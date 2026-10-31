@@ -1634,6 +1634,7 @@ function mpHostBuildG(){
 }
 async function mpSet(patch){const j=await mpCall('set',{patch});MP.meta=Object.assign({},MP.meta,patch,{v:j.v});mpHostPaint()}
 async function mpHostStartGame(){
+ if(document.getElementById('hsT'))mpReadFields();
  const hs=MP.players.filter(Boolean);if(!hs.length){toast('Noch niemand in der Lobby');return}
  const names=shuffle(BOT_NAMES).filter(n=>!hs.some(p=>(p.alias||p.name).toLowerCase()===n.toLowerCase()));
  const mix=[];Object.entries(BOT_MIX).forEach(([id,n])=>{for(let i=0;i<n;i++)mix.push(id)});shuffle(mix);
@@ -1675,7 +1676,8 @@ async function mpHostCalc(){
 }
 function mpHostPaint(){
  const H=$('#s-host'),m=MP.meta||{state:'lobby'};
- if(!H.querySelector('#hsStat'))H.innerHTML=`<h1 class="hero" style="font-size:36px">👩‍🏫 Lehrer-Verwaltung</h1><div class="card" id="hsTop"></div><div id="hsMid"></div>`;
+ if(!H.querySelector('#hsStat'))H.innerHTML=`<h1 class="hero" style="font-size:36px">👩‍🏫 Lehrer-Verwaltung</h1><div class="card" id="hsTop"></div><div id="hsMid"></div><div class="card" id="hsSet"><h3>🔧 Spieleinstellungen</h3>${hostFields()}<div class="row" style="margin-top:8px"><button class="btn blue" id="hsSave">💾 Einstellungen speichern</button><span class="small">Änderbar, solange die Lobby offen ist.</span></div></div>`;
+  setTimeout(()=>{const b=document.getElementById('hsSave');if(b)b.onclick=async()=>{try{mpReadFields();await mpSet({cfg:mpCfgObj()});toast('✔ Einstellungen gespeichert')}catch(e){toast('⚠️ '+e.message)}}},0);
  const link=mpJoinLink();
  const top=$('#hsTop');
  if(!top.dataset.code){top.dataset.code=MP.code;
@@ -1686,6 +1688,7 @@ function mpHostPaint(){
   $('#hsCp').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Link:',link)})};
  }
  const mid=$('#hsMid'),ps=MP.players||[];
+ {const st=document.getElementById('hsSet');if(st)st.style.display=m.state==='lobby'?'':'none'}
  const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
  const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Saison ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Saison läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Saison ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
  let btn='';
