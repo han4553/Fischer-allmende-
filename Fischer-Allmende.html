@@ -120,6 +120,7 @@ body.playing{overflow:hidden}
 #playHud .pill{padding:3px 10px;font-size:13px;pointer-events:auto}
 #playHud #bTeach{padding:5px 10px;font-size:14px;pointer-events:auto;box-shadow:0 3px 0 #b8c4cc}
 #playHud .bar{background:#0006}
+#h-set{display:inline-flex;align-items:center;gap:3px;padding:2px 6px!important}#h-set:empty{display:none}#h-set i{font-style:normal;display:inline-block;min-width:17px;height:17px;line-height:17px;border-radius:50%;text-align:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 1px #0008}#h-set b{font-size:12px;margin-left:2px}
 #playCtrl{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:10px 14px max(12px,env(safe-area-inset-bottom));pointer-events:none}
 #playCtrl .pad,#playCtrl .netbtn,#joy{pointer-events:auto;opacity:.92}
 #joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),rgba(10,60,100,.45));border:3px solid rgba(255,255,255,.75);touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
@@ -145,6 +146,8 @@ body.playing{overflow:hidden}
   <div class="card">
     <h2>🎯 Dein Auftrag</h2>
     <p>Du bist <b>eines von 30 Fischerbooten</b> in <b>derselben Bucht</b>. Alle fischen <b>gleichzeitig</b> auf einer großen Karte, die mitscrollt, wenn du an den Rand fährst. Du steuerst dein Boot mit dem Joystick (am PC: Pfeiltasten/WASD) und wirfst ein <b>Netz</b> aus, das hinter dem Boot herläuft – per Knopf holst du es ein und aus.</p>
+    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, danach ist dein Boot wieder leer und du kannst weiterfischen.</p>
+    <p>🌈 <b>Farbset:</b> Die Fische gibt es in 5 Farben mit unterschiedlichem Wert – <span style="color:#2e9a47"><b>Grün</b> 1</span> · <span style="color:#1aa7bd"><b>Blau</b> 1</span> · <span style="color:#e8643a"><b>Orange</b> 2</span> · <span style="color:#7a56c9"><b>Violett</b> 3</span> · <span style="color:#d6336c"><b>Pink</b> 4</span>. Für <b>jedes komplette Set aus allen 5 Farben</b> gibt es <b>+4 Extrapunkte</b>. Dazu kommen Großfische (2×) und Goldfische (3×).</p>
     <p><b>Dein Ziel:</b> Fang möglichst viele Fische und mach den größten Gewinn. Mehr musst du erstmal nicht wissen – viel Erfolg!</p>
   </div>
   <div class="card">
@@ -169,6 +172,8 @@ body.playing{overflow:hidden}
       <span class="pill" id="h-time">⏱ 0</span>
       <span class="pill" id="h-rank">🏅 Platz 1/30</span>
       <span class="pill" id="h-cargo">🧺 0/10</span>
+      <span class="pill" id="h-landed">⚓ 0 entladen</span>
+      <span class="pill" id="h-set"></span>
       <span class="pill" id="h-quota">📜 Quote</span>
       <span class="pill" id="h-stock">🐟 Bestand 0</span>
       <span class="pill" id="h-price">💰 0</span>
@@ -219,6 +224,7 @@ const CFG={
   PRICE_BASE:2,     // Mindestpreis pro Fisch (Münzen)
   PRICE_SLOPE:3,    // Knappheitsaufschlag (Preis = BASE + SLOPE*(1-Bestand/K))
   GOLD_CHANCE:0.06, // Anteil Goldfische
+  SET_BONUS:4,      // Extrapunkte für jedes komplette Farbset (5 Farben)
   GOLD_MULT:3,      // (Großfisch = Wert 3, Goldfisch = Wert 5)
   BIG_CHANCE:0.14,  // Anteil Großfische (Wert 2)
   QUIZ_REWARD:6,    // Münzen für richtige Quizantwort
@@ -443,11 +449,11 @@ function renderDecision(){
  ${phaseCard()}
  <div class="card"><div class="row" style="justify-content:space-between"><div class="row"><canvas id="thumb" width="130" height="90" style="width:84px"></canvas><h3>${me.role.emoji} ${esc(me.name)} – ${me.role.title}<br><small>⛵ ${esc(msName(BOAT.name))} · 🏅 Platz ${me.rank}/${G.P.length}</small></h3></div><span class="pill">💰 ${me.coins} Münzen</span></div>
   ${revLvl()<2?'':`<div class="bar"><i style="width:${S/CFG.K*100}%;background:${col}"></i><span>🐟 Bestand ${S} / ${CFG.K}</span></div>`}
-  <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum: <b>${capOf()}</b>${G.phase===2?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
+  <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum pro Fahrt: <b>${capOf()}</b>${G.phase===2?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
  ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, fahr zum Hafengebäude (in der Kartenmitte): Dort wird der Fisch entladen und du fischst mit leerem Boot weiter.</p>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Dein Fang muss am Hafen (kleine Insel in der Kartenmitte) entladen werden – danach ist dein Boot wieder leer und du fischst weiter. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
@@ -458,7 +464,9 @@ ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ 
 
 /* ---------- Arcade (Draufsicht, 30 Boote) ---------- */
 let A=null;const cv=$('#cv'),cx=cv.getContext('2d');
-const FCOL=['#ff8a65','#4dd0e1','#9575cd','#81c784','#f06292'];
+const FCOL=['#81c784','#4dd0e1','#ff8a65','#9575cd','#f06292'];
+const FNAME=['Grün','Blau','Orange','Violett','Pink'],CVAL=[0,0,1,2,3],CCUM=[.40,.68,.84,.94,1];
+const pickCol=()=>{const r=Math.random();for(let i=0;i<5;i++)if(r<CCUM[i])return i;return 4};
 const AR={x0:24,y0:24,x1:800-24,y1:480-24};  /* sichtbarer Spielbereich auf dem Bildschirm (ohne HUD/Tasten) */
 let HB={x0:0,x1:0,y0:0,y1:0,W:0,H:0};
 let WB={x0:40,y0:40,x1:1900,y1:1100,W:1940,H:1140};  /* Weltgrenzen */
@@ -471,16 +479,16 @@ const BIGCOL=['#4f7cac','#6c63c9','#2e86ab','#9aa5b1','#1d6f8a'];
 /* Fischarten: klein (Wert 1) · normal (1) · Großfisch (2) · Goldfisch (3) – 'ex' = Mehrwert über 1 */
 function newFish(sc,si){
  const r=Math.random(),loner=Math.random()<.3;
- let kind='S',size=rnd(6,8),ex=0,color=FCOL[rint(0,4)];
- if(r<CFG.GOLD_CHANCE){kind='G';size=12;ex=4;color='#ffca28'}
- else if(r<CFG.GOLD_CHANCE+CFG.BIG_CHANCE){kind='B';size=rnd(18,23);ex=2;color=BIGCOL[rint(0,BIGCOL.length-1)]}
+ let kind='S',size=rnd(6,8),ci=pickCol(),ex=CVAL[ci],color=FCOL[ci];
+ if(r<CFG.GOLD_CHANCE){kind='G';size=12;ex=4;ci=-1;color='#ffca28'}
+ else if(r<CFG.GOLD_CHANCE+CFG.BIG_CHANCE){kind='B';size=rnd(18,23);ex=2;ci=-1;color=BIGCOL[rint(0,BIGCOL.length-1)]}
  else if(r<.78){kind='N';size=rnd(9,12)}
  let far=false;
  if((kind==='G'||kind==='B')&&A&&A.schools&&A.schools.length&&Math.random()<.8){ /* seltene, teure Fische meist weit weg vom Hafen */
   const hx=(HB.x0+HB.x1)/2,hy=(HB.y0+HB.y1)/2,thr=.5*Math.hypot(HB.W/2,HB.H/2);
   for(let k=0;k<25;k++){const j=rint(0,A.schools.length-1),q=A.schools[j];if(Math.hypot(q.x-hx,q.y-hy)>=thr){sc=q;si=j;far=true;break}}
  }
- return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,380):far?rnd(25,110):rnd(30,190),ang:rnd(0,6.28),size,kind,ex,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
+ return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,380):far?rnd(25,110):rnd(30,190),ang:rnd(0,6.28),size,kind,ex,ci,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
 }
 function fishSprite(color,gold){
  const key=color+(gold||'');if(FSPR[key])return FSPR[key];
@@ -556,9 +564,9 @@ function startRound(T){
  A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
   boat:{x:WW/2,y:WH/2+36+60,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
   bs:105*(1+.2*me.upg.motor)*me.role.speed,ev:evFor(G.phase,G.round),windAng:rnd(0,6.28),curAng:rnd(0,6.28),
-  net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
-  cap:capOf(),cargo:0,hold:0,landed:0,trips:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
-  bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:rnd(WB.x0+20,WB.x1-20),y:rnd(WB.y0+20,WB.y1-20),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
+  net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,col:[0,0,0,0,0],full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
+  cap:capOf(),cargo:0,hold:0,landed:0,trips:0,col:[0,0,0,0,0],sets:0,setKey:'',plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
+  bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:WW/2+Math.cos(i*2.399)*rnd(88,150),y:WH/2+Math.sin(i*2.399)*rnd(80,130),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
  const ns=S<6?1:clamp(Math.round(S/8),12,50);
  { /* Schwärme gleichmäßig über die ganze Karte verteilen (gejitterte Rasterzellen) */
   const cols=Math.max(1,Math.round(Math.sqrt(ns*WW/WH))),rows=Math.max(1,Math.ceil(ns/cols)),cells=[];
@@ -608,7 +616,7 @@ function setNetBtn(){const b=$('#bNet'),N=A&&A.net,o=N&&N.out;b.classList.toggle
  b.innerHTML=!o?'🎣 NETZ AUSWERFEN<br><small>Netz ist an Bord</small>':N.full?'🪢 NETZ VOLL!<br><small>jetzt einholen ('+N.n+'/'+N.bag+')</small>':'🪢 NETZ EINHOLEN<br><small>Netz '+N.n+'/'+N.bag+'</small>'}
 function haulIn(){
  const N=A.net;if(!N.out)return;
- if(N.n){A.cargo+=N.n;A.hold+=N.n;A.gold+=N.gold;A.plain+=N.n;
+ if(N.n){A.cargo+=N.n;A.hold+=N.n;A.gold+=N.gold;A.plain+=N.n;applyCols();
   A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'+'+N.n+' 🧺',t:1.2,col:'#ffe066'});beep(660,.1,'square',.04);
   if(G.phase===2){
    if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
@@ -616,6 +624,12 @@ function haulIn(){
   }
   if(A.hold>=A.cap){toast('🧺 Boot voll – ab zum Hafen (Insel in der Kartenmitte)!')}}
  N.n=0;N.gold=0;N.full=false;N.out=false;beep(300,.1,'triangle');setNetBtn();
+}
+function applyCols(){
+ const N=A.net;for(let i=0;i<5;i++){A.col[i]+=N.col[i];N.col[i]=0}
+ const sets=Math.min(...A.col);
+ while(A.sets<sets){A.sets++;A.gold+=CFG.SET_BONUS;
+  A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-62,txt:'🌈 Farbset komplett! +'+CFG.SET_BONUS,t:2,col:'#ffd166'});toast('🌈 Alle 5 Farben gesammelt: +'+CFG.SET_BONUS+' Extrapunkte!');beep(880,.15,'triangle',.05)}
 }
 function unloadHold(){
  const n=A.hold;if(n<=0)return;A.landed+=n;A.hold=0;A.trips++;A.dockFlash=1;
@@ -635,7 +649,7 @@ function sweep(){
  const inside=A.fish.filter(f=>Math.hypot(f.x-N.x,f.y-N.y)<N.R+f.size*.3).sort((a,b)=>Math.hypot(a.x-N.x,a.y-N.y)-Math.hypot(b.x-N.x,b.y-N.y));
  const take=inside.slice(0,Math.min(N.cap,space));const g0=N.gold;
  if(!take.length){N.cd=.15;return}
- take.forEach(f=>{A.fish.splice(A.fish.indexOf(f),1);f.dead=true;N.n++;N.gold+=f.ex||0});
+ take.forEach(f=>{A.fish.splice(A.fish.indexOf(f),1);f.dead=true;N.n++;N.gold+=f.ex||0;if(f.ci>=0)N.col[f.ci]++});
  N.cd=N.cdMax;N.pulse=.45;
  A.fx.push({k:'txt',x:N.x,y:N.y-20,txt:'+'+take.length+' 🐟'+(N.gold-g0>0?' ✨+'+(N.gold-g0)+'💰':''),t:1.2,col:'#ffe066'});beep(560+take.length*60,.12);
  if(N.n>=N.bag||A.hold+N.n>=A.cap){N.full=true;toast('🪢 Netz voll – jetzt einholen!');beep(740,.2,'square',.05)}
@@ -745,6 +759,7 @@ function update(dt){
   for(const o of A.bots){if(o===b)continue;const ox=b.x-o.x,oy=b.y-o.y,dd=ox*ox+oy*oy;if(dd<1500&&dd>.01){const q=Math.sqrt(dd);b.x+=ox/q*(38.7-q)*.5;b.y+=oy/q*(38.7-q)*.5}}
   b.x=clamp(b.x,WB.x0,WB.x1);b.y=clamp(b.y,WB.y0,WB.y1);
   for(const r of A.rocks){const ddx=b.x-r.x,ddy=b.y-r.y,dd=Math.hypot(ddx,ddy)||1,m=r.r+18;if(dd<m){b.x=r.x+ddx/dd*m;b.y=r.y+ddy/dd*m}}
+  if(b.x>HB.x0-20&&b.x<HB.x1+20&&b.y>HB.y0-20&&b.y<HB.y1+20){const pl=b.x-(HB.x0-20),pr=(HB.x1+20)-b.x,pt=b.y-(HB.y0-20),pb=(HB.y1+20)-b.y,mn=Math.min(pl,pr,pt,pb);if(mn===pl)b.x=HB.x0-20;else if(mn===pr)b.x=HB.x1+20;else if(mn===pt)b.y=HB.y0-20;else b.y=HB.y1+20}
  }
  /* Kollisionen: Boote sind feste Körper */
  const push=(o,r)=>{const dx=B.x-o.x,dy=B.y-o.y,d=Math.hypot(dx,dy)||.1;if(d<r){const q=(r-d),ux=dx/d,uy=dy/d;B.x+=ux*q*.5;B.y+=uy*q*.5;o.x-=ux*q*.5;o.y-=uy*q*.5;B.v*=.8;if(!o.bump||A.t-o.bump>.6){o.bump=A.t;beep(150,.05,'square',.03)}}};
@@ -981,6 +996,8 @@ const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.s
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
  const have=A.cargo+A.net.n;
  $('#h-cargo').textContent='🧺 '+A.hold+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;$('#h-cargo').style.background=A.hold>=A.cap?'#ffd6d9':'';
+ $('#h-landed').textContent='⚓ '+A.landed+' entladen';
+ {const k=A.col.join(',')+'|'+A.sets;if(A.setKey!==k){A.setKey=k;$('#h-set').innerHTML=A.col.map((n,i)=>'<i style="background:'+FCOL[i]+';opacity:'+(n?1:.35)+'">'+n+'</i>').join('')+(A.sets?'<b>🌈×'+A.sets+'</b>':'')}}
  $('#h-stock').textContent='🐟 Bestand '+A.fish.length+'/'+CFG.K;$('#h-stock').style.display=revLvl()<2?'none':'';
  $('#h-rank').textContent='🏅 Platz '+A.rank+'/'+G.P.length;
  if(G.phase===2){const q=$('#h-quota');q.textContent=(have>A.quota?'⚠️ ':'📜 ')+'Quote '+have+'/'+A.quota;q.style.background=have>A.quota?'#ffd6d9':have===A.quota?'#d8f5e5':''}
@@ -1013,7 +1030,7 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();netPress()});
 function finishRound(){
  if(MP.role==='player'){mpPlayerFinish();return}
  const me=G.P[0],ph=G.phase;
- if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0}
+ if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0;applyCols()}
   for(const b of A.bots)for(const e of b.evs)if(!e.done)execBot(b,e,true);
  const Sstart=A.S0,Safter=A.fish.length,base=priceBase(Sstart),pr=A.price,Q=A.quota,tac=A.tac;
  /* Spieler: Kontrolle im Hafen */
@@ -1631,7 +1648,7 @@ function mpPlayTick(){
 }
 async function mpPlayerFinish(){
  const me=G.P[0],ph=G.phase;
- if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0}
+ if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0;applyCols()}
  const base=priceBase(A.S0),Q=A.quota,pr=A.price;
  const pIll=polOn()?Math.max(0,A.cargo-Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
  if(pIll>0){pViol=1;if(Math.random()<1-Math.pow(1-CFG.PATROL_P,pIll)){pCaught=true;confiscate(pIll);pFine+=Math.round(pIll*CFG.FINE_MULT*base)}}
