@@ -395,25 +395,23 @@ function phaseCard(){
  if(G.phase===1)return `<div class="card" style="border:4px solid #fb8500"><h3>🌊 Spielrunde 1</h3>
   <p>Wer am meisten fängt, steht ganz oben: Jede Saison bekommen die drei fangstärksten Boote eine <b>🏆 Fangprämie</b> (${CFG.KING_PRIZE.join(' / ')} 💰).</p></div>`;
  const tac=tacNow(),Q=quotaNow();
- if(G.round<2)return `<div class="card" style="border:4px solid #2a9d8f"><h3>🌱 Spielrunde 2 – Der See braucht Schutz</h3>
-  <p>In Spielrunde 1 war der See am Ende leer. Jetzt gilt: <b>Jeder sollte nachhaltig fischen</b>, damit der See überlebt und sich erholen kann – dann können alle auch in Zukunft Fische fangen.</p>
-  <table class="small" style="width:100%"><tr><th>Vorgabe</th><th>So funktioniert's</th><th>Nutzen</th></tr>
-  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td>Die Behörde legt fest: <b>${tac} Fische</b> pro Saison dürfen insgesamt gefangen werden.</td><td>Der Bestand bleibt in einem gesunden Bereich und wächst nach.</td></tr>
-  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td><td>Fair: alle haben dieselben Chancen.</td></tr></table>
-  <p class="small" style="margin-top:8px">🎯 Tipp: Mit wenig Fisch viel verdienen – 🐋 Großfische zählen 3×, ⭐ Goldfische 5×. Wer früh fertig ist: ⚓ Feierabend.</p></div>`;
+ if(G.round<2)return `<div class="card" style="border:4px solid #2a9d8f"><h3>📜 Spielrunde 2 – Neue Vorgaben</h3>
+  <p>Gleicher See, gleiche Boote. Die Fischereibehörde hat für diese Runde Vorgaben festgelegt:</p>
+  <table class="small" style="width:100%"><tr><th>Vorgabe</th><th>Inhalt</th></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Saison dürfen insgesamt gefangen werden.</td></tr>
+  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr></table></div>`;
  const overN=G.last?G.last.rows.filter(r=>r.fish>G.last.Q).length:0;
  const lead=G.round===2?`<p>📣 <b>Neu ab dieser Saison!</b> ${overN?`Letzte Saison haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'} Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
  const p=Math.round(price(G.S)*10)/10,gain=p,loss=Math.round(CFG.PATROL_P*CFG.FINE_MULT*p*10)/10,ev=Math.round((gain*(1-CFG.PATROL_P)-CFG.FINE_MULT*p*CFG.PATROL_P-p*CFG.PATROL_P)*10)/10;
  return `<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2 – Quote mit Kontrolle</h3>
   ${lead}
-  <table class="small" style="width:100%"><tr><th>Baustein</th><th>So funktioniert's</th><th>Nutzen</th></tr>
-  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td>Die Behörde legt fest: <b>${tac} Fische</b> pro Saison.</td><td>Der Bestand bleibt in einem gesunden Bereich und wächst nach.</td></tr>
-  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td><td>Fair: alle haben dieselben Chancen, keiner muss „mitgieren“.</td></tr>
-  <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td><td>Regeln werden ernst genommen – Trittbrettfahrer fallen auf.</td></tr>
-  <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang wird beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td><td>Schummeln lohnt sich im Durchschnitt nicht.</td></tr>
-  <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie.</td><td>Wer sich an Regeln hält, wird belohnt.</td></tr></table>
-  <div class="fact" style="margin-top:10px"><b>🎲 Lohnt sich Schummeln? Selbst ausrechnen:</b><br>Ein Fisch über der Quote bringt dir ca. <b>+${gain} 💰</b>. Mit ca. ${Math.round(CFG.PATROL_P*100)} % Wahrscheinlichkeit wirst du erwischt: Fisch weg (−${gain}) und Strafe (−${Math.round(CFG.FINE_MULT*p*10)/10}). Im Schnitt ergibt das pro Schwarzfisch: <b>${ev>=0?'+':''}${ev} 💰</b> – und das Öko-Siegel (+${CFG.ECO_BONUS}) verlierst du auch noch.</div>
-  <p class="small" style="margin-top:8px">🎯 Tipp: Mit wenig Fisch viel verdienen – 🐋 Großfische zählen 3×, ⭐ Goldfische 5×. Wer früh fertig ist: ⚓ Feierabend.</p></div>`;
+  <table class="small" style="width:100%"><tr><th>Regel</th><th>Inhalt</th></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Saison insgesamt.</td></tr>
+  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr>
+  <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td></tr>
+  <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang wird beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td></tr>
+  <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie für Boote ohne Überfang.</td></tr></table>
+  </div>`;
 }
 const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Saison 2 der Spielrunde 2
 const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Saison für Saison aufgedeckt
@@ -566,7 +564,7 @@ function haulIn(){
  if(N.n){A.cargo+=N.n;A.gold+=N.gold;A.plain+=N.n;
   A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'+'+N.n+' 🧺',t:1.2,col:'#ffe066'});beep(660,.1,'square',.04);
   if(G.phase===2){
-   if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'⚠️ Über der Quote – das gefährdet den See!');beep(200,.3,'sawtooth',.06)}}
+   if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
    else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt – ⚓ Hafen!');$('#bHome').classList.add('pulse')}
   }
   if(A.cargo>=A.cap){toast('🧺 Laderaum voll – zurück in den Hafen!');$('#bHome').classList.add('pulse')}}
@@ -857,7 +855,7 @@ function draw(){
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
  if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick ziehen = Kurs & Tempo · 🎣 Netz-Knopf: aus-/einholen';
- else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'🌱 Fischt nachhaltig! Quote: '+A.quota+' Fische – damit der See überlebt.';
+ else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
  if(msg){c.strokeText(msg,W/2,AR.y0+26);c.fillText(msg,W/2,AR.y0+26)}
  drawMini(c);
  const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
@@ -1011,7 +1009,7 @@ function renderResult(){
  const L=G.last,me=G.P[0],ph=G.phase,fact=FACTS[FACT_SEQ[ph][(G.round-1)%5]],m=fact.m,lv=revLvl();
  const Q=QUIZ[QUIZ_SEQ[ph][(G.round-1)%5]],showQ=!(ph===1&&G.round===1);
  const R1h=ph===2&&G.res[1]?G.res[1].hist:null,r1=R1h&&R1h[G.round-1];
- const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Nutzen-Check: Regeln im Vergleich</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Saisonstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Saison</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See – und er wächst nach. Das ist der Nutzen der gemeinsamen Regel.':'Beobachte, wie sich der Bestand mit den Regeln entwickelt.'}</p></div>`:'';
+ const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Vergleich mit Spielrunde 1</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Saisonstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Saison</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See als in der freien Fischerei.':'Der Bestand entwickelt sich anders als in Spielrunde 1.'}</p></div>`:'';
  const myRow=L.rows[0];
  let special='';
  if(ph===1){
@@ -1024,11 +1022,11 @@ function renderResult(){
   const overN=L.rows.filter(r=>r.fish>L.Q).length;
   special=G.round<2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🌱 Bilanz der Fischereibehörde</h3>
   <p>Erlaubt (TAC): <b>${L.tac}</b> · Tatsächlich gefangen: <b>${L.total}</b> · Quote pro Boot: <b>${L.Q}</b></p>
-  <p>📜 <b>${overN}</b> von ${L.rows.length} Booten haben mehr als die Quote gefangen – ohne Kontrolle passiert ihnen nichts.</p>
-  <p class="small">${myRow.fish>L.Q?'Du hast über der Quote gefischt. Ohne jede Kontrolle bleibt das folgenlos – aber der See leidet.':'Du hast dich an die Quote gehalten – das war gut für den See.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`:`<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Bilanz der Fischereibehörde</h3>
+  <p>📜 <b>${overN}</b> von ${L.rows.length} Booten haben mehr als die Quote gefangen. Die Flotte fing <b>${L.total}</b> statt der erlaubten <b>${L.tac}</b> Fische.</p>
+  <p class="small">${myRow.fish>L.Q?'Dein Fang lag über der Quote ('+myRow.fish+' statt '+L.Q+').':'Dein Fang lag innerhalb der Quote ('+myRow.fish+' von '+L.Q+').'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`:`<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Bilanz der Fischereibehörde</h3>
   <p>Erlaubt (TAC): <b>${L.tac}</b> · Tatsächlich gefangen: <b>${L.total}</b> · Quote pro Boot: <b>${L.Q}</b></p>
   <p>🌿 <b>${L.ecoN}</b> Boote hielten sich an die Quote (Öko-Siegel +${Math.round((CFG.ECO_MULT-1)*100)} % und ${CFG.ECO_BONUS} 💰) · 🚔 <b>${L.caughtN}</b> erwischt (Strafen ${L.finesTotal} 💰) · 😏 <b>${L.sneakyN}</b> unentdeckt</p>
-  <p class="small">${myRow.caught?'🚔 Du wurdest erwischt: Überfang beschlagnahmt und '+myRow.fine+' 💰 Strafe.':myRow.sneaky?'😏 Du hast über der Quote gefischt und Glück gehabt – ohne Kontrolle gibt es aber kein Öko-Siegel. Auf Dauer lohnt sich das nicht.':'🌿 Du hast dich an die Quote gehalten: Öko-Siegel und Prämie sind deins.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`;
+  <p class="small">${myRow.caught?'🚔 Du wurdest erwischt: Überfang beschlagnahmt, dazu '+myRow.fine+' 💰 Strafe. Saisonergebnis: '+(myRow.net>=0?'+':'')+myRow.net+' 💰.':myRow.sneaky?'😏 Du warst über der Quote und wurdest nicht erwischt – ein Öko-Siegel gibt es dafür nicht.':'🌿 Du warst innerhalb der Quote: Öko-Siegel und Prämie.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`;
  }
  const end=G.collapse||G.round>=G.rounds;
  $('#s-result').innerHTML=`
@@ -1067,7 +1065,7 @@ function renderUpgrades(){
  $('#s-upg').innerHTML=`
  <h1 class="hero" style="font-size:34px">${G.phase===1?'Hafen':'Hafen & Dorfversammlung'}</h1>
  <div class="card"><div class="row" style="justify-content:space-between"><h3>⚓ Mein Boot</h3><span class="pill">💰 ${me.coins} Münzen</span></div>
- <p class="small">Private Upgrades machen dich effizienter${G.phase===1?'':' – nützlich, auch wenn du dich an die Quote hältst (gezielt Groß- und Goldfische fangen!).'}</p>
+ <p class="small">Private Upgrades machen dich effizienter${G.phase===1?'':' – auch mit begrenzter Quote.'}</p>
  <div class="grid g2">${Object.entries(PRIV).map(([k,u])=>{const l=me.upg[k],mx=l>=u.max,cost=u.cost[l];return `<div class="upg"><h4>${u.emoji} ${u.name} <span class="pips">${pips(l,u.max)}</span></h4><p>${u.desc}</p><button class="btn" data-p="${k}" ${mx||me.coins<cost?'disabled':''}>${mx?'MAX':'Kaufen · '+cost+' 💰'}</button></div>`}).join('')}</div></div>
  ${G.phase===1||MP.role||G.round<2?'':` <div class="card"><div class="row" style="justify-content:space-between"><h3>🏛 Gemeindekasse</h3><span class="pill">🏦 ${G.comm.fund} Münzen im Topf</span></div>
  <p>Hier zahlen alle freiwillig ein${G.phase===2?' – dazu fließt die Hälfte der Strafgelder in die Kasse':''}. Die Projekte nützen <b>allen ${G.P.length} Booten</b> – auch denen, die nichts beitragen (Trittbrettfahrer!). Diese Runde zahlten <b>${G.botContrib.cnt}</b> Boote zusammen <b>${G.botContrib.sum} 💰</b> ein.</p>
@@ -1107,7 +1105,7 @@ function renderPhase1End(sorted,myRank){
  <div class="card" id="reveal" style="display:none;border:4px solid #e63946"><h3>📉 Tragödie der Allmende</h3><p>Die Bucht ist ein <b>Allmendegut</b>: Niemand kann von der Nutzung ausgeschlossen werden (nicht ausschließbar), aber jeder Fisch, den du fängst, fehlt den anderen (<b>Rivalität</b>). Der Nutzen eines Fisches gehört ganz dir, die Kosten eines leeren Sees tragen alle. Also ist es für jeden vernünftig, schnell mehr zu fangen – und für alle zusammen ein Verlust. Garrett Hardin nannte das 1968 die <b>Tragödie der Allmende</b>.</p><table class="small" style="width:100%"><tr><th></th><th>Die anderen fangen wenig</th><th>Die anderen fangen viel</th></tr><tr><td><b>Ich fange wenig</b></td><td>👍 alle gut (See bleibt)</td><td>😖 ich habe wenig, der See ist trotzdem leer</td></tr><tr><td><b>Ich fange viel</b></td><td>🤑 ich gewinne</td><td>💀 alle verlieren</td></tr></table><p class="small">Für jeden Einzelnen ist „viel fangen“ die beste Antwort – das ist ein <b>Gefangenendilemma</b>. Wie kommt man da raus? Das probierst du in Spielrunde 2.</p></div>
  <div class="card"><h3>🏅 Endstand Spielrunde 1</h3><div id="lbBox">${leaderboardHTML(sorted,false)}</div><button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
  <div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2: Was, wenn es Regeln gibt?</h3>
-  <p>Gleicher See, gleiche ${G.P.length} Boote – aber jetzt soll <b>jeder nachhaltig fischen</b>, damit der See überlebt. Die Behörde gibt dafür <b>Fangquoten</b> vor.</p>
+  <p>Gleicher See, gleiche ${G.P.length} Boote – aber jetzt gibt die Fischereibehörde <b>Fangquoten</b> vor.</p>
   <button class="btn" id="toPhase2">🚔 Spielrunde 2 starten</button></div>`;
  drawChart($('#chart1'),R.hist.length?R.hist:[{r:1,start:CFG.S0,after:0,end:0}]);
  attachQuiz('refl',{a:1,e:'Genau: Der Nutzen ist privat, die Kosten sind gemeinsam.'},0,()=>{$('#reveal').style.display='block'});attachLbToggle(()=>sorted);
