@@ -80,6 +80,10 @@ input[type=range]{width:100%}
 
 /* Boot-Werft */
 .yard{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:16px;align-items:start}
+.ypre{position:sticky;top:6px;z-index:5}.ypre #yc{width:100%;max-width:360px;height:auto}
+.ynav{display:flex;gap:4px;margin-bottom:10px}.ystep{flex:1;border:3px solid #dbe6ec;background:#f8fcfd;border-radius:12px;padding:4px 2px;font:inherit;cursor:pointer;color:var(--ink);display:flex;flex-direction:column;align-items:center;line-height:1.1}.ystep span{font-size:18px}.ystep small{font-size:10px;font-weight:700}.ystep.sel{border-color:var(--orange);background:#fff4e0}.ystep.done{background:#e8f7ee}
+.ysec{margin-bottom:12px}.ymsg{margin:0 0 8px;font-size:15px}
+@media(max-width:720px){.ypre{background:#fff;padding:4px 0;border-radius:18px}.ypre #yc{max-height:34vh;width:auto;margin:0 auto;display:block}}
 @media(max-width:720px){.yard{grid-template-columns:1fr}}
 #yc{border-radius:18px;touch-action:none;cursor:crosshair;box-shadow:0 5px 0 #0b3d5c33;background:#bfeaf5}
 .yctl>div{margin-bottom:12px}
@@ -146,8 +150,8 @@ body.playing{overflow:hidden}
   <div class="card">
     <h2>🎯 Dein Auftrag</h2>
     <p>Du bist <b>eines von 30 Fischerbooten</b> in <b>derselben Bucht</b>. Alle fischen <b>gleichzeitig</b> auf einer großen Karte, die mitscrollt, wenn du an den Rand fährst. Du steuerst dein Boot mit dem Joystick (am PC: Pfeiltasten/WASD) und wirfst ein <b>Netz</b> aus, das hinter dem Boot herläuft – per Knopf holst du es ein und aus.</p>
-    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, danach ist dein Boot wieder leer und du kannst weiterfischen.</p>
-    <p>🌈 <b>Farbset:</b> Die Fische gibt es in 5 Farben mit unterschiedlichem Wert – <span style="color:#2e9a47"><b>Grün</b> 1</span> · <span style="color:#1aa7bd"><b>Blau</b> 1</span> · <span style="color:#e8643a"><b>Orange</b> 2</span> · <span style="color:#7a56c9"><b>Violett</b> 3</span> · <span style="color:#d6336c"><b>Pink</b> 4</span>. Für <b>jedes komplette Set aus allen 5 Farben</b> gibt es <b>+4 Extrapunkte</b>. Dazu kommen Großfische (2×) und Goldfische (3×).</p>
+    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, bevor du weiterfischen kannst – danach ist dein Boot wieder leer. Was am Ende der Saison noch im Boot liegt, wird automatisch angelandet.</p>
+    <p>🌈 <b>Farbset:</b> Die Fische gibt es in 5 Farben und Formen (schlank, rund, Raute …) mit unterschiedlichem Wert – <span style="color:#1f9d2c"><b>Grün</b> 1</span> · <span style="color:#6b7b8c"><b>Silber</b> 1</span> · <span style="color:#e07800"><b>Orange</b> 2</span> · <span style="color:#8a1fe0"><b>Violett</b> 3</span> · <span style="color:#e0155f"><b>Pink</b> 4</span>. Für <b>jedes komplette Set aus allen 5 Farben</b> gibt es <b>+4 Extrapunkte</b>. Dazu kommen Großfische (2×) und Goldfische (3×).</p>
     <p><b>Dein Ziel:</b> Fang möglichst viele Fische und mach den größten Gewinn. Mehr musst du erstmal nicht wissen – viel Erfolg!</p>
   </div>
   <div class="card">
@@ -453,7 +457,7 @@ function renderDecision(){
  ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Dein Fang muss am Hafen (kleine Insel in der Kartenmitte) entladen werden – danach ist dein Boot wieder leer und du fischst weiter. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel in der Kartenmitte) entladen – danach ist es wieder leer und du fischst weiter. Was am Saisonende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
@@ -464,8 +468,8 @@ ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ 
 
 /* ---------- Arcade (Draufsicht, 30 Boote) ---------- */
 let A=null;const cv=$('#cv'),cx=cv.getContext('2d');
-const FCOL=['#81c784','#4dd0e1','#ff8a65','#9575cd','#f06292'];
-const FNAME=['Grün','Blau','Orange','Violett','Pink'],CVAL=[0,0,1,2,3],CCUM=[.40,.68,.84,.94,1];
+const FCOL=['#3ddc4b','#e9eef5','#ff8a00','#a233ff','#ff2e7e'];
+const FNAME=['Grün','Silber','Orange','Violett','Pink'],CVAL=[0,0,1,2,3],CCUM=[.40,.68,.84,.94,1];
 const pickCol=()=>{const r=Math.random();for(let i=0;i<5;i++)if(r<CCUM[i])return i;return 4};
 const AR={x0:24,y0:24,x1:800-24,y1:480-24};  /* sichtbarer Spielbereich auf dem Bildschirm (ohne HUD/Tasten) */
 let HB={x0:0,x1:0,y0:0,y1:0,W:0,H:0};
@@ -490,15 +494,43 @@ function newFish(sc,si){
  }
  return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,380):far?rnd(25,110):rnd(30,190),ang:rnd(0,6.28),size,kind,ex,ci,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
 }
-function fishSprite(color,gold){
- const key=color+(gold||'');if(FSPR[key])return FSPR[key];
+function fishSprite(color,gold,ci){
+ ci=(gold==='G'||gold==='B')?-1:(ci==null?0:ci);
+ const key=color+(gold||'')+ci;if(FSPR[key])return FSPR[key];
  const c=document.createElement('canvas');c.width=64;c.height=36;const x=c.getContext('2d'),s=12;x.translate(40,18);
  if(gold==='G'){x.shadowColor='#ffd700';x.shadowBlur=8}else if(gold==='B'){x.shadowColor='#bfefff';x.shadowBlur=5}
- x.fillStyle=color;x.beginPath();x.ellipse(0,0,s,s*.48,0,0,7);x.fill();
- if(gold==='B'){x.save();x.shadowBlur=0;x.clip();x.fillStyle='rgba(0,0,40,.25)';for(let i=-2;i<=2;i++)x.fillRect(i*s*.32-s*.05,-s*.5,s*.11,s);x.restore();x.shadowColor='#bfefff';x.shadowBlur=5;x.fillStyle=color}
- x.beginPath();x.moveTo(-s*.8,0);x.lineTo(-s*1.55,-s*.5);x.lineTo(-s*1.55,s*.5);x.closePath();x.fill();
- x.shadowBlur=0;x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.ellipse(s*.1,-s*.14,s*.5,s*.14,0,0,7);x.fill();
- x.fillStyle='#000';x.beginPath();x.arc(s*.55,-s*.2,s*.1,0,7);x.arc(s*.55,s*.2,s*.1,0,7);x.fill();
+ x.fillStyle=color;x.strokeStyle='rgba(6,30,45,.85)';x.lineWidth=1.4;x.lineJoin='round';
+ const body=new Path2D();let eyeX=s*.55,eyeY=.2;
+ const tri=(a,b,cc,d,e,f)=>{x.beginPath();x.moveTo(a,b);x.lineTo(cc,d);x.lineTo(e,f);x.closePath();x.fill();x.stroke()};
+ if(ci===1){ /* Silber: schlanker Torpedo mit Gabelschwanz */
+  tri(-s*1.0,0,-s*1.75,-s*.55,-s*1.45,0);tri(-s*1.0,0,-s*1.75,s*.55,-s*1.45,0);
+  tri(-s*.1,-s*.32,s*.35,-s*.7,s*.5,-s*.3);
+  body.ellipse(0,0,s*1.3,s*.36,0,0,7);eyeX=s*.95;eyeY=.12;
+ }else if(ci===2){ /* Orange: kugelrund, Clownfisch-Streifen */
+  tri(-s*.7,0,-s*1.45,-s*.5,-s*1.45,s*.5);
+  body.ellipse(0,0,s*.9,s*.82,0,0,7);eyeX=s*.5;eyeY=.25;
+ }else if(ci===3){ /* Violett: Raute mit Rücken- und Bauchflosse */
+  tri(-s*.75,0,-s*1.5,-s*.55,-s*1.5,s*.55);
+  body.moveTo(s*1.05,0);body.lineTo(0,-s*.78);body.lineTo(-s*.85,0);body.lineTo(0,s*.78);body.closePath();eyeX=s*.5;eyeY=.1;
+ }else if(ci===4){ /* Pink: Kaiserfisch mit hohen Flossen */
+  tri(-s*.35,-s*.3,-s*.1,-s*1.35,s*.45,-s*.35);tri(-s*.35,s*.3,-s*.1,s*1.35,s*.45,s*.35);
+  tri(-s*.65,0,-s*1.6,-s*.6,-s*1.35,0);tri(-s*.65,0,-s*1.6,s*.6,-s*1.35,0);
+  body.ellipse(0,0,s*.8,s*.52,0,0,7);eyeX=s*.45;eyeY=.15;
+ }else{ /* Grün (und Groß-/Goldfische): klassischer Fisch */
+  tri(-s*.8,0,-s*1.55,-s*.5,-s*1.55,s*.5);
+  body.ellipse(0,0,s,s*.48,0,0,7);
+ }
+ x.fill(body);x.shadowBlur=0;x.stroke(body);
+ x.save();x.clip(body);
+ if(ci===1){x.fillStyle='#16324a';x.fillRect(-s*1.4,-s*.03,s*2.8,s*.1);x.fillStyle='rgba(255,255,255,.7)';x.fillRect(-s*1.4,-s*.2,s*2.8,s*.08)}
+ else if(ci===2){x.fillStyle='#fff';x.fillRect(-s*.45,-s,s*.22,s*2);x.fillRect(s*.12,-s,s*.22,s*2);x.strokeStyle='#222';x.lineWidth=.8;x.strokeRect(-s*.45,-s,s*.22,s*2);x.strokeRect(s*.12,-s,s*.22,s*2)}
+ else if(ci===3){x.fillStyle='#fff';for(const [dx,dy] of [[-.3,-.2],[.15,.25],[.1,-.3],[-.5,.2]]){x.beginPath();x.arc(s*dx,s*dy,s*.11,0,7);x.fill()}}
+ else if(ci===4){x.fillStyle='#fff';x.fillRect(-s*.25,-s,s*.16,s*2);x.fillStyle='rgba(120,0,60,.5)';x.fillRect(s*.15,-s,s*.12,s*2)}
+ else if(gold==='B'){x.fillStyle='rgba(0,0,40,.25)';for(let k=-2;k<=2;k++)x.fillRect(k*s*.32-s*.05,-s*.5,s*.11,s)}
+ else{x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.ellipse(s*.1,-s*.14,s*.5,s*.14,0,0,7);x.fill()}
+ x.restore();
+ x.fillStyle='#fff';x.beginPath();x.arc(eyeX,-s*eyeY,s*.17,0,7);x.arc(eyeX,s*eyeY,s*.17,0,7);x.fill();
+ x.fillStyle='#000';x.beginPath();x.arc(eyeX+s*.04,-s*eyeY,s*.09,0,7);x.arc(eyeX+s*.04,s*eyeY,s*.09,0,7);x.fill();
  FSPR[key]=c;return c;
 }
 const angDiff=(w,a)=>((w-a+Math.PI*3)%(Math.PI*2))-Math.PI;
@@ -971,7 +1003,7 @@ function draw(){
  for(const r of A.rocks)if(iv(r.x,r.y,60))drawRock(c,r,t);
  for(const e of A.fx){if(e.k==='foam'){c.fillStyle='rgba(255,255,255,'+(e.t/e.t0*.5)+')';c.beginPath();c.arc(e.x,e.y,3+(1-e.t/e.t0)*7,0,7);c.fill()}}
  c.globalAlpha=.9;
- for(const f of A.fish){if(!iv(f.x,f.y,40))continue;const spr=fishSprite(f.color,f.kind==='G'||f.kind==='B'?f.kind:''),k=f.size/12,ca=Math.cos(f.ang),sa=Math.sin(f.ang);c.setTransform(m*ca,m*sa,-m*sa,m*ca,m*(f.x-vx),m*(f.y-vy));c.drawImage(spr,-40*k,-18*k,64*k,36*k)}
+ for(const f of A.fish){if(!iv(f.x,f.y,40))continue;const spr=fishSprite(f.color,f.kind==='G'||f.kind==='B'?f.kind:'',f.ci),k=f.size/12,ca=Math.cos(f.ang),sa=Math.sin(f.ang);c.setTransform(m*ca,m*sa,-m*sa,m*ca,m*(f.x-vx),m*(f.y-vy));c.drawImage(spr,-40*k,-18*k,64*k,36*k)}
  c.globalAlpha=1;wt();
  for(const j of A.jel)if(iv(j.x,j.y,60))drawJelly(c,j,t);
  for(const e of A.fx){if(e.k==='ring'){const k=1-e.t/e.t0;c.strokeStyle=e.col;c.globalAlpha=1-k;c.lineWidth=3;c.beginPath();c.arc(e.x,e.y,e.R*(.3+.7*k),0,7);c.stroke();c.globalAlpha=1}}
@@ -1170,6 +1202,7 @@ function renderResult(){
  ${special}
  <div class="card"><h3>🏅 Bestenliste nach Saison ${G.round}</h3>
   <p class="small">Du: Platz <b>${me.rank}</b> von ${G.P.length} · Fang ${myRow.fish} (Ø der anderen: ${L.avgBot}) · Saison ${myRow.net>=0?'+':''}${myRow.net} 💰</p>
+  <p class="small">🧾 Deine Abrechnung: ${myRow.fish} Fische${myRow.gold?' + <b>'+myRow.gold+' Extrapunkte</b> (Farbwert, Groß-/Goldfische, Farbset)':''} × ${fmt(L.pr)} 💰${myRow.eco?' × 1,25 (Öko-Siegel)':''} ≈ ${myRow.income} 💰${myRow.fine?' · Strafe −'+myRow.fine:''} · Betriebskosten −${myRow.fix}${myRow.prize?' · Prämie +'+myRow.prize:''}</p>
   <div id="lbBox">${leaderboardHTML(L.sorted,false)}</div>
   <button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
  ${lv<2?`<div class="card" style="border:4px solid #f4a261"><h3>⚠️ Achtung: Der Fischbestand sinkt!</h3><p>Vor der Saison schwammen <b>${L.Sstart}</b> Fische in der Bucht. Ihr habt zusammen <b class="neg">${L.total}</b> gefangen – jetzt sind es nur noch <b>${L.Safter}</b>. Ein Teil wächst zwar nach (+${L.gr}), aber was gefangen wurde, fehlt im See. Beobachte ab jetzt den Bestand!</p></div>`:` <div class="card"><h3>🌊 Was passierte mit der Bucht?</h3>
@@ -1198,8 +1231,8 @@ function renderUpgrades(){
  const me=G.P[0];
  const commKeys=Object.keys(COMM).filter(k=>k!=='wache'&&!(k==='sonar'&&G.phase===2));
  $('#s-upg').innerHTML=`
- <h1 class="hero" style="font-size:34px">${G.phase===1?'Hafen':'Hafen & Dorfversammlung'}</h1>
- <div class="card"><div class="row" style="justify-content:space-between"><h3>⚓ Mein Boot</h3><span class="pill">💰 ${me.coins} Münzen</span></div>
+ <h1 class="hero" style="font-size:34px">${G.phase===1?'Werkstatt':'Werkstatt & Dorfversammlung'}</h1>
+ <div class="card"><div class="row" style="justify-content:space-between"><h3>⛵ Mein Boot</h3><span class="pill">💰 ${me.coins} Münzen</span></div>
  <p class="small">Private Upgrades machen dich effizienter${G.phase===1?'':' – auch mit begrenzter Quote.'}</p>
  <div class="grid g2">${Object.entries(PRIV).map(([k,u])=>{const l=me.upg[k],mx=l>=u.max,cost=u.cost[l];return `<div class="upg"><h4>${u.emoji} ${u.name} <span class="pips">${pips(l,u.max)}</span></h4><p>${u.desc}</p><button class="btn" data-p="${k}" ${mx||me.coins<cost?'disabled':''}>${mx?'MAX':'Kaufen · '+cost+' 💰'}</button></div>`}).join('')}</div></div>
  ${G.phase===1||MP.role||G.round<2?'':` <div class="card"><div class="row" style="justify-content:space-between"><h3>🏛 Gemeindekasse</h3><span class="pill">🏦 ${G.comm.fund} Münzen im Topf</span></div>
@@ -1278,9 +1311,10 @@ function renderFinal(sorted,myRank){
  <ul>
  <li><b>Ohne Regeln</b> belohnt der Markt kurzfristig den Rücksichtslosesten – am Ende ist der See leer und alle verlieren (Tragödie der Allmende, Hardin 1968).</li>
  <li><b>Gesamtfangmenge und Quote:</b> Erst wenn die Menge begrenzt und fair verteilt ist, muss keiner mehr „mitgieren“. ${more?'Zusammen wurde sogar mehr gefangen.':'Der See bleibt dafür dauerhaft lebendig.'}</li>
- <li><b>Quote ohne Kontrolle</b> reicht nicht: In Saison 1 der Spielrunde 2 haben sich viele nicht daran gehalten – wer sich daran hielt, war der Dumme. Erst Kontrolle und Strafen machen Schwarzfischen unattraktiv: Überfang wird beschlagnahmt, die Strafe übersteigt den Gewinn.</li>
+ <li><b>Quote ohne Kontrolle</b> reicht nicht: In Saison 1 der Spielrunde 2 haben sich oft viele nicht daran gehalten – wer sich daran hielt, war der Dumme. Erst Kontrolle und Strafen machen Schwarzfischen unattraktiv: Überfang wird beschlagnahmt, die Strafe übersteigt den Gewinn.</li>
  <li><b>Anreize</b> (Öko-Siegel, Prämie) belohnen Regeltreue. Ostrom: klare Grenzen, gemeinsam beschlossene Regeln, Kontrolle, abgestufte Sanktionen.</li>
  ${MP.role?'':'<li><b>Gemeindekasse:</b> Gemeinsame Projekte nützen allen – auch denen, die nichts einzahlen (Trittbrettfahrer). Freiwillig zahlen nur wenige ein; deshalb sind verbindliche Regeln oft nötig.</li>'}
+ <li><b>Qualität statt Masse:</b> Bei begrenzter Menge lohnt es sich, wertvolle Fische (seltene Farben, Großfische, ein komplettes Farbset) zu fangen – so entsteht aus derselben Naturnutzung mehr Wert.</li>
  <li><b>Produktionsfaktor Natur:</b> erneuerbar, aber nur, wenn der Bestand nicht schneller schrumpft, als er nachwächst.</li></ul></div>
  ${quizCard(QUIZ[QUIZ_SEQ[3][0]],'ft1','🎯 Abschlusstest 1/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][1]],'ft2','🎯 Abschlusstest 2/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][2]],'ft3','🎯 Abschlusstest 3/3',0)}
  <div class="card"><h3>💬 Diskussionsfragen</h3><ol>
@@ -1303,7 +1337,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;
 const rndName=()=>BOAT_NAMES[rint(0,BOAT_NAMES.length-1)];
 const BOAT={name:'',type:'kutter',hull:'#e63946',trim:'#ffffff',sail:'#ffffff',pattern:'none',topper:'🎣',parts:{bug:'none',dach:'none',heck:'none',seite:'none'},paint:document.createElement('canvas')};
 BOAT.paint.width=288;BOAT.paint.height=96;
-let yTab='hull';const brush={color:'#3a86ff',size:10,erase:false};
+const brush={color:'#3a86ff',size:10,erase:false};
 const YO=225,YS=3.1;
 function hullPath(c,T){
  c.beginPath();
@@ -1363,24 +1397,46 @@ function drawYard(){
  c.font='bold 24px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.lineWidth=5;c.strokeStyle='#0b3d5c';
  const nm=msName(BOAT.name||'Boot');c.strokeText(nm,180,328);c.fillStyle='#fff';c.fillText(nm,180,328);
 }
-const activeColor=()=>yTab==='brush'?brush.color:BOAT[yTab];
-function setColor(col){if(yTab==='brush'){brush.color=col;brush.erase=false}else BOAT[yTab]=col;renderYardCtl();drawYard();saveBoat()}
+let yStep=0;
+const Y_STEPS=[['🚢','Form'],['🎨','Rumpf'],['⛵','Segel'],['🐙','Maskottchen'],['🔧','Anbauteile'],['🖌️','Name & Pinsel']];
 function renderYardCtl(){
- const chips=(id,items,isSel,onPick)=>{const el=$(id);el.innerHTML=items.map((it,i)=>`<button class="chip ${isSel(it)?'sel':''}" data-i="${i}">${it[1]}</button>`).join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>onPick(items[+b.dataset.i]))};
+ const el=$('#yBody');if(!el)return;
+ const pal=(key,label)=>`<div class="ysec"><b>${label}</b><div class="pal" data-k="${key}">${BOAT_COLORS.map(col=>`<span class="sw ${col===String(BOAT[key]).toLowerCase()?'sel':''}" data-c="${col}" style="background:${col}"></span>`).join('')}</div><label class="small">eigene Farbe: <input type="color" data-k="${key}" value="${/^#[0-9a-f]{6}$/i.test(BOAT[key])?BOAT[key]:'#ffffff'}"></label></div>`;
+ const chipRow=(id,label)=>`<div class="ysec"><b>${label}</b><div class="chips" id="${id}"></div></div>`;
+ let h='';
+ if(yStep===0)h=`<p class="small ymsg">Schritt 1: Wähle die <b>Form</b> deines Boots.</p>`+chipRow('bTypes','Bootsform');
+ else if(yStep===1)h=`<p class="small ymsg">Schritt 2: Streich den <b>Rumpf</b> an und wähle ein Muster.</p>`+pal('hull','Rumpffarbe')+chipRow('bPats','Muster')+pal('trim','Muster- & Randfarbe');
+ else if(yStep===2)h=`<p class="small ymsg">Schritt 3: Gib deinem Boot ${BOAT.type==='trawler'||BOAT.type==='schlauch'?'einen <b>Aufbau</b>':'<b>Segel</b>'} in deiner Farbe.</p>`+pal('sail',BOAT.type==='trawler'||BOAT.type==='schlauch'?'Aufbau-Farbe':'Segelfarbe');
+ else if(yStep===3)h=`<p class="small ymsg">Schritt 4: Wer fährt mit? Such dir ein <b>Maskottchen</b> aus.</p>`+chipRow('bTops','Maskottchen');
+ else if(yStep===4)h=`<p class="small ymsg">Schritt 5: Noch ein paar <b>Anbauteile</b> (nur Optik).</p>`+Object.keys(PARTS).map(k=>`<div class="prow"><b>${PART_TITLES[k]}</b><div class="chips" id="bP_${k}"></div></div>`).join('')+`<button class="chip" id="bPRnd">🎲 Zufällig bestücken</button>`;
+ else h=`<p class="small ymsg">Schritt 6: Gib deinem Boot einen <b>Namen</b> – und male nach Lust und Laune direkt aufs Boot!</p>
+  <div class="ysec"><label><b>Bootsname:</b> <input type="text" id="bName" maxlength="16" placeholder="z. B. Seelöwe" value="${esc(BOAT.name)}"></label> <button class="btn ghost" id="bDice" style="padding:6px 12px;font-size:16px" title="Zufallsname">🎲</button></div>
+  <div class="ysec"><b>🖌️ Pinsel</b> – Dicke <input type="range" id="bSize" min="3" max="28" value="${brush.size}" style="width:140px;vertical-align:middle">
+   <div class="pal" data-k="brush">${BOAT_COLORS.map(col=>`<span class="sw ${col===brush.color&&!brush.erase?'sel':''}" data-c="${col}" style="background:${col}"></span>`).join('')}</div>
+   <label class="small">eigene Farbe: <input type="color" data-k="brush" value="${/^#[0-9a-f]{6}$/i.test(brush.color)?brush.color:'#3a86ff'}"></label>
+   <div class="chips"><button class="chip ${brush.erase?'sel':''}" id="bEra">🧽 Radierer</button><button class="chip" id="bFill">🪣 Rumpf füllen</button><button class="chip" id="bClear">🗑 Bemalung löschen</button></div></div>`;
+ el.innerHTML=h;
+ const chips=(id,items,isSel,onPick)=>{const c=$(id);if(!c)return;c.innerHTML=items.map((it,i)=>`<button class="chip ${isSel(it)?'sel':''}" data-i="${i}">${it[1]}</button>`).join('');c.querySelectorAll('button').forEach(b=>b.onclick=()=>onPick(items[+b.dataset.i]))};
  const upd=()=>{renderYardCtl();drawYard();saveBoat()};
  chips('#bTypes',Object.entries(BOAT_TYPES).map(([k,v])=>[k,v.emoji+' '+v.name]),it=>it[0]===BOAT.type,it=>{BOAT.type=it[0];upd()});
- chips('#bTabs',[['hull','🚢 Rumpf'],['trim','🎀 Muster & Rand'],['sail','⛵ Segel/Aufbau'],['brush','🖌️ Pinsel']],it=>it[0]===yTab,it=>{yTab=it[0];renderYardCtl()});
  chips('#bPats',BOAT_PATTERNS,it=>it[0]===BOAT.pattern,it=>{BOAT.pattern=it[0];upd()});
  chips('#bTops',BOAT_TOPPERS.map(t=>[t,t]),it=>it[0]===BOAT.topper,it=>{BOAT.topper=it[0];upd()});
  for(const k of Object.keys(PARTS))chips('#bP_'+k,PARTS[k],it=>it[0]===BOAT.parts[k],it=>{BOAT.parts[k]=it[0];upd()});
- $('#bPRnd').onclick=()=>{for(const k of Object.keys(PARTS))BOAT.parts[k]=pick(PARTS[k].slice(1))[0];upd()};
- const cur=String(activeColor()).toLowerCase();
- $('#bPal').innerHTML=BOAT_COLORS.map(col=>`<span class="sw ${col===cur&&!brush.erase?'sel':''}" data-c="${col}" style="background:${col}"></span>`).join('');
- $('#bPal').querySelectorAll('.sw').forEach(sw=>sw.onclick=()=>setColor(sw.dataset.c));
- $('#bCol').value=/^#[0-9a-f]{6}$/.test(cur)?cur:'#ffffff';
- $('#bBrush').style.display=yTab==='brush'?'':'none';
- $('#bSize').value=brush.size;
- $('#bEra').classList.toggle('sel',brush.erase);
+ if($('#bPRnd'))$('#bPRnd').onclick=()=>{for(const k of Object.keys(PARTS))BOAT.parts[k]=pick(PARTS[k].slice(1))[0];upd()};
+ el.querySelectorAll('.pal').forEach(pl=>pl.querySelectorAll('.sw').forEach(sw=>sw.onclick=()=>{const k=pl.dataset.k;if(k==='brush'){brush.color=sw.dataset.c;brush.erase=false}else BOAT[k]=sw.dataset.c;upd()}));
+ el.querySelectorAll('input[type=color]').forEach(ci=>ci.oninput=()=>{const k=ci.dataset.k;if(k==='brush'){brush.color=ci.value;brush.erase=false}else BOAT[k]=ci.value.toLowerCase();drawYard();saveBoat()});
+ if($('#bName')){
+  $('#bName').oninput=e=>{BOAT.name=e.target.value;drawYard();saveBoat()};
+  $('#bDice').onclick=()=>{BOAT.name=rndName();$('#bName').value=BOAT.name;drawYard();saveBoat()};
+  $('#bSize').oninput=e=>{brush.size=+e.target.value};
+  $('#bEra').onclick=()=>{brush.erase=!brush.erase;renderYardCtl()};
+  $('#bFill').onclick=()=>{const q=BOAT.paint.getContext('2d');q.globalCompositeOperation='source-over';q.fillStyle=brush.color;q.fillRect(0,0,288,96);drawYard();saveBoat()};
+  $('#bClear').onclick=()=>{BOAT.paint.getContext('2d').clearRect(0,0,288,96);drawYard();saveBoat()};
+ }
+ $('#yNav').innerHTML=Y_STEPS.map((t,n)=>`<button class="ystep ${n===yStep?'sel':''} ${n<yStep?'done':''}" data-n="${n}"><span>${t[0]}</span><small>${t[1]}</small></button>`).join('');
+ $('#yNav').querySelectorAll('button').forEach(b=>b.onclick=()=>{yStep=+b.dataset.n;renderYardCtl()});
+ $('#yPrev').style.visibility=yStep>0?'visible':'hidden';
+ $('#yNext').style.display=yStep<Y_STEPS.length-1?'':'none';
 }
 function yPaint(a,b){
  const p=BOAT.paint.getContext('2d');p.lineCap='round';p.lineJoin='round';p.lineWidth=brush.size;p.strokeStyle=brush.color;
@@ -1389,32 +1445,16 @@ function yPaint(a,b){
 }
 function buildYard(){
  $('#boatYard').innerHTML=`<h2>🎨 Werft – dein Boot</h2>
- <p class="small" style="margin-top:0">Nur Optik – aber alle sehen, wer da gerade die Bucht leerfischt. 😉 Wähle den Bootstyp, Farben, Muster – oder male mit dem Pinsel direkt auf den Rumpf!</p>
- <div class="yard"><div><canvas id="yc" width="360" height="340"></canvas></div>
- <div class="yctl">
-  <div><label><b>Bootsname:</b> <input type="text" id="bName" maxlength="16" placeholder="z. B. Seelöwe"></label> <button class="btn ghost" id="bDice" style="padding:6px 12px;font-size:16px" title="Zufallsname">🎲</button></div>
-  <div><b>Bootstyp</b><div class="chips" id="bTypes"></div></div>
-  <div><b>Anmalen:</b><div class="chips" id="bTabs"></div>
-   <div id="bPal" style="margin-top:6px"></div>
-   <label class="small">eigene Farbe: <input type="color" id="bCol"></label></div>
-  <div id="bBrush"><b>Pinsel</b> – Dicke <input type="range" id="bSize" min="3" max="28" style="width:140px;vertical-align:middle">
-   <div class="chips"><button class="chip" id="bEra">🧽 Radierer</button><button class="chip" id="bFill">🪣 Rumpf füllen</button><button class="chip" id="bClear">🗑 Bemalung löschen</button></div></div>
-  <div><b>Muster</b><div class="chips" id="bPats"></div></div>
-  <div><b>Maskottchen</b><div class="chips" id="bTops"></div></div>
-  <div><b>🔧 Anbauteile</b> <span class="small">(nur Optik)</span>${Object.keys(PARTS).map(k=>`<div class="prow"><b>${PART_TITLES[k]}</b><div class="chips" id="bP_${k}"></div></div>`).join('')}
-   <button class="chip" id="bPRnd">🎲 Zufällig bestücken</button></div>
+ <p class="small" style="margin-top:0">Nur Optik – aber alle sehen, wer da gerade die Bucht leerfischt. 😉 Gestalte dein Boot Schritt für Schritt – du siehst jede Änderung sofort.</p>
+ <div class="yard"><div class="ypre"><canvas id="yc" width="360" height="340"></canvas></div>
+ <div class="yctl"><div id="yNav" class="ynav"></div><div id="yBody"></div>
+  <div class="row" style="margin-top:10px;justify-content:space-between"><button class="btn ghost" id="yPrev" style="padding:8px 16px;font-size:16px">◀ Zurück</button><button class="btn" id="yNext" style="padding:8px 18px;font-size:16px">Weiter ▶</button></div>
  </div></div>`;
- $('#bName').value=BOAT.name;
- $('#bName').oninput=e=>{BOAT.name=e.target.value;drawYard();saveBoat()};
- $('#bDice').onclick=()=>{BOAT.name=rndName();$('#bName').value=BOAT.name;drawYard();saveBoat()};
- $('#bCol').oninput=e=>setColor(e.target.value.toLowerCase());
- $('#bSize').oninput=e=>{brush.size=+e.target.value};
- $('#bEra').onclick=()=>{brush.erase=!brush.erase;renderYardCtl()};
- $('#bFill').onclick=()=>{const p=BOAT.paint.getContext('2d');p.globalCompositeOperation='source-over';p.fillStyle=brush.color;p.fillRect(0,0,288,96);drawYard();saveBoat()};
- $('#bClear').onclick=()=>{BOAT.paint.getContext('2d').clearRect(0,0,288,96);drawYard();saveBoat()};
+ $('#yPrev').onclick=()=>{if(yStep>0){yStep--;renderYardCtl()}};
+ $('#yNext').onclick=()=>{if(yStep<Y_STEPS.length-1){yStep++;renderYardCtl()}};
  const cvY=$('#yc');let yDraw=false,yLast=null;
  const yPos=e=>{const r=cvY.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*360-(180-36*YS),y:(e.clientY-r.top)/r.height*340-YO}};
- cvY.addEventListener('pointerdown',e=>{e.preventDefault();if(yTab!=='brush'){yTab='brush';renderYardCtl()}yDraw=true;yLast=yPos(e);try{cvY.setPointerCapture(e.pointerId)}catch(x){}yPaint(yLast,yLast);drawYard()});
+ cvY.addEventListener('pointerdown',e=>{e.preventDefault();if(yStep!==5){yStep=5;renderYardCtl()}yDraw=true;yLast=yPos(e);try{cvY.setPointerCapture(e.pointerId)}catch(x){}yPaint(yLast,yLast);drawYard()});
  cvY.addEventListener('pointermove',e=>{if(!yDraw)return;const p=yPos(e);yPaint(yLast,p);yLast=p;drawYard()});
  const yEnd=()=>{if(yDraw){yDraw=false;saveBoat()}};
  cvY.addEventListener('pointerup',yEnd);cvY.addEventListener('pointercancel',yEnd);
