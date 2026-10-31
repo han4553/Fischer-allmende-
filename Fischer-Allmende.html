@@ -136,7 +136,6 @@ body.playing{overflow:hidden}
 </style>
 </head>
 <body>
-<div id="rotHint" style="display:none;position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:60;background:rgba(11,61,92,.92);color:#fff;padding:10px 16px;border-radius:14px;font-weight:700;text-align:center;pointer-events:none">📱↻ Dreh dein Handy ins Querformat – so hast du mehr Platz</div>
 <div class="top"><div class="logo">🌊 Fischer Allmende</div><span><button class="icon-btn" id="teachBtn" title="Lehrer-Verwaltung">⚙️</button> <button class="icon-btn" id="muteBtn" title="Ton">🔊</button></span></div>
 <main>
 
@@ -174,7 +173,6 @@ body.playing{overflow:hidden}
       <span class="pill" id="h-quota">📜 Quote</span>
       <span class="pill" id="h-stock">🐟 Bestand 0</span>
       <span class="pill" id="h-price">💰 0</span>
-      <button class="btn ghost" id="bRot" style="padding:6px 12px;font-size:16px;min-width:0" title="Bildschirm drehen (Quer-/Hochformat)">🔄</button>
       <button class="btn ghost" id="bHome">⚓ Hafen</button>
       <button class="btn ghost" id="bTeach" title="Lehrer-Verwaltung">⚙️</button>
     </div>
@@ -211,6 +209,7 @@ const CFG={
   ROUND_TIME:60,    // Sekunden pro Saison – für alle gleich
   WORLD:2.4,        // Kartengröße = Bildschirmgröße x WORLD (Karte scrollt mit)
   K:450,            // Kapazität der Bucht (max. Fische)
+  SEASON_EVENTS:false, // Wetter-Ereignisse (Wind, Sturm, Nebel …) – aktuell AUS; true = wieder an
   API_URL:'',       // Adresse des Mehrspieler-Servers (leer = gleiche Seite /api/room)
   ROUNDS:5,         // Saisons je Spielrunde
   S0:390,           // Start-Bestand
@@ -453,7 +452,7 @@ function renderDecision(){
   <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Mit ⚓ Hafen kannst du früher Feierabend machen.</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
-  if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>{lockOrient('landscape');setTimeout(go,200)}).catch(go)}catch(e){go()}}else go()};
+  if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
  if(hasSonar()){const upd=()=>{const c=+$('#plR').value;$('#plV').textContent=c;const sa=Math.max(0,S-c),g=growth(sa)+CFG.FARM*G.comm.farm,sn=Math.min(CFG.K,sa+g);$('#plO').innerHTML=`Nach dem Fang: <b>${sa}</b> → Nachwuchs <b>+${g}</b> → nächste Saison: <b style="color:${sn>=S?'#2a9d8f':'#e63946'}">${sn}</b>`};$('#plR').oninput=upd;upd()}
  show('s-decide');
  {const th=$('#thumb');if(th)drawBoatCustom(th.getContext('2d'),65,55,BOAT,1.2,null)}
@@ -509,11 +508,8 @@ function updateCam(dt,snap){
  const k=snap?1:Math.min(1,dt*5);CAM.x+=dx*k;CAM.y+=dy*k;camClamp();
 }
 function onResize(){if(!A||!A.running)return;fitWorld();updateCam(0,true)}
-let orientMode=null;
-function lockOrient(m){try{if(screen.orientation&&screen.orientation.lock){screen.orientation.lock(m).catch(()=>{})}}catch(e){}}
-function updRot(){const h=document.getElementById('rotHint');if(!h)return;h.style.display=(A&&A.running&&innerHeight>innerWidth&&matchMedia('(pointer:coarse)').matches&&orientMode!=='port')?'block':'none'}
-setInterval(updRot,700);
-addEventListener('resize',updRot);
+/* Ausrichtung: nicht gesperrt – das Spiel passt sich automatisch an Hoch-/Querformat an */
+try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(e){}
 addEventListener('resize',onResize);addEventListener('orientationchange',()=>setTimeout(onResize,250));
 /* ---------- Saison-Ereignisse (jede Saison fühlt sich etwas anders an) ---------- */
 const EVENTS=[
@@ -527,6 +523,7 @@ const EVENTS=[
 const hashStr=t=>{let h=7;for(const ch of String(t))h=(h*31+ch.charCodeAt(0))|0;return Math.abs(h)};
 const mulb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 function evFor(ph,rd){
+ if(!CFG.SEASON_EVENTS)return EVENTS[0];
  const seed=MP.code?hashStr(MP.code):(G&&G.evSeed)||1,idx=(ph-1)*CFG.ROUNDS+(rd-1);
  let cur=0;
  for(let i=1;i<=idx;i++){const r=mulb(seed+i*977),opts=EVENTS.map((e,k)=>k).filter(k=>k!==cur);cur=opts[Math.floor(r()*opts.length)]}
@@ -901,8 +898,9 @@ function draw(){
  let msg='';
  if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick ziehen = Kurs & Tempo · 🎣 Netz-Knopf: aus-/einholen';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
- if(msg){c.strokeText(msg,W/2,AR.y0+26);c.fillText(msg,W/2,AR.y0+26)}
- if(A.t<6&&A.ev.id!=='calm'){const em=A.ev.emoji+' '+A.ev.name+': '+A.ev.txt;c.globalAlpha=clamp(6-A.t,0,1);c.strokeText(em,W/2,AR.y0+52);c.fillText(em,W/2,AR.y0+52);c.globalAlpha=1}
+const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
+ if(msg)fitT(msg,AR.y0+26);
+ if(A.t<6&&A.ev.id!=='calm'){const em=A.ev.emoji+' '+A.ev.name+': '+A.ev.txt;c.globalAlpha=clamp(6-A.t,0,1);fitT(em,AR.y0+52);c.globalAlpha=1}
  drawMini(c);
  const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
@@ -935,7 +933,6 @@ const hold=(id,key)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preve
 {const nb=$('#bNet');nb.addEventListener('pointerdown',e=>{e.preventDefault();try{nb.setPointerCapture(e.pointerId)}catch(x){}netPress()});
  ['pointerup','pointercancel'].forEach(ev=>nb.addEventListener(ev,()=>netRelease()));nb.addEventListener('contextmenu',e=>e.preventDefault())}
 cv.addEventListener('pointerdown',e=>{e.preventDefault();netPress()});
-$('#bRot').onclick=()=>{const land=innerWidth>innerHeight;orientMode=land?'port':'land';const el=document.documentElement,go=()=>{lockOrient(land?'portrait':'landscape');if(!(screen.orientation&&screen.orientation.lock))toast('Drehe dein Handy – ggf. Auto-Drehung einschalten')};if(!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(go).catch(go)}catch(e){go()}}else go();setTimeout(updRot,300)};
 $('#bHome').onclick=()=>{if(A&&A.running)endRound()};
 
 /* ---------- Saisonende ---------- */
