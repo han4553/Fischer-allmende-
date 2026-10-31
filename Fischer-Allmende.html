@@ -169,7 +169,6 @@ body.playing{overflow:hidden}
       <span class="pill" id="h-time">⏱ 0</span>
       <span class="pill" id="h-rank">🏅 Platz 1/30</span>
       <span class="pill" id="h-cargo">🧺 0/10</span>
-      <span class="pill" id="h-landed">📦 0</span>
       <span class="pill" id="h-quota">📜 Quote</span>
       <span class="pill" id="h-stock">🐟 Bestand 0</span>
       <span class="pill" id="h-price">💰 0</span>
@@ -972,7 +971,7 @@ function draw(){
  drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
- if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · 📦 Boot voll? Fang im Hafen entladen';
+ if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · Boot voll? Fang im Hafen entladen';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
 const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
  if(msg)fitT(msg,AR.y0+26);
@@ -982,7 +981,6 @@ const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.s
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
  const have=A.cargo+A.net.n;
  $('#h-cargo').textContent='🧺 '+A.hold+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;$('#h-cargo').style.background=A.hold>=A.cap?'#ffd6d9':'';
- $('#h-landed').textContent='📦 '+A.landed+' entladen';
  $('#h-stock').textContent='🐟 Bestand '+A.fish.length+'/'+CFG.K;$('#h-stock').style.display=revLvl()<2?'none':'';
  $('#h-rank').textContent='🏅 Platz '+A.rank+'/'+G.P.length;
  if(G.phase===2){const q=$('#h-quota');q.textContent=(have>A.quota?'⚠️ ':'📜 ')+'Quote '+have+'/'+A.quota;q.style.background=have>A.quota?'#ffd6d9':have===A.quota?'#d8f5e5':''}
