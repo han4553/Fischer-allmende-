@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Fischer Allmende</title>
+<meta name="description" content="Arcade-Fischerspiel für den Unterricht (VWL).">
+<style>
+/* Fischer Allmende – Look & Farben (Variablen in :root) */
+:root{--navy:#0b3d5c;--sea:#12829b;--foam:#e6f7fa;--sun:#ffb703;--orange:#fb8500;--red:#e63946;--green:#2a9d8f;--ink:#12303f;--card:#ffffff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#8ed1e6 0,#2aa7c0 35%,#0b3d5c 100%) fixed}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 85% 8%,#fff8 0,#fff0 18%)}
+.top{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;max-width:980px;margin:0 auto}
+.logo{font-size:22px;font-weight:900;color:#fff;text-shadow:0 3px 0 #0b3d5c}
+.icon-btn{border:0;background:#fff8;border-radius:12px;font-size:20px;padding:6px 10px;cursor:pointer}
+main{max-width:980px;margin:0 auto;padding:0 12px 40px}
+.screen{display:none;animation:pop .35s ease}
+.screen.active{display:block}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:22px;padding:18px;margin:12px 0;box-shadow:0 6px 0 #0b3d5c33,0 12px 24px #0b3d5c22}
+.card h2,.card h3{margin:0 0 8px}
+h1.hero{font-size:clamp(34px,8vw,64px);margin:6px 0;color:#fff;text-shadow:0 5px 0 #0b3d5c;line-height:1}
+.sub{color:#fff;font-size:18px;text-shadow:0 2px 0 #0b3d5c99;margin:0 0 6px}
+.btn{border:0;border-radius:16px;padding:14px 22px;font:inherit;font-weight:900;font-size:18px;color:#fff;background:var(--orange);box-shadow:0 5px 0 #b35c00;cursor:pointer;transition:transform .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #b35c00}
+.btn.green{background:var(--green);box-shadow:0 5px 0 #1b6e64}
+.btn.blue{background:#3a86ff;box-shadow:0 5px 0 #1d4fa8}
+.btn.ghost{background:#e9eef2;color:var(--ink);box-shadow:0 5px 0 #b8c4cc}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.pulse{animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.role{border:4px solid #dbe6ec;border-radius:18px;padding:12px;cursor:pointer;background:#f8fcfd;transition:.15s;position:relative}
+.role:hover{transform:translateY(-3px)}
+.role.sel{border-color:var(--orange);background:#fff4e0;transform:translateY(-3px) rotate(-1deg)}
+.role .em{font-size:40px}.role b{font-size:18px}.role small{display:block;color:#456}
+.perk{display:inline-block;margin-top:6px;background:#e6f7fa;border-radius:10px;padding:4px 8px;font-size:13px;font-weight:700}
+.quote{font-style:italic;color:#567;font-size:13px;margin-top:6px}
+input[type=text],select{font:inherit;padding:10px 12px;border-radius:12px;border:3px solid #cfe0e8;background:#fff}
+.pill{display:inline-block;background:var(--navy);color:#fff;border-radius:99px;padding:4px 12px;font-weight:800;font-size:14px}
+.bar{height:22px;border-radius:12px;background:#dbe6ec;overflow:hidden;position:relative}
+.bar>i{display:block;height:100%;border-radius:12px;transition:width .4s}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;text-shadow:0 1px 2px #0008}
+.opt{border:4px solid #dbe6ec;border-radius:18px;padding:12px;cursor:pointer;background:#f8fcfd;text-align:center}
+.opt.sel{border-color:var(--orange);background:#fff4e0}
+.opt .big{font-size:34px;font-weight:900}
+.opt small{color:#567;display:block}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:7px 6px;text-align:left;border-bottom:2px solid #e6eef2}
+th{font-size:12px;text-transform:uppercase;color:#567}
+tr.me td{background:#fff4e0;font-weight:800}
+.neg{color:var(--red);font-weight:800}.pos{color:var(--green);font-weight:800}
+.meme{position:relative;background:linear-gradient(135deg,#ffd166,#ef476f);border-radius:18px;padding:16px 10px;text-align:center;color:#fff;font-family:Impact,"Arial Black",sans-serif;text-transform:uppercase;letter-spacing:1px;text-shadow:2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;transform:rotate(-1deg)}
+.meme .e{font-size:64px;margin:4px 0;text-shadow:none}
+.meme div{font-size:19px;line-height:1.15}
+.fact{background:#fff9db;border-left:8px solid var(--sun);padding:10px 14px;border-radius:12px}
+.news{background:#12303f;color:#ffe066;border-radius:14px;padding:10px 14px;font-weight:800}
+.hud{display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;margin:8px 0}
+.hud .pill{background:#fff;color:var(--ink);box-shadow:0 3px 0 #0b3d5c33}
+.canvaswrap{position:relative;border-radius:22px;overflow:hidden;box-shadow:0 8px 0 #0b3d5c55;background:#000;touch-action:none}
+canvas{display:block;width:100%;height:auto}
+.ctrl{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.ctrl .btn{flex:1;max-width:200px;user-select:none;-webkit-user-select:none;touch-action:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#12303f;color:#fff;padding:10px 18px;border-radius:14px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
+.toast.show{opacity:1}
+.upg{border:3px solid #dbe6ec;border-radius:16px;padding:10px;background:#f8fcfd}
+.upg h4{margin:0 0 4px}.upg p{margin:2px 0 8px;font-size:13px;color:#456}
+.pips{letter-spacing:3px;color:var(--orange);font-size:18px}
+.quiz button{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;border-radius:12px;border:3px solid #dbe6ec;background:#f8fcfd;font:inherit;cursor:pointer}
+.quiz button.ok{background:#d8f5e5;border-color:var(--green)}
+.quiz button.bad{background:#ffe0e3;border-color:var(--red)}
+details summary{cursor:pointer;font-weight:900}
+.badge{display:inline-block;background:var(--sun);color:#412;border-radius:12px;padding:6px 12px;font-weight:900;margin:4px 4px 0 0}
+input[type=range]{width:100%}
+.small{font-size:13px;color:#456}
+
+/* Boot-Werft */
+.yard{display:grid;grid-template-columns:minmax(260px,360px) 1fr;gap:16px;align-items:start}
+@media(max-width:720px){.yard{grid-template-columns:1fr}}
+#yc{border-radius:18px;touch-action:none;cursor:crosshair;box-shadow:0 5px 0 #0b3d5c33;background:#bfeaf5}
+.yctl>div{margin-bottom:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chip{border:3px solid #dbe6ec;background:#f8fcfd;border-radius:12px;padding:6px 10px;font:inherit;font-weight:800;cursor:pointer;color:var(--ink)}
+.chip.sel{border-color:var(--orange);background:#fff4e0}
+.sw{display:inline-block;width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 3px #cfe0e8;cursor:pointer;margin:3px}
+.sw.sel{box-shadow:0 0 0 4px var(--orange)}
+input[type=color]{width:46px;height:34px;border:0;padding:0;background:none;vertical-align:middle;cursor:pointer}
+
+/* Steuerung Draufsicht */
+.ctrls{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px}
+.pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,58px);gap:8px;grid-template-areas:". u ." "l d r"}
+#bU{grid-area:u}#bL{grid-area:l}#bD{grid-area:d}#bR{grid-area:r}
+.pad .btn,.netbtn{padding:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.pad .btn{font-size:24px}
+.netbtn{flex:1;max-width:260px;height:124px;font-size:24px;line-height:1.15}
+.netbtn small{font-size:12px;font-weight:700;opacity:.9}
+.netbtn.out{background:var(--green);box-shadow:0 5px 0 #1b6e64}
+#h-quota{display:none}
+#lbBox{overflow-x:auto}
+#tp{position:fixed;inset:0;z-index:300;background:#000a;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:14px}
+#tp.show{display:flex}
+#tp .box{background:#fff;border-radius:20px;padding:16px;max-width:620px;width:100%;box-shadow:0 8px 0 #0b3d5c55}
+#tp h3{margin:12px 0 6px;font-size:16px}#tp .row .btn{padding:8px 12px;font-size:14px;box-shadow:0 3px 0 #b35c00}
+#tp .btn.ghost{box-shadow:0 3px 0 #b8c4cc}#tp .btn.blue{box-shadow:0 3px 0 #1d4fa8}
+#tp label{font-size:13px;display:flex;flex-direction:column;gap:2px;font-weight:700}
+#tp input[type=number]{width:96px;padding:6px 8px}
+#tp .st{background:#12303f;color:#ffe066;border-radius:12px;padding:8px 12px;font-weight:800;font-size:14px}
+
+/* Vollbild-Spielfeld */
+body.playing{overflow:hidden}
+#s-play{position:fixed;inset:0;z-index:100;background:#0a4f73;margin:0;padding:0;max-width:none}
+#s-play.active{display:block}
+#cv{position:absolute;left:0;top:0;width:100%;height:100%;touch-action:none}
+#playHud{position:absolute;left:0;right:0;top:0;padding:max(8px,env(safe-area-inset-top)) 10px 0;pointer-events:none}
+#playHud .hud{margin:0;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px}
+#playHud .pill{padding:3px 10px;font-size:13px;pointer-events:auto}
+#playHud #bTeach{padding:5px 10px;font-size:14px;pointer-events:auto;box-shadow:0 3px 0 #b8c4cc}
+#playHud #bHome{padding:5px 12px;font-size:14px;margin-left:auto;pointer-events:auto;box-shadow:0 3px 0 #b8c4cc}
+#playHud .bar{background:#0006}
+#playCtrl{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:10px 14px max(12px,env(safe-area-inset-bottom));pointer-events:none}
+#playCtrl .pad,#playCtrl .netbtn,#joy{pointer-events:auto;opacity:.92}
+#joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),rgba(10,60,100,.45));border:3px solid rgba(255,255,255,.75);touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#joyKnob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe08a,#f4a300);border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4);pointer-events:none}
+.joyL{position:absolute;transform:translate(-50%,0);color:#fff;font-size:12px;opacity:.8;pointer-events:none}
+.joyL[style*='left:6px'],.joyL[style*='right:6px']{transform:translate(0,-50%)}
+@media(max-height:520px){#joy{width:120px;height:120px}#joyKnob{width:52px;height:52px;margin:-26px 0 0 -26px}}
+#playCtrl .netbtn{flex:0 0 auto;width:190px;max-width:none;height:112px;font-size:22px}
+@media(max-height:520px){.pad{grid-template-columns:repeat(3,54px);grid-template-rows:repeat(2,46px);gap:6px}#playCtrl .netbtn{height:94px;width:170px;font-size:19px}}
+.qrov{position:fixed;inset:0;background:#fff;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;text-align:center}
+.qrov.show{display:flex}.qrov canvas{width:min(80vmin,640px);height:min(80vmin,640px);image-rendering:pixelated}
+.prow{display:flex;gap:8px;align-items:flex-start;margin:6px 0}.prow>b{min-width:92px;font-size:14px;padding-top:6px}
+</style>
+</head>
+<body>
+<div class="top"><div class="logo">🌊 Fischer Allmende</div><span><button class="icon-btn" id="teachBtn" title="Lehrer-Verwaltung">⚙️</button> <button class="icon-btn" id="muteBtn" title="Ton">🔊</button></span></div>
+<main>
+
+<!-- START -->
+<section id="s-start" class="screen">
+  <h1 class="hero">Fischer Allmende 🐟</h1>
+  <p class="sub">Fang Fische. Mach Gewinn. Werde Fischer des Jahres.</p>
+  <div class="card">
+    <h2>🎯 Dein Auftrag</h2>
+    <p>Du bist <b>eines von 30 Fischerbooten</b> in <b>derselben Bucht</b>. Alle fischen <b>gleichzeitig</b> auf einer großen Karte, die mitscrollt, wenn du an den Rand fährst. Du steuerst dein Boot mit dem Joystick (am PC: Pfeiltasten/WASD) und wirfst ein <b>Netz</b> aus, das hinter dem Boot herläuft – per Knopf holst du es ein und aus.</p>
+    <p><b>Dein Ziel:</b> Fang möglichst viele Fische und mach den größten Gewinn. Mehr musst du erstmal nicht wissen – viel Erfolg!</p>
+  </div>
+  <div class="card">
+    <h2>🎣 Alle starten gleich</h2>
+    <div id="roleGrid"></div>
+    <div class="row" style="margin-top:14px">
+      <label>Name: <input type="text" id="nameIn" maxlength="14" placeholder="Dein Name"></label>
+    </div>
+  </div>
+  <div class="card" id="boatYard"></div>
+  <button class="btn" id="startBtn">⛵ Leinen los!</button>
+</section>
+
+<!-- DECIDE -->
+<section id="s-decide" class="screen"></section>
+
+<!-- PLAY -->
+<section id="s-play" class="screen">
+  <canvas id="cv"></canvas>
+  <div id="playHud">
+    <div class="hud">
+      <span class="pill" id="h-time">⏱ 0</span>
+      <span class="pill" id="h-rank">🏅 Platz 1/30</span>
+      <span class="pill" id="h-cargo">🧺 0/10</span>
+      <span class="pill" id="h-quota">📜 Quote</span>
+      <span class="pill" id="h-stock">🐟 Bestand 0</span>
+      <span class="pill" id="h-price">💰 0</span>
+      <button class="btn ghost" id="bHome">⚓ Hafen</button>
+      <button class="btn ghost" id="bTeach" title="Lehrer-Verwaltung">⚙️</button>
+    </div>
+    <div class="bar" style="height:10px;margin-top:4px"><i id="h-bar" style="width:100%;background:#2a9d8f"></i></div>
+  </div>
+  <div id="playCtrl">
+    <div id="joy"><div id="joyKnob"></div><span class="joyL" style="top:4px;left:50%">▲</span><span class="joyL" style="bottom:4px;left:50%">▼</span><span class="joyL" style="left:6px;top:50%">◀</span><span class="joyL" style="right:6px;top:50%">▶</span></div>
+    <button class="btn netbtn" id="bNet">🎣 NETZ AUSWERFEN<br><small>Netz ist an Bord</small></button>
+  </div>
+</section>
+
+<section id="s-result" class="screen"></section>
+<section id="s-upg" class="screen"></section>
+<section id="s-final" class="screen"></section>
+<section id="s-host" class="screen"></section>
+<section id="s-wait" class="screen"></section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>/* QR-Code-Generator (MIT, Kazuhiko Arase) */
+var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],f={},c=function(t,r){o=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(i=4*e+17),l(0,0),l(i-7,0),l(0,i-7),s(),h(),d(t,r),e>=7&&v(t),null==a&&(a=p(e,n,u)),w(a,r)},l=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||i<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||i<=r+n||(o[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},h=function(){for(var t=8;t<i-8;t+=1)null==o[t][6]&&(o[t][6]=t%2==0);for(var r=8;r<i-8;r+=1)null==o[6][r]&&(o[6][r]=r%2==0)},s=function(){for(var t=B.getPatternPosition(e),r=0;r<t.length;r+=1)for(var n=0;n<t.length;n+=1){var i=t[r],a=t[n];if(null==o[i][a])for(var u=-2;u<=2;u+=1)for(var f=-2;f<=2;f+=1)o[i+u][a+f]=-2==u||2==u||-2==f||2==f||0==u&&0==f}},v=function(t){for(var r=B.getBCHTypeNumber(e),n=0;n<18;n+=1){var a=!t&&1==(r>>n&1);o[Math.floor(n/3)][n%3+i-8-3]=a}for(n=0;n<18;n+=1){a=!t&&1==(r>>n&1);o[n%3+i-8-3][Math.floor(n/3)]=a}},d=function(t,r){for(var e=n<<3|r,a=B.getBCHTypeInfo(e),u=0;u<15;u+=1){var f=!t&&1==(a>>u&1);u<6?o[u][8]=f:u<8?o[u+1][8]=f:o[i-15+u][8]=f}for(u=0;u<15;u+=1){f=!t&&1==(a>>u&1);u<8?o[8][i-u-1]=f:u<9?o[8][15-u-1+1]=f:o[8][15-u-1]=f}o[i-8][8]=!t},w=function(t,r){for(var e=-1,n=i-1,a=7,u=0,f=B.getMaskFunction(r),c=i-1;c>0;c-=2)for(6==c&&(c-=1);;){for(var g=0;g<2;g+=1)if(null==o[n][c-g]){var l=!1;u<t.length&&(l=1==(t[u]>>>a&1)),f(n,c-g)&&(l=!l),o[n][c-g]=l,-1==(a-=1)&&(u+=1,a=7)}if((n+=e)<0||i<=n){n-=e,e=-e;break}}},p=function(t,r,e){for(var n=A.getRSBlocks(t,r),o=b(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=k(i[u],l.getLength()-1).mod(l);for(a[u]=new Array(l.getLength()-1),g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=s>=0?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};f.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=M(t);break;case"Alphanumeric":e=x(t);break;case"Byte":e=m(t);break;case"Kanji":e=L(t);break;default:throw"mode:"+r}u.push(e),a=null},f.isDark=function(t,r){if(t<0||i<=t||r<0||i<=r)throw t+","+r;return o[t][r]},f.getModuleCount=function(){return i},f.make=function(){if(e<1){for(var t=1;t<40;t++){for(var r=A.getRSBlocks(t,n),o=b(),i=0;i<u.length;i++){var a=u[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var g=0;for(i=0;i<r.length;i++)g+=r[i].dataCount;if(o.getLengthInBits()<=8*g)break}e=t}c(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){c(!0,e);var n=B.getLostPoint(f);(0==e||t>n)&&(t=n,r=e)}return r}())},f.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<f.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<f.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=f.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},f.createSvgTag=function(t,r,e,n){var o={};"object"==typeof arguments[0]&&(t=(o=arguments[0]).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,c,g=f.getModuleCount()*t+2*r,l="";for(c="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",l+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',l+=o.scalable?"":' width="'+g+'px" height="'+g+'px"',l+=' viewBox="0 0 '+g+" "+g+'" ',l+=' preserveAspectRatio="xMinYMin meet"',l+=n.text||e.text?' role="img" aria-labelledby="'+y([n.id,e.id].join(" ").trim())+'"':"",l+=">",l+=n.text?'<title id="'+y(n.id)+'">'+y(n.text)+"</title>":"",l+=e.text?'<description id="'+y(e.id)+'">'+y(e.text)+"</description>":"",l+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',l+='<path d="',a=0;a<f.getModuleCount();a+=1)for(u=a*t+r,i=0;i<f.getModuleCount();i+=1)f.isDark(a,i)&&(l+="M"+(i*t+r)+","+u+c);return l+='" stroke="transparent" fill="black"/>',l+="</svg>"},f.createDataURL=function(t,r){t=t||2,r=void 0===r?4*t:r;var e=f.getModuleCount()*t+2*r,n=r,o=e-r;return I(e,e,function(r,e){if(n<=r&&r<o&&n<=e&&e<o){var i=Math.floor((r-n)/t),a=Math.floor((e-n)/t);return f.isDark(a,i)?0:1}return 1})},f.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=f.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=f.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=y(e),o+='"'),o+="/>"};var y=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return f.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*f.getModuleCount()+2*t,u=t,c=a-t,g={"██":"█","█ ":"▀"," █":"▄","  ":" "},l={"██":"▀","█ ":"▀"," █":" ","  ":" "},h="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<c&&u<=r&&r<c&&f.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<c&&u<=r+1&&r+1<c&&f.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",h+=t<1&&r+1>=c?l[i]:g[i];h+="\n"}return a%2&&t>0?h.substring(0,h.length-a-1)+Array(a+1).join("▀"):h.substring(0,h.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=f.getModuleCount()*t+2*r,u=r,c=a-r,g=Array(t+1).join("██"),l=Array(t+1).join("  "),h="",s="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),s="",n=0;n<a;n+=1)i=1,u<=n&&n<c&&u<=e&&e<c&&f.isDark(o,Math.floor((n-u)/t))&&(i=0),s+=i?g:l;for(o=0;o<t;o+=1)h+=s+"\n"}return h.substring(0,h.length-1)},f.renderTo2dContext=function(t,r){r=r||2;for(var e=f.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=f.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},f};t.stringToBytes=(t.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,t.createStringToBytes=function(t,r){var e=function(){for(var e=S(t),n=function(){var t=e.read();if(-1==t)throw"eof";return t},o=0,i={};;){var a=e.read();if(-1==a)break;var u=n(),f=n()<<8|n();i[String.fromCharCode(a<<8|u)]=f,o+=1}if(o!=r)throw o+" != "+r;return i}(),n="?".charCodeAt(0);return function(t){for(var r=[],o=0;o<t.length;o+=1){var i=t.charCodeAt(o);if(i<128)r.push(i);else{var a=e[t.charAt(o)];"number"==typeof a?(255&a)==a?r.push(a):(r.push(a>>>8),r.push(255&a)):r.push(n)}}return r}};var r,e,n,o,i,a=1,u=2,f=4,c=8,g={L:1,M:0,Q:3,H:2},l=0,h=1,s=2,v=3,d=4,w=5,p=6,y=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],e=1335,n=7973,i=function(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r},(o={}).getBCHTypeInfo=function(t){for(var r=t<<10;i(r)-i(e)>=0;)r^=e<<i(r)-i(e);return 21522^(t<<10|r)},o.getBCHTypeNumber=function(t){for(var r=t<<12;i(r)-i(n)>=0;)r^=n<<i(r)-i(n);return t<<12|r},o.getPatternPosition=function(t){return r[t-1]},o.getMaskFunction=function(t){switch(t){case l:return function(t,r){return(t+r)%2==0};case h:return function(t,r){return t%2==0};case s:return function(t,r){return r%3==0};case v:return function(t,r){return(t+r)%3==0};case d:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case w:return function(t,r){return t*r%2+t*r%3==0};case p:return function(t,r){return(t*r%2+t*r%3)%2==0};case y:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},o.getErrorCorrectPolynomial=function(t){for(var r=k([1],0),e=0;e<t;e+=1)r=r.multiply(k([1,C.gexp(e)],0));return r},o.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case f:case c:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case f:return 16;case c:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case f:return 16;case c:return 12;default:throw"mode:"+t}}},o.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);i>5&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},o),C=function(){for(var t=new Array(256),r=new Array(256),e=0;e<8;e+=1)t[e]=1<<e;for(e=8;e<256;e+=1)t[e]=t[e-4]^t[e-5]^t[e-6]^t[e-8];for(e=0;e<255;e+=1)r[t[e]]=e;var n={glog:function(t){if(t<1)throw"glog("+t+")";return r[t]},gexp:function(r){for(;r<0;)r+=255;for(;r>=256;)r-=255;return t[r]}};return n}();function k(t,r){if(void 0===t.length)throw t.length+"/"+r;var e=function(){for(var e=0;e<t.length&&0==t[e];)e+=1;for(var n=new Array(t.length-e+r),o=0;o<t.length-e;o+=1)n[o]=t[o+e];return n}(),n={getAt:function(t){return e[t]},getLength:function(){return e.length},multiply:function(t){for(var r=new Array(n.getLength()+t.getLength()-1),e=0;e<n.getLength();e+=1)for(var o=0;o<t.getLength();o+=1)r[e+o]^=C.gexp(C.glog(n.getAt(e))+C.glog(t.getAt(o)));return k(r,0)},mod:function(t){if(n.getLength()-t.getLength()<0)return n;for(var r=C.glog(n.getAt(0))-C.glog(t.getAt(0)),e=new Array(n.getLength()),o=0;o<n.getLength();o+=1)e[o]=n.getAt(o);for(o=0;o<t.getLength();o+=1)e[o]^=C.gexp(C.glog(t.getAt(o))+r);return k(e,0).mod(t)}};return n}var A=function(){var t=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],r=function(t,r){var e={};return e.totalCount=t,e.dataCount=r,e},e={};return e.getRSBlocks=function(e,n){var o=function(r,e){switch(e){case g.L:return t[4*(r-1)+0];case g.M:return t[4*(r-1)+1];case g.Q:return t[4*(r-1)+2];case g.H:return t[4*(r-1)+3];default:return}}(e,n);if(void 0===o)throw"bad rs block @ typeNumber:"+e+"/errorCorrectionLevel:"+n;for(var i=o.length/3,a=[],u=0;u<i;u+=1)for(var f=o[3*u+0],c=o[3*u+1],l=o[3*u+2],h=0;h<f;h+=1)a.push(r(c,l));return a},e}(),b=function(){var t=[],r=0,e={getBuffer:function(){return t},getAt:function(r){var e=Math.floor(r/8);return 1==(t[e]>>>7-r%8&1)},put:function(t,r){for(var n=0;n<r;n+=1)e.putBit(1==(t>>>r-n-1&1))},getLengthInBits:function(){return r},putBit:function(e){var n=Math.floor(r/8);t.length<=n&&t.push(0),e&&(t[n]|=128>>>r%8),r+=1}};return e},M=function(t){var r=a,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+2<r.length;)t.put(o(r.substring(n,n+3)),10),n+=3;n<r.length&&(r.length-n==1?t.put(o(r.substring(n,n+1)),4):r.length-n==2&&t.put(o(r.substring(n,n+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return n},x=function(t){var r=u,e=t,n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=e,n=0;n+1<r.length;)t.put(45*o(r.charAt(n))+o(r.charAt(n+1)),11),n+=2;n<r.length&&t.put(o(r.charAt(n)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return n},m=function(r){var e=f,n=t.stringToBytes(r),o={getMode:function(){return e},getLength:function(t){return n.length},write:function(t){for(var r=0;r<n.length;r+=1)t.put(n[r],8)}};return o},L=function(r){var e=c,n=t.stringToBytesFuncs.SJIS;if(!n)throw"sjis not supported.";!function(){var t=n("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=n(r),i={getMode:function(){return e},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return i},D=function(){var t=[],r={writeByte:function(r){t.push(255&r)},writeShort:function(t){r.writeByte(t),r.writeByte(t>>>8)},writeBytes:function(t,e,n){e=e||0,n=n||t.length;for(var o=0;o<n;o+=1)r.writeByte(t[o+e])},writeString:function(t){for(var e=0;e<t.length;e+=1)r.writeByte(t.charCodeAt(e))},toByteArray:function(){return t},toString:function(){var r="";r+="[";for(var e=0;e<t.length;e+=1)e>0&&(r+=","),r+=t[e];return r+="]"}};return r},S=function(t){var r=t,e=0,n=0,o=0,i={read:function(){for(;o<8;){if(e>=r.length){if(0==o)return-1;throw"unexpected end of file./"+o}var t=r.charAt(e);if(e+=1,"="==t)return o=0,-1;t.match(/^\s$/)||(n=n<<6|a(t.charCodeAt(0)),o+=6)}var i=n>>>o-8&255;return o-=8,i}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return i},I=function(t,r,e){for(var n=function(t,r){var e=t,n=r,o=new Array(t*r),i={setPixel:function(t,r,n){o[r*e+t]=n},write:function(t){t.writeString("GIF87a"),t.writeShort(e),t.writeShort(n),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(e),t.writeShort(n),t.writeByte(0);var r=a(2);t.writeByte(2);for(var o=0;r.length-o>255;)t.writeByte(255),t.writeBytes(r,o,255),o+=255;t.writeByte(r.length-o),t.writeBytes(r,o,r.length-o),t.writeByte(0),t.writeString(";")}},a=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,i=u(),a=0;a<r;a+=1)i.add(String.fromCharCode(a));i.add(String.fromCharCode(r)),i.add(String.fromCharCode(e));var f,c,g,l=D(),h=(f=l,c=0,g=0,{write:function(t,r){if(t>>>r!=0)throw"length over";for(;c+r>=8;)f.writeByte(255&(t<<c|g)),r-=8-c,t>>>=8-c,g=0,c=0;g|=t<<c,c+=r},flush:function(){c>0&&f.writeByte(g)}});h.write(r,n);var s=0,v=String.fromCharCode(o[s]);for(s+=1;s<o.length;){var d=String.fromCharCode(o[s]);s+=1,i.contains(v+d)?v+=d:(h.write(i.indexOf(v),n),i.size()<4095&&(i.size()==1<<n&&(n+=1),i.add(v+d)),v=d)}return h.write(i.indexOf(v),n),h.write(e,n),h.flush(),l.toByteArray()},u=function(){var t={},r=0,e={add:function(n){if(e.contains(n))throw"dup key:"+n;t[n]=r,r+=1},size:function(){return r},indexOf:function(r){return t[r]},contains:function(r){return void 0!==t[r]}};return e};return i}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=D();n.write(a);for(var u=function(){var t=0,r=0,e=0,n="",o={},i=function(t){n+=String.fromCharCode(a(63&t))},a=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return o.writeByte=function(n){for(t=t<<8|255&n,r+=8,e+=1;r>=6;)i(t>>>r-6),r-=6},o.flush=function(){if(r>0&&(i(t<<6-r),t=0,r=0),e%3!=0)for(var o=3-e%3,a=0;a<o;a+=1)n+="="},o.toString=function(){return n},o}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return t}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||n>=57344?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+</script>
+<script>
+/* =====================================================================
+   Fischer Allmende – config.js   (HIER wird alles Wichtige angepasst!)
+   Reihenfolge: 1) Spielbalance  2) (frei)  3) Rollen  4) Upgrades
+                5) Gemeindekasse  6) Side Facts + Memes  7) Quizfragen
+   Datei speichern/committen -> Vercel deployt automatisch neu.
+   ===================================================================== */
+
+/* 1) SPIELBALANCE */
+const CFG={
+  BOATS:30,         // Anzahl Boote (1 Spieler:in + KI)
+  ROUND_TIME:60,    // Sekunden pro Saison – für alle gleich
+  WORLD:2.4,        // Kartengröße = Bildschirmgröße x WORLD (Karte scrollt mit)
+  K:450,            // Kapazität der Bucht (max. Fische)
+  API_URL:'https://fischgruende-api-hannes3.vercel.app/api/room',       // Adresse des Mehrspieler-Servers (leer = gleiche Seite /api/room)
+  ROUNDS:5,         // Saisons je Spielrunde
+  S0:390,           // Start-Bestand
+  R:1.2,            // Wachstumsrate (höher = Bucht erholt sich schneller)
+  COLLAPSE:15,      // Bestand darunter = See leer -> Spielrunde endet
+  BASECARGO:16,     // Laderaum pro Saison (Fische)
+  BOTCAP:14,        // max. Fang eines KI-Boots pro Saison
+  NET_BAG:6, NET_R:26, NET_CAP:3, NET_CD:1.5, // Netzradius, Fische pro Zug (NET_BAG = Fassungsvermögen des Netzes; voll = einholen!), Sekunden zwischen zwei Zügen
+  PRICE_BASE:2,     // Mindestpreis pro Fisch (Münzen)
+  PRICE_SLOPE:3,    // Knappheitsaufschlag (Preis = BASE + SLOPE*(1-Bestand/K))
+  GOLD_CHANCE:0.06, // Anteil Goldfische
+  GOLD_MULT:3,      // (Großfisch = Wert 3, Goldfisch = Wert 5)
+  BIG_CHANCE:0.14,  // Anteil Großfische (Wert 2)
+  QUIZ_REWARD:6,    // Münzen für richtige Quizantwort
+  FARM:4, STIPEND:4, TIM_DIV:0.0125, // Fischzucht, Elifs Stipendium, Tims Dividende (x Bestand)
+  KING_PRIZE:[25,15,8],  // Spielrunde 1: Fangprämie für Platz 1/2/3 der Fänger
+  PATROLS:4,        // Spielrunde 2: Zahl der Patrouillenboote
+  PATROL_P:0.35,    // Entdeckungswahrscheinlichkeit pro illegalem Fisch
+  FINE_MULT:4,      // Strafe = Überfang x FINE_MULT x Marktpreis
+  ECO_MULT:1.25,    // Öko-Siegel: Preisaufschlag bei Quote eingehalten
+  ECO_BONUS:8,      // Öko-Prämie in Münzen
+  TEACHER_PIN:'',   // Lehrer-PIN fürs ⚙️-Menü (leer = ohne PIN)
+  W:800,H:480       // Sichtfenster (wird automatisch angepasst)
+};
+const BOT_MIX={kalle:10,tessa:6,elif:6,tim:7}; // Strategien der 29 KI-Boote
+const BOT_NAMES=['Anna','Ben','Clara','David','Emil','Fiona','Gustav','Hanna','Ibrahim','Jana','Kevin','Lena','Marco','Nina','Omar','Paula','Quentin','Rosa','Stefan','Tina','Uwe','Vera','Waldemar','Xenia','Yusuf','Zoe','Leon','Mia','Noah','Emma','Finn','Lea','Jonas','Sofia','Elias','Lara','Tom','Amelie','Max','Selin'];
+
+
+/* 3)-7) ROLLEN, UPGRADES, GEMEINDEKASSE, FACTS, QUIZ */
+const ROLES={
+ fischer:{id:'fischer',name:'Fischer',title:'Fischer',emoji:'🎣',color:'#f4a261',desc:'',perk:'',start:10,fix:3,speed:1,hook:0,quote:'',contrib:.25},
+ kalle:{id:'kalle',name:'Kalle',title:'Fischer',emoji:'🎣',color:'#f4a261',desc:'',perk:'',start:10,fix:3,speed:1,hook:0,quote:'',contrib:.25},
+ tessa:{id:'tessa',name:'Tessa',title:'Fischer',emoji:'🎣',color:'#e63946',desc:'',perk:'',start:10,fix:3,speed:1,hook:0,quote:'',contrib:0},
+ elif:{id:'elif',name:'Elif',title:'Fischer',emoji:'🎣',color:'#2a9d8f',desc:'',perk:'',start:10,fix:3,speed:1,hook:0,quote:'',contrib:.4},
+ tim:{id:'tim',name:'Tim',title:'Fischer',emoji:'🎣',color:'#3a86ff',desc:'',perk:'',start:10,fix:3,speed:1,hook:0,quote:'',contrib:.2}
+};
+const PRIV={
+ hook:{name:'Größeres Netz',emoji:'🪝',max:3,cost:[20,35,50],desc:'Größeres Netz: mehr Fläche, mehr Fische pro Zug'},
+ winch:{name:'Starke Winde',emoji:'⚙️',max:3,cost:[15,30,45],desc:'Das Netz fängt schneller nach (kürzere Pause zwischen Zügen)'},
+ cargo:{name:'Laderaum',emoji:'🧰',max:3,cost:[15,25,40],desc:'+4 Fische Platz pro Saison'},
+ motor:{name:'Außenborder',emoji:'🚤',max:3,cost:[15,25,35],desc:'Dein Boot wird schneller'},
+ cool:{name:'Kühlkette',emoji:'🧊',max:2,cost:[25,45],desc:'+10 % Verkaufspreis je Stufe'}
+};
+const COMM={
+ laich:{name:'Laichschutzgebiet',emoji:'🥚',max:3,cost:[60,90,120],desc:'Fische vermehren sich schneller (Wachstumsrate +0,1)'},
+ farm:{name:'Fischzucht',emoji:'🐟',max:3,cost:[80,120,160],desc:'+4 Jungfische pro Saison, garantiert'},
+ wache:{name:'Küstenwache',emoji:'🚔',max:1,cost:[60],desc:'(in Spielrunde 2 automatisch durch die Behörde)'},
+ sonar:{name:'Sonar-Boje',emoji:'📡',max:1,cost:[60],desc:'Alle sehen die Wachstumsprognose'}
+};
+const FACTS=[
+ {t:'Laut FAO gelten über ein Drittel der weltweit bewirtschafteten Fischbestände als überfischt.',m:['😎🐟','Ich: nur 5 Fische fangen','Tessa: hold my net']},
+ {t:'1992 verhängte Kanada ein Fangverbot für Kabeljau vor Neufundland – der Bestand war zusammengebrochen. Tausende Jobs verschwanden.',m:['📉','Bestand: 100','Bestand: ???']},
+ {t:'Garrett Hardin beschrieb 1968 in „The Tragedy of the Commons“ eine Weide, die von zu vielen Hirten genutzt wird: Für jeden lohnt sich ein Tier mehr – für alle zusammen wird es ruinös.',m:['🐄🐄🐄','Jeder Hirte: nur eine Kuh mehr','Die Weide: bin ich ein Witz für dich?']},
+ {t:'Elinor Ostrom erhielt 2009 den Wirtschaftsnobelpreis. Sie zeigte, dass Gemeinschaften ihre Allmende oft selbst gut verwalten – mit klaren Regeln, Absprachen und Kontrolle. Sie untersuchte z. B. Almen in der Schweiz und Bewässerungssysteme in Spanien.',m:['🧑‍🔬','Ostrom: es geht auch anders','Regeln · Absprache · Kontrolle']},
+ {t:'Island setzt seit den 1980er-Jahren auf handelbare Fangquoten. Die Idee: Wer eine Quote besitzt, hat ein Interesse an gesunden Beständen.',m:['🇮🇸','Fangquote: 5 Fische','Tessa: Das ist Planwirtschaft!!1']},
+ {t:'In der EU legt der Rat jedes Jahr für viele Bestände eine Gesamtfangmenge (TAC) fest und teilt sie als Quoten auf die Länder auf. Fischereiaufsicht und Strafen sollen Schwarzfang verhindern.',m:['🇪🇺','Fangquote: 5 Fische','Tessa: …und wenn niemand schaut?']},
+ {t:'Studien zeigen: Bestände, die mit wissenschaftlich begründeten Quoten bewirtschaftet werden, erholen sich meist – etwa der Hering in der Nordsee nach den Krisen der 1970er.',m:['📈','Quote halten','See wächst wieder']},
+ {t:'Rund die Hälfte des Fisches, den Menschen essen, stammt inzwischen aus Aquakultur (Fischzucht).',m:['🐟🏭','Fischzucht','…ist auch nicht immer super, aber besser als leere Meere']},
+ {t:'Von Fischerei und Aquakultur leben weltweit rund 600 Millionen Menschen ganz oder teilweise.',m:['🌍','Fisch ist Job, Essen und Kultur','Aber nur, wenn es noch welche gibt']},
+ {t:'Natur ist ein Produktionsfaktor – erneuerbare Ressourcen wie Fisch oder Wald können nachwachsen. Aber nur, wenn genug Restbestand übrig bleibt.',m:['🌳🐟','Natur: Produktionsfaktor','Wirtschaft: *nutzt sie auf wie unendlich*']}
+];
+const QUIZ=[
+ {q:'Fische im offenen Meer sind ein typisches …',o:['Allmendegut','Privatgut','Clubgut','Öffentliches Gut'],a:0,e:'Allmendegüter: niemand kann ausgeschlossen werden (nicht ausschließbar), aber jeder Fisch ist nur einmal da (Rivalität).'},
+ {q:'Was ist typisch für Allmendegüter?',o:['Ausschließbar, keine Rivalität','Nicht ausschließbar, aber Rivalität','Ausschließbar und Rivalität','Weder noch'],a:1,e:'Nicht-Ausschließbarkeit + Rivalität im Konsum = Übernutzungsgefahr.'},
+ {q:'Wer erhielt 2009 den Wirtschaftsnobelpreis für Forschung zu Gemeingütern?',o:['Milton Friedman','Elinor Ostrom','Adam Smith','Paul Krugman'],a:1,e:'Elinor Ostrom – als erste Frau mit dem Wirtschaftsnobelpreis.'},
+ {q:'Wer beschrieb 1968 die „Tragödie der Allmende“?',o:['Garrett Hardin','Karl Marx','John Maynard Keynes','Greta Thunberg'],a:0,e:'Garrett Hardin, Fachzeitschrift „Science“, 1968.'},
+ {q:'Was ist ein Trittbrettfahrer (Free Rider)?',o:['Wer zu spät kommt','Wer Nutzen zieht, ohne einen Beitrag zu leisten','Wer Fahrrad fährt','Wer das Gemeingut schützt'],a:1,e:'Trittbrettfahrer nutzen etwas gemeinsam, ohne selbst etwas dazu beizutragen – zum Beispiel ein Laichschutzgebiet, das alle bezahlen, aber auch wer nichts einzahlt nutzt.'},
+ {q:'Was bedeutet „maximaler nachhaltiger Ertrag“ (MSY)?',o:['So viel fangen wie möglich','Größte Fangmenge, die dauerhaft möglich ist, ohne den Bestand zu verkleinern','Fangquote 0','Der höchste Preis'],a:1,e:'Im Spiel liegt er bei mittlerem Bestand (etwa die Hälfte der Kapazität) – dort wächst die Bucht am schnellsten.'},
+ {q:'Wenn die Kosten der Überfischung nicht der Verursacher trägt, spricht man von …',o:['Gewinn','Externen Kosten (Externalität)','Fixkosten','Skalenerträgen'],a:1,e:'Die Kosten tragen alle – der Fang gehört aber nur dem einzelnen Fischer.'},
+ {q:'Was passierte 1992 vor Neufundland?',o:['Rekordfang','Fangverbot für Kabeljau nach Bestandszusammenbruch','Neue Fischzucht','Ölpest'],a:1,e:'Ein warnendes Beispiel für Kollaps durch Überfischung.'},
+ {q:'Warum steigt der Preis bei knapper werdenden Fischen?',o:['Angebot sinkt, Nachfrage bleibt','Fische werden schöner','Steuern sinken','Nachfrage sinkt'],a:0,e:'Preismechanismus: Knappheit macht jeden Fisch wertvoller – und Fischen lukrativer. Ein Teufelskreis.'},
+ {q:'Was ist eine Fangquote (TAC)?',o:['Mindestfang pro Boot','Erlaubte Höchstmenge, die gefangen werden darf','Preis pro Fisch','Ein Fischfest'],a:1,e:'Die Gesamtfangmenge wird so festgelegt, dass sich der Bestand erholen kann – und auf die Boote aufgeteilt.'},
+ {q:'Warum braucht eine Quote Kontrollen und Strafen?',o:['Damit sich alle daran halten – sonst lohnt sich Schummeln','Damit Fische billiger werden','Nur zur Dekoration','Weil Fische sonst weglaufen'],a:0,e:'Ohne Kontrolle lohnt es sich für den Einzelnen, über die Quote zu fischen (Trittbrettfahrer). Strafen müssen höher sein als der Schwarzfang-Gewinn.'},
+ {q:'Wofür steht ein Öko-Siegel wie MSC?',o:['Höchster Preis egal wie','Nachhaltig bewirtschaftete Fischerei','Nur für Süßwasser','Für Zuchtlachs'],a:1,e:'Siegel schaffen Anreize: Wer nachhaltig fischt, kann oft höhere Preise erzielen.'},
+ {q:'Natur als Produktionsfaktor ist …',o:['unbegrenzt','begrenzt, erneuerbare Teile brauchen Regenerationszeit','nur Boden','kostenlos und unendlich'],a:1,e:'Erneuerbar heißt nicht unendlich: Nutzung darf die Regeneration nicht überschreiten.'}
+];
+
+/* 8) BOOT-WERFT (Bemalen & Aussuchen) */
+const BOAT_TYPES={
+ kutter:{name:'Kutter',emoji:'⛵'},
+ segler:{name:'Segler',emoji:'🏁'},
+ trawler:{name:'Trawler',emoji:'🚢'},
+ schlauch:{name:'Schlauchboot',emoji:'🛟'}
+};
+const BOAT_COLORS=['#e63946','#fb8500','#ffb703','#ffd166','#2a9d8f','#06d6a0','#3a86ff','#0b3d5c','#8338ec','#ff006e','#ffffff','#264653','#8d5524','#adb5bd'];
+const BOAT_PATTERNS=[['none','Uni'],['stripe','Streifen'],['dots','Punkte'],['check','Karo'],['wave','Wellen']];
+const BOAT_TOPPERS=['🎣','🐟','🦈','🏴‍☠️','⭐','🐙','👑','🦆','🔥','🌈'];
+const PARTS={
+ bug:[['none','–'],['delfin','🐬 Delfin'],['drache','🐉 Drache'],['nixe','🧜‍♀️ Nixe'],['hai','🦈 Hai']],
+ dach:[['none','–'],['radar','📡 Radar'],['antenne','📻 Antenne'],['flagge','🏴‍☠️ Piratenflagge'],['licht','🔦 Scheinwerfer']],
+ heck:[['none','–'],['aussen','⚙️ Außenborder'],['doppel','⚙️⚙️ Doppelmotor'],['rad','🎡 Schaufelrad'],['turbo','🔥 Turbo']],
+ seite:[['none','–'],['ringe','🛟 Rettungsringe'],['fender','⚪ Fender'],['kanonen','💣 Kanonen'],['lampions','🏮 Lampions']]
+};
+const PART_TITLES={bug:'Galionsfigur (Bug)',dach:'Aufbau (Dach)',heck:'Antrieb (Heck)',seite:'Seitenteile'};
+const BUG_EMO={delfin:'🐬',drache:'🐉',nixe:'🧜‍♀️',hai:'🦈'};
+const BOAT_NAMES=['Seelöwe','Fischers Fritz','Nemo','Blaue Welle','Käpt’n Haddock','MS Flunder','Möwe','Salzige Susi','Goldmakrele','Schollenschreck','Wellenreiter','Zander Express'];
+/* Boote der KI-Fischer */
+const BOT_BOATS={
+ kalle:{type:'kutter',hull:'#f4a261',trim:'#ffffff',sail:'#fff3d6',pattern:'stripe',topper:'🎣'},
+ tessa:{type:'trawler',hull:'#e63946',trim:'#12303f',sail:'#e9ecef',pattern:'none',topper:'🚢'},
+ elif:{type:'segler',hull:'#2a9d8f',trim:'#ffffff',sail:'#e6f7fa',pattern:'wave',topper:'🔬'},
+ tim:{type:'schlauch',hull:'#3a86ff',trim:'#ffd166',sail:'#ffffff',pattern:'dots',topper:'🏖️'}
+};
+
+/* ===== ab hier Spiellogik – normalerweise nichts ändern ===== */
+/* Fischer Allmende – game.js (Spiellogik). Inhalte & Balance: config.js, Look: style.css */
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.random()*(b-a), rint=(a,b)=>Math.floor(rnd(a,b+1)), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rint(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ---------- Audio ---------- */
+let ac=null,mute=false;
+function beep(f,d=.08,type='sine',v=.05){if(mute)return;try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(ac.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.stop(ac.currentTime+d)}catch(e){}}
+$('#muteBtn').onclick=()=>{mute=!mute;$('#muteBtn').textContent=mute?'🔇':'🔊'};
+let toastT;function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),2200)}
+
+/* ---------- Daten ---------- */
+
+/* ---------- Spielzustand ---------- */
+let G=null,selRole='fischer';
+const rEff=()=>CFG.R+0.1*G.comm.laich;
+const growth=S=>Math.round(rEff()*S*(1-S/CFG.K));
+const commCost=(k,l)=>Math.round(COMM[k].cost[l]*1);
+const hasSonar=()=>G.comm.sonar>0||G.phase===2;
+const priceBase=S=>CFG.PRICE_BASE+CFG.PRICE_SLOPE*(1-S/CFG.K);
+const price=S=>priceBase(S)*(1+.1*G.P[0].upg.cool);
+const capOf=()=>CFG.BASECARGO+4*G.P[0].upg.cargo;
+const tacNow=()=>G.S>=CFG.K/2?Math.round(G.S-CFG.K/2):Math.round(growth(G.S)*.4);
+const quotaNow=()=>Math.max(1,Math.floor(tacNow()/G.P.length));
+const fmt=n=>(Math.round(n*10)/10).toString().replace('.',',');
+const pick=a=>a[rint(0,a.length-1)];
+const byCoins=()=>[...G.P].sort((a,b)=>b.coins-a.coins||a.id-b.id);
+function show(id){document.body.classList.toggle('playing',id==='s-play');document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('#'+id).classList.add('active');window.scrollTo(0,0)}
+
+/* ---------- Start ---------- */
+function renderRoles(){
+ $('#roleGrid').innerHTML='<p style="margin:4px 0">Alle ${CFG.BOATS} Fischer starten mit derselben Ausrüstung, derselben Kasse und denselben Chancen. Was daraus wird, entscheidest du.</p>';
+}
+$('#startBtn').onclick=()=>{if(!BOAT.name.trim())BOAT.name=rndName();saveBoat();newGame(selRole,($('#nameIn').value||'').trim(),CFG.ROUNDS)};
+function randBoat(){
+ const hull=pick(BOAT_COLORS);let trim=pick(BOAT_COLORS);if(trim===hull)trim='#ffffff';
+ return {type:pick(Object.keys(BOAT_TYPES)),hull,trim,sail:pick(['#ffffff','#fff3d6','#e6f7fa','#ffe0e3','#e0f5e9']),pattern:pick(BOAT_PATTERNS)[0],topper:pick(BOAT_TOPPERS),parts:{bug:pick(PARTS.bug)[0],dach:pick(PARTS.dach)[0],heck:pick(PARTS.heck)[0],seite:pick(PARTS.seite)[0]}};
+}
+function rankPlayers(init){
+ const arr=byCoins();arr.forEach((p,i)=>{p.prevRank=init?i+1:p.rank;p.rank=i+1});return arr;
+}
+function newGame(roleId,name,rounds){
+ const mix=[];Object.entries(BOT_MIX).forEach(([id,n])=>{for(let i=0;i<n;i++)mix.push(id)});
+ while(mix.length<CFG.BOATS-1)mix.push('kalle');mix.length=CFG.BOATS-1;
+ const names=shuffle(BOT_NAMES);
+ const mk=(id,isP,nm,i)=>({id:i,role:ROLES[id],isP,name:nm,coins:0,contrib:0,fishTotal:0,lastFish:0,lastNet:0,tag:'',fines:0,viol:0,rank:0,prevRank:0,skill:isP?1:rnd(.75,1.3),upg:{hook:0,winch:0,cargo:0,motor:0,cool:0},boat:isP?null:randBoat()});
+ const P=[mk(roleId,true,name||ROLES[roleId].name,0)];
+ shuffle(mix).forEach((id,i)=>P.push(mk(id,false,names[i%names.length]+(i>=names.length?' II':''),i+1)));
+ G={rounds,phase:1,round:1,S:CFG.S0,hist:[],lastPlayer:0,collapse:false,last:null,res:{},totalCatch:0,totalFines:0,comm:{fund:0,laich:0,farm:0,wache:0,sonar:0},quiz:shuffle(QUIZ.map((_,i)=>i)),P};
+ startPhase(1);
+}
+function startPhase(ph){
+ G.phase=ph;G.round=1;G.S=CFG.S0;G.hist=[];G.collapse=false;G.last=null;G.lastPlayer=0;G.totalCatch=0;G.totalFines=0;
+ G.comm={fund:0,laich:0,farm:0,wache:0,sonar:0};
+ G.P.forEach(p=>{p.coins=p.role.start;p.contrib=0;p.fishTotal=0;p.lastFish=0;p.lastNet=0;p.tag='';p.fines=0;p.viol=0;p.upg={hook:p.role.hook||0,winch:0,cargo:0,motor:0,cool:0}});
+ rankPlayers(true);if(MP.role==='host')mpHostRender();else renderDecision();
+}
+
+/* ---------- Entscheidung ---------- */
+
+/* ---------- Lernmodule: Infos & Abfragen ---------- */
+const FACT_SEQ={1:[8,0,1,7,9],2:[4,5,6,3,2]};
+const QUIZ_SEQ={1:[7,8,0,1,4],2:[9,10,11,2,3],3:[5,6,12]};
+function quizCard(Q,id,title,reward){
+ return `<div class="card quiz" id="${id}"><h3>${title||'🧠 Bonusfrage'}${reward?` (+${reward} Münzen)`:''}</h3><p><b>${Q.q}</b></p><div class="qo">${Q.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><p class="small qe"></p></div>`;
+}
+function attachQuiz(id,Q,reward,onDone){
+ const box=document.getElementById(id);if(!box)return;let done=false;
+ box.querySelectorAll('.qo button').forEach(b=>b.onclick=()=>{
+  if(done)return;done=true;const i=+b.dataset.i;
+  box.querySelectorAll('.qo button').forEach((x,j)=>{if(j===Q.a)x.classList.add('ok');else if(j===i)x.classList.add('bad')});
+  if(i===Q.a){if(reward&&G){G.P[0].coins+=reward}toast('✅ Richtig!'+(reward?' +'+reward+' Münzen':''));beep(800,.15)}else{toast('❌ Nicht ganz');beep(150,.2,'sawtooth')}
+  box.querySelector('.qe').textContent=Q.e;
+  if(onDone)onDone(i===Q.a);
+ });
+}
+function phaseCard(){
+ if(G.phase===1)return `<div class="card" style="border:4px solid #fb8500"><h3>🌊 Spielrunde 1</h3>
+  <p>Wer am meisten fängt, steht ganz oben: Jede Saison bekommen die drei fangstärksten Boote eine <b>🏆 Fangprämie</b> (${CFG.KING_PRIZE.join(' / ')} 💰).</p></div>`;
+ const tac=tacNow(),Q=quotaNow();
+ if(G.round<2)return `<div class="card" style="border:4px solid #2a9d8f"><h3>🌱 Spielrunde 2 – Der See braucht Schutz</h3>
+  <p>In Spielrunde 1 war der See am Ende leer. Jetzt gilt: <b>Jeder sollte nachhaltig fischen</b>, damit der See überlebt und sich erholen kann – dann können alle auch in Zukunft Fische fangen.</p>
+  <table class="small" style="width:100%"><tr><th>Vorgabe</th><th>So funktioniert's</th><th>Nutzen</th></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td>Die Behörde legt fest: <b>${tac} Fische</b> pro Saison dürfen insgesamt gefangen werden.</td><td>Der Bestand bleibt in einem gesunden Bereich und wächst nach.</td></tr>
+  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td><td>Fair: alle haben dieselben Chancen.</td></tr></table>
+  <p class="small" style="margin-top:8px">🎯 Tipp: Mit wenig Fisch viel verdienen – 🐋 Großfische zählen 3×, ⭐ Goldfische 5×. Wer früh fertig ist: ⚓ Feierabend.</p></div>`;
+ const overN=G.last?G.last.rows.filter(r=>r.fish>G.last.Q).length:0;
+ const lead=G.round===2?`<p>📣 <b>Neu ab dieser Saison!</b> ${overN?`Letzte Saison haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'} Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
+ const p=Math.round(price(G.S)*10)/10,gain=p,loss=Math.round(CFG.PATROL_P*CFG.FINE_MULT*p*10)/10,ev=Math.round((gain*(1-CFG.PATROL_P)-CFG.FINE_MULT*p*CFG.PATROL_P-p*CFG.PATROL_P)*10)/10;
+ return `<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2 – Quote mit Kontrolle</h3>
+  ${lead}
+  <table class="small" style="width:100%"><tr><th>Baustein</th><th>So funktioniert's</th><th>Nutzen</th></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td>Die Behörde legt fest: <b>${tac} Fische</b> pro Saison.</td><td>Der Bestand bleibt in einem gesunden Bereich und wächst nach.</td></tr>
+  <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td><td>Fair: alle haben dieselben Chancen, keiner muss „mitgieren“.</td></tr>
+  <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td><td>Regeln werden ernst genommen – Trittbrettfahrer fallen auf.</td></tr>
+  <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang wird beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td><td>Schummeln lohnt sich im Durchschnitt nicht.</td></tr>
+  <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie.</td><td>Wer sich an Regeln hält, wird belohnt.</td></tr></table>
+  <div class="fact" style="margin-top:10px"><b>🎲 Lohnt sich Schummeln? Selbst ausrechnen:</b><br>Ein Fisch über der Quote bringt dir ca. <b>+${gain} 💰</b>. Mit ca. ${Math.round(CFG.PATROL_P*100)} % Wahrscheinlichkeit wirst du erwischt: Fisch weg (−${gain}) und Strafe (−${Math.round(CFG.FINE_MULT*p*10)/10}). Im Schnitt ergibt das pro Schwarzfisch: <b>${ev>=0?'+':''}${ev} 💰</b> – und das Öko-Siegel (+${CFG.ECO_BONUS}) verlierst du auch noch.</div>
+  <p class="small" style="margin-top:8px">🎯 Tipp: Mit wenig Fisch viel verdienen – 🐋 Großfische zählen 3×, ⭐ Goldfische 5×. Wer früh fertig ist: ⚓ Feierabend.</p></div>`;
+}
+const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Saison 2 der Spielrunde 2
+const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Saison für Saison aufgedeckt
+function stockCard(){
+ if(revLvl()<2)return '';
+ const S=G.S,K=CFG.K,gr=growth(S),pct=Math.round(S/K*100);
+ let lvl,col,msg;
+ if(S>=K*.7){lvl='🟢 Die Bucht ist voll';col='#2a9d8f';msg='Viel Fisch, schneller Nachwuchs. Aber jeder gefangene Fisch fehlt später.'}
+ else if(S>=K*.45){lvl='🟡 Der Bestand schrumpft';col='#f4a261';msg='Achtung: Wenn alle weiter so viel fangen wie bisher, kippt der See bald.'}
+ else if(S>=K*.2){lvl='🟠 ACHTUNG: Wenig Fisch!';col='#fb8500';msg='Der Bestand ist stark gefallen. Fängt die Flotte so weiter, ist der Fisch bald weg.'}
+ else{lvl='🔴 ALARM: Bald ist der Fisch weg!';col='#e63946';msg='Fast nichts mehr im Meer. Fängt jetzt jeder noch viel, bricht der Bestand ganz zusammen.'}
+ const exp=G.phase===1?'':'';
+ return `<div class="card" style="border:4px solid ${col}"><h3 style="color:${col}">${lvl}</h3>
+  <div class="bar" style="height:30px"><i style="width:${pct}%;background:${col}"></i><span style="font-size:15px">🐟 ${S} von ${K} Fischen (${pct} %)</span></div>
+  ${revLvl()<3?'':`<p style="margin:8px 0 2px">🌱 <b>Nachwuchs:</b> Wenn der Bestand jetzt so bleibt, wachsen bis zur nächsten Saison etwa <b>+${gr} Fische</b> nach.</p>
+  <p style="margin:2px 0">${G.phase===2?(S>=CFG.K/2?`⚖️ Weil der See noch übervoll ist, erlaubt die Behörde dieses Mal <b>${tacNow()} Fische</b> insgesamt (≈ ${quotaNow()} pro Boot): So sinkt der Bestand auf die <b>Idealgröße von ≈ ${Math.round(CFG.K/2)}</b>, bei der er am schnellsten nachwächst. Danach darf nur noch das gefangen werden, was nachwächst.`:`⚖️ Die Behörde erlaubt insgesamt nur <b>${tacNow()} Fische</b> (≈ ${quotaNow()} pro Boot) – weniger, als nachwächst, damit sich der See erholt.`):`⚖️ Das heißt: Alle ${G.P.length} Boote zusammen dürften etwa <b>${gr} Fische</b> fangen, ohne dass der See kleiner wird (≈ ${Math.round(gr/G.P.length*10)/10} pro Boot).`}</p>`}
+  <p style="margin:6px 0 0"><b>${msg}</b></p></div>`;
+}
+function renderDecision(){
+ const me=G.P[0],S=G.S,p=price(S),msy=Math.round(rEff()*CFG.K/4);
+ const col=S>CFG.K*.6?'#2a9d8f':S>CFG.K*.33?'#f4a261':'#e63946';
+ const avgBot=G.last?Math.round(G.last.total/G.P.length*10)/10:0;
+ const prev=G.last?`<div class="small">Letzte Saison: du ${me.lastFish} Fische · Ø aller Boote ${avgBot} · Platz ${me.rank}/${G.P.length}</div>`:'';
+ const planner=hasSonar()?`<div class="card"><h3>📡 Sonar-Prognose</h3><p>Bei idealem Bestand (≈ ${Math.round(CFG.K/2)} Fische) wächst der See um höchstens <b>≈ ${msy} Fische pro Saison</b> nach – das ist die größte dauerhaft mögliche Fangmenge (MSY) für alle ${G.P.length} Boote zusammen. Probiere aus, was ein Gesamtfang für den Bestand bedeutet:</p><label>Angenommener Gesamtfang aller: <b id="plV">0</b></label><input type="range" id="plR" min="0" max="${Math.min(S,Math.round(CFG.K*.7))}" value="${Math.min(msy,S)}"><div id="plO" class="small"></div></div>`:'';
+ const news=G.last?G.last.headline:(G.phase===1?`Alle ${G.P.length} Boote laufen aus. Fang so viel du kannst und mach Gewinn!`:`Neuer See, neue Regeln: Die Fischereibehörde hat eine Quote beschlossen.`);
+ $('#s-decide').innerHTML=`
+ <h1 class="hero" style="font-size:34px">Spielrunde ${G.phase}/2 · Saison ${G.round}/${G.rounds}</h1>
+ <div class="news">📰 ${news}</div>
+ ${stockCard()}
+ ${phaseCard()}
+ <div class="card"><div class="row" style="justify-content:space-between"><div class="row"><canvas id="thumb" width="130" height="90" style="width:84px"></canvas><h3>${me.role.emoji} ${esc(me.name)} – ${me.role.title}<br><small>⛵ ${esc(msName(BOAT.name))} · 🏅 Platz ${me.rank}/${G.P.length}</small></h3></div><span class="pill">💰 ${me.coins} Münzen</span></div>
+  ${revLvl()<2?'':`<div class="bar"><i style="width:${S/CFG.K*100}%;background:${col}"></i><span>🐟 Bestand ${S} / ${CFG.K}</span></div>`}
+  <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum: <b>${capOf()}</b>${G.phase===2?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
+ ${planner}
+ <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Mit ⚓ Hafen kannst du früher Feierabend machen.</p>
+${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
+ if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
+  if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
+ if(hasSonar()){const upd=()=>{const c=+$('#plR').value;$('#plV').textContent=c;const sa=Math.max(0,S-c),g=growth(sa)+CFG.FARM*G.comm.farm,sn=Math.min(CFG.K,sa+g);$('#plO').innerHTML=`Nach dem Fang: <b>${sa}</b> → Nachwuchs <b>+${g}</b> → nächste Saison: <b style="color:${sn>=S?'#2a9d8f':'#e63946'}">${sn}</b>`};$('#plR').oninput=upd;upd()}
+ show('s-decide');
+ {const th=$('#thumb');if(th)drawBoatCustom(th.getContext('2d'),65,55,BOAT,1.2,null)}
+}
+
+/* ---------- Arcade (Draufsicht, 30 Boote) ---------- */
+let A=null;const cv=$('#cv'),cx=cv.getContext('2d');
+const FCOL=['#ff8a65','#4dd0e1','#9575cd','#81c784','#f06292'];
+const AR={x0:24,y0:24,x1:800-24,y1:480-24};  /* sichtbarer Spielbereich auf dem Bildschirm (ohne HUD/Tasten) */
+let WB={x0:40,y0:40,x1:1900,y1:1100,W:1940,H:1140};  /* Weltgrenzen */
+let CAM={x:0,y:0};
+let KS=1,DPR=1,useFS=true;
+const PATROL_BOAT={type:'trawler',hull:'#ffffff',trim:'#e63946',sail:'#cfe8ff',pattern:'stripe',topper:'🚔'};
+const msName=n=>/^MS\s/i.test(n||'')?n:'MS '+n;
+const FSPR={};
+const BIGCOL=['#4f7cac','#6c63c9','#2e86ab','#9aa5b1','#1d6f8a'];
+/* Fischarten: klein (Wert 1) · normal (1) · Großfisch (2) · Goldfisch (3) – 'ex' = Mehrwert über 1 */
+function newFish(sc,si){
+ const r=Math.random(),loner=Math.random()<.22;
+ let kind='S',size=rnd(6,8),ex=0,color=FCOL[rint(0,4)];
+ if(r<CFG.GOLD_CHANCE){kind='G';size=12;ex=4;color='#ffca28'}
+ else if(r<CFG.GOLD_CHANCE+CFG.BIG_CHANCE){kind='B';size=rnd(18,23);ex=2;color=BIGCOL[rint(0,BIGCOL.length-1)]}
+ else if(r<.78){kind='N';size=rnd(9,12)}
+ return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,330):rnd(30,170),ang:rnd(0,6.28),size,kind,ex,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
+}
+function fishSprite(color,gold){
+ const key=color+(gold||'');if(FSPR[key])return FSPR[key];
+ const c=document.createElement('canvas');c.width=64;c.height=36;const x=c.getContext('2d'),s=12;x.translate(40,18);
+ if(gold==='G'){x.shadowColor='#ffd700';x.shadowBlur=8}else if(gold==='B'){x.shadowColor='#bfefff';x.shadowBlur=5}
+ x.fillStyle=color;x.beginPath();x.ellipse(0,0,s,s*.48,0,0,7);x.fill();
+ if(gold==='B'){x.save();x.shadowBlur=0;x.clip();x.fillStyle='rgba(0,0,40,.25)';for(let i=-2;i<=2;i++)x.fillRect(i*s*.32-s*.05,-s*.5,s*.11,s);x.restore();x.shadowColor='#bfefff';x.shadowBlur=5;x.fillStyle=color}
+ x.beginPath();x.moveTo(-s*.8,0);x.lineTo(-s*1.55,-s*.5);x.lineTo(-s*1.55,s*.5);x.closePath();x.fill();
+ x.shadowBlur=0;x.fillStyle='rgba(255,255,255,.35)';x.beginPath();x.ellipse(s*.1,-s*.14,s*.5,s*.14,0,0,7);x.fill();
+ x.fillStyle='#000';x.beginPath();x.arc(s*.55,-s*.2,s*.1,0,7);x.arc(s*.55,s*.2,s*.1,0,7);x.fill();
+ FSPR[key]=c;return c;
+}
+const angDiff=(w,a)=>((w-a+Math.PI*3)%(Math.PI*2))-Math.PI;
+function fitWorld(){
+ const vw=window.innerWidth,vh=window.innerHeight;DPR=Math.min(2,window.devicePixelRatio||1);
+ KS=Math.sqrt(vw*vh/384000);
+ CFG.W=Math.round(vw/KS);CFG.H=Math.round(vh/KS);
+ cv.width=Math.round(vw*DPR);cv.height=Math.round(vh*DPR);
+ AR.x0=24;AR.x1=CFG.W-24;
+ AR.y0=Math.round($('#playHud').offsetHeight/KS)+14;
+ AR.y1=CFG.H-Math.round($('#playCtrl').offsetHeight/KS)-14;
+}
+function camClamp(){CAM.x=clamp(CAM.x,0,Math.max(0,WB.W-CFG.W));CAM.y=clamp(CAM.y,0,Math.max(0,WB.H-CFG.H))}
+/* Kamera: bleibt stehen, bis das Boot an den Rand fährt – dann scrollt die Karte mit */
+function updateCam(dt,snap){
+ const B=A.boat,mx=(AR.x1-AR.x0)*.3,my=(AR.y1-AR.y0)*.3,sx=B.x-CAM.x,sy=B.y-CAM.y;let dx=0,dy=0;
+ if(sx<AR.x0+mx)dx=sx-(AR.x0+mx);else if(sx>AR.x1-mx)dx=sx-(AR.x1-mx);
+ if(sy<AR.y0+my)dy=sy-(AR.y0+my);else if(sy>AR.y1-my)dy=sy-(AR.y1-my);
+ const k=snap?1:Math.min(1,dt*5);CAM.x+=dx*k;CAM.y+=dy*k;camClamp();
+}
+function onResize(){if(!A||!A.running)return;fitWorld();updateCam(0,true)}
+addEventListener('resize',onResize);addEventListener('orientationchange',()=>setTimeout(onResize,250));
+function startRound(T){
+ show('s-play');fitWorld();
+ const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
+ const WW=Math.round(CFG.W*CFG.WORLD),WH=Math.round(CFG.H*CFG.WORLD);
+ WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};
+ A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
+  boat:{x:WW/2,y:WH/2,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
+  bs:105*(1+.2*me.upg.motor)*me.role.speed,
+  net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
+  cap:capOf(),cargo:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
+  bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:rnd(WB.x0+20,WB.x1-20),y:rnd(WB.y0+20,WB.y1-20),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
+ const ns=S<6?1:clamp(Math.round(S/11),10,40);
+ for(let i=0;i<ns;i++){const sp=rnd(25,45),an=rnd(0,6.28);A.schools.push({x:rnd(150,WW-150),y:rnd(150,WH-150),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
+ for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si))}
+ for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<160||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
+ const nj=8+G.round;for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
+ if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
+ A.bots.forEach(b=>{const n=botTarget(b.p);for(let k=0;k<n;k++)b.evs.push({t:rnd(3,T-2),prep:false,done:false,f:null});b.evs.sort((a,c)=>a.t-c.t)});
+ $('#h-price').textContent='💰 '+fmt(A.price)+'/Fisch';
+ $('#h-quota').style.display=ph2?'':'none';
+ $('#bHome').classList.remove('pulse');setNetBtn();
+ CAM.x=A.boat.x-CFG.W/2;CAM.y=A.boat.y-(AR.y0+AR.y1)/2;camClamp();
+ A.last=performance.now();requestAnimationFrame(loop);
+}
+function botTarget(p){
+ const S=G.S,r=G.round,ratio=S/CFG.K,share=Math.max(1,growth(Math.round(CFG.K/2))/G.P.length),pr=1+.6*(1-ratio);
+ if(G.phase===2){
+  const Q=quotaNow();let t=Q-(Math.random()<.25?1:0);
+  if(p.role.id==='tessa'&&Math.random()<.55)t=Q+rint(2,4);
+  else if(p.role.id==='kalle'&&Math.random()<.2)t=Q+rint(1,2);
+  return Math.max(1,t);
+ }
+ let t;
+ switch(p.role.id){
+  case 'tessa':t=share*2.2*pr+r*.8;break;
+  case 'kalle':t=share*1.4*pr+(G.lastPlayer>CFG.BASECARGO?1:0);break;
+  case 'elif':t=share*.85*pr;break;
+  default:t=share*.95*pr;
+ }
+ return clamp(Math.round(t*p.skill+rnd(-1,1)),1,CFG.BOTCAP);
+}
+function execBot(b,e,silent){
+ e.done=true;b.fast=false;b.tx=rnd(60,WB.W-60);b.ty=rnd(WB.y0+20,WB.y1-40);
+ if(!A.fish.length)return;
+ const f=(e.f&&!e.f.dead)?e.f:A.fish[rint(0,A.fish.length-1)];
+ A.fish.splice(A.fish.indexOf(f),1);f.dead=true;b.n++;b.gold+=f.ex||0;
+ if(A.quota<Infinity&&polOn()&&b.n>A.quota&&Math.random()<CFG.PATROL_P)b.flag=true;
+ if(!silent)A.fx.push({k:'ring',x:f.x,y:f.y,t:.7,t0:.7,R:40,col:b.p.role.color});
+}
+/* --- Netz: bleibt draußen und wird per Taste ein-/ausgeholt --- */
+function setNetBtn(){const b=$('#bNet'),N=A&&A.net,o=N&&N.out;b.classList.toggle('out',!!o);b.classList.toggle('pulse',!!(o&&N.full));
+ b.innerHTML=!o?'🎣 NETZ AUSWERFEN<br><small>Netz ist an Bord</small>':N.full?'🪢 NETZ VOLL!<br><small>jetzt einholen ('+N.n+'/'+N.bag+')</small>':'🪢 NETZ EINHOLEN<br><small>Netz '+N.n+'/'+N.bag+'</small>'}
+function haulIn(){
+ const N=A.net;if(!N.out)return;
+ if(N.n){A.cargo+=N.n;A.gold+=N.gold;A.plain+=N.n;
+  A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'+'+N.n+' 🧺',t:1.2,col:'#ffe066'});beep(660,.1,'square',.04);
+  if(G.phase===2){
+   if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'⚠️ Über der Quote – das gefährdet den See!');beep(200,.3,'sawtooth',.06)}}
+   else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt – ⚓ Hafen!');$('#bHome').classList.add('pulse')}
+  }
+  if(A.cargo>=A.cap){toast('🧺 Laderaum voll – zurück in den Hafen!');$('#bHome').classList.add('pulse')}}
+ N.n=0;N.gold=0;N.full=false;N.out=false;beep(300,.1,'triangle');setNetBtn();
+}
+function netPress(){
+ if(!A||!A.running)return;const N=A.net,B=A.boat;
+ if(N.out){haulIn();return}
+ if(A.cargo>=A.cap){toast('🧺 Laderaum voll – zurück in den Hafen!');$('#bHome').classList.add('pulse');return}
+ N.out=true;N.cd=.5;N.tang=0;N.n=0;N.gold=0;N.full=false;N.x=B.x-Math.cos(B.ang)*64;N.y=B.y-Math.sin(B.ang)*64;beep(420,.1,'triangle');setNetBtn();
+ if(G.phase===2&&A.cargo>=A.quota)toast('🚔 Quote erreicht – jeder weitere Fisch ist Schwarzfang!');
+}
+function netRelease(){}
+function sweep(){
+ const N=A.net,space=Math.min(N.bag-N.n,A.cap-A.cargo-N.n);
+ if(space<=0){N.full=true;return}
+ const inside=A.fish.filter(f=>Math.hypot(f.x-N.x,f.y-N.y)<N.R+f.size*.3).sort((a,b)=>Math.hypot(a.x-N.x,a.y-N.y)-Math.hypot(b.x-N.x,b.y-N.y));
+ const take=inside.slice(0,Math.min(N.cap,space));const g0=N.gold;
+ if(!take.length){N.cd=.15;return}
+ take.forEach(f=>{A.fish.splice(A.fish.indexOf(f),1);f.dead=true;N.n++;N.gold+=f.ex||0});
+ N.cd=N.cdMax;N.pulse=.45;
+ A.fx.push({k:'txt',x:N.x,y:N.y-20,txt:'+'+take.length+' 🐟'+(N.gold-g0>0?' ✨+'+(N.gold-g0)+'💰':''),t:1.2,col:'#ffe066'});beep(560+take.length*60,.12);
+ if(N.n>=N.bag||A.cargo+N.n>=A.cap){N.full=true;toast('🪢 Netz voll – jetzt einholen!');beep(740,.2,'square',.05)}
+ setNetBtn();
+}
+function confiscate(n){A.cargo=Math.max(0,A.cargo-n);A.gold=Math.min(A.gold,A.cargo*4)}
+function liveRank(){
+ const base=priceBase(A.S0);
+ const arr=[{me:1,s:G.P[0].coins+(A.cargo+A.gold)*A.price}];
+ A.bots.forEach(b=>arr.push({me:0,s:b.p.coins+(b.n+Math.min(b.gold,b.n*4))*base}));
+ arr.sort((a,b)=>b.s-a.s);A.rank=arr.findIndex(x=>x.me)+1;
+}
+/* --- Patrouillen --- */
+function patrolCatch(pt){
+ const tg=pt.tg;pt.tg=null;pt.cool=3;
+ if(tg==='me'){
+  const ill=Math.max(0,A.cargo-A.quota);if(ill<=0)return;
+  confiscate(ill);const f=Math.round(ill*CFG.FINE_MULT*priceBase(A.S0));A.fines+=f;A.viol=1;A.warned=false;
+  A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'🚔 Kontrolle! −'+ill+' Fische, Strafe '+f+' 💰',t:2.6,col:'#ff6b6b'});
+  toast('🚔 Erwischt! '+ill+' Fische beschlagnahmt, Strafe '+f+' 💰');beep(150,.4,'sawtooth',.07);
+ }else{
+  tg.caught=true;A.fx.push({k:'ring',x:tg.x,y:tg.y,t:1,t0:1,R:55,col:'#ff3b3b'});
+  A.fx.push({k:'txt',x:tg.x,y:tg.y-22,txt:'🚔 Strafe!',t:1.6,col:'#ff6b6b'});
+ }
+}
+function updatePatrols(dt){
+ const B=A.boat;
+ for(const pt of A.patrols){
+  if(pt.cool>0)pt.cool-=dt;
+  if(pt.tg&&(pt.tg==='me'?A.cargo<=A.quota:(!pt.tg.flag||pt.tg.caught)))pt.tg=null;
+  if(!pt.tg&&pt.cool<=0){
+   let best=null,bd=1e9;
+   if(A.cargo>A.quota&&A.patrols.filter(o=>o.tg==='me').length<2){const d=Math.hypot(B.x-pt.x,B.y-pt.y);if(d<bd){bd=d;best='me'}}
+   for(const b of A.bots)if(b.flag&&!b.caught&&!A.patrols.some(o=>o.tg===b)){const d=Math.hypot(b.x-pt.x,b.y-pt.y);if(d<bd){bd=d;best=b}}
+   pt.tg=best;
+  }
+  let tx,ty,spd;
+  if(pt.tg){const o=pt.tg==='me'?B:pt.tg;tx=o.x;ty=o.y;spd=115}
+  else{if(Math.hypot(pt.tx-pt.x,pt.ty-pt.y)<20){pt.tx=rnd(60,WB.W-60);pt.ty=rnd(WB.y0+20,WB.y1-60)}tx=pt.tx;ty=pt.ty;spd=40}
+  pt.ang+=clamp(angDiff(Math.atan2(ty-pt.y,tx-pt.x),pt.ang),-3*dt,3*dt);
+  pt.x+=Math.cos(pt.ang)*spd*dt;pt.y+=Math.sin(pt.ang)*spd*dt;
+  pt.x=clamp(pt.x,WB.x0,WB.x1);pt.y=clamp(pt.y,WB.y0,WB.y1);
+  if(pt.tg&&Math.hypot(tx-pt.x,ty-pt.y)<42)patrolCatch(pt);
+ }
+}
+/* --- Update --- */
+function update(dt){
+ A.t+=dt;const B=A.boat,K=A.keys,N=A.net,W=WB.W,H=WB.H;
+ const turn=2.6*clamp(.4+Math.abs(B.v)/(A.bs*.6),.4,1.1);
+ const J=A.joy,jm=J?Math.hypot(J.x,J.y):0;
+ if(jm>.18){
+  const want=Math.atan2(J.y,J.x),df=angDiff(want,B.ang),mag=Math.min(1,jm);
+  B.ang+=clamp(df,-turn*1.5*dt,turn*1.5*dt);
+  const tv=A.bs*mag*(Math.abs(df)>1.9?.25:Math.abs(df)>1?.6:1);
+  B.v+=(tv-B.v)*Math.min(1,dt*(tv>B.v?3:5));
+ }else{
+  B.ang+=(K.r-K.l)*turn*dt;
+  if(K.u)B.v+=240*dt;else if(K.d)B.v-=260*dt;else B.v-=B.v*1.1*dt;
+ }
+ B.v=clamp(B.v,-A.bs*.4,A.bs*(N.out?.8:1));
+ B.x+=Math.cos(B.ang)*B.v*dt;B.y+=Math.sin(B.ang)*B.v*dt;
+ if(B.x<WB.x0){B.x=WB.x0;B.v*=.5}if(B.x>WB.x1){B.x=WB.x1;B.v*=.5}if(B.y<WB.y0){B.y=WB.y0;B.v*=.5}if(B.y>WB.y1){B.y=WB.y1;B.v*=.5}
+ for(const r of A.rocks){const dx=B.x-r.x,dy=B.y-r.y,d=Math.hypot(dx,dy)||1,m=r.r+18;if(d<m){B.x=r.x+dx/d*m;B.y=r.y+dy/d*m;B.v*=.6}}
+ A.foamT-=dt;if(Math.abs(B.v)>20&&A.foamT<=0){A.foamT=.05;A.fx.push({k:'foam',x:B.x-Math.cos(B.ang)*28+rnd(-4,4),y:B.y-Math.sin(B.ang)*28+rnd(-4,4),t:.9,t0:.9})}
+ if(N.pulse>0)N.pulse-=dt;
+ if(N.out){
+  const tx=B.x-Math.cos(B.ang)*64,ty=B.y-Math.sin(B.ang)*64,k=Math.min(1,dt*6);N.x+=(tx-N.x)*k;N.y+=(ty-N.y)*k;
+  if(N.tang>0)N.tang-=dt;
+  else{
+   for(const j of A.jel)if(Math.hypot(j.x-N.x,j.y-N.y)<N.R+j.r*.7){N.tang=2.5;A.fx.push({k:'txt',x:N.x,y:N.y-20,txt:'🪼 Verheddert!',t:1.4,col:'#e0aaff'});beep(120,.3,'sawtooth',.06);break}
+   if(N.tang<=0){N.cd-=dt;if(N.cd<=0)sweep()}
+  }
+ }
+ for(const sc of A.schools){sc.x+=sc.vx*dt;sc.y+=sc.vy*dt;if(sc.x<90||sc.x>W-90)sc.vx*=-1;if(sc.y<WB.y0+50||sc.y>WB.y1-50)sc.vy*=-1;sc.x=clamp(sc.x,60,W-60);sc.y=clamp(sc.y,WB.y0+30,WB.y1-30)}
+ for(const f of A.fish){
+  const sc=A.schools[f.s];f.a+=f.w*dt;
+  const tx=sc.x+Math.cos(f.a)*f.rad,ty=sc.y+Math.sin(f.a)*f.rad*.7,px=f.x,py=f.y,k=Math.min(1,dt*1.6);
+  f.x+=(tx-f.x)*k;f.y+=(ty-f.y)*k;
+  const dx=f.x-B.x,dy=f.y-B.y,d=Math.hypot(dx,dy);if(d<48&&d>0){const q=(48-d)*dt*5;f.x+=dx/d*q;f.y+=dy/d*q}
+  const mx=f.x-px,my=f.y-py;if(mx*mx+my*my>.01)f.ang+=angDiff(Math.atan2(my,mx),f.ang)*Math.min(1,dt*6);
+  f.x=clamp(f.x,15,W-15);f.y=clamp(f.y,WB.y0,WB.y1+20);
+ }
+ for(const j of A.jel){j.x+=j.vx*dt;j.y+=j.vy*dt;if(j.x<50||j.x>W-50)j.vx*=-1;if(j.y<WB.y0+20||j.y>WB.y1-30)j.vy*=-1}
+ /* KI-Boote */
+ for(const b of A.bots){
+  let e=null;for(const x of b.evs){if(!x.done){e=x;break}}
+  let spd=40;
+  if(e){
+   if(!e.prep&&A.t>=e.t-14&&A.fish.length){e.prep=true;let best=null,bd=1e9;for(let k=0;k<14;k++){const f=A.fish[rint(0,A.fish.length-1)],d=Math.hypot(f.x-b.x,f.y-b.y);if(d<bd){bd=d;best=f}}e.f=best}
+   if(e.prep){
+    if(!e.f||e.f.dead){if(A.fish.length)e.f=A.fish[rint(0,A.fish.length-1)];else e.f=null}
+    if(e.f){b.tx=e.f.x;b.ty=e.f.y;b.fast=true;spd=clamp(Math.hypot(b.tx-b.x,b.ty-b.y)/Math.max(.6,e.t-A.t),40,230)}
+   }
+   if(A.t>=e.t)execBot(b,e);
+  }else if(Math.hypot(b.tx-b.x,b.ty-b.y)<14){b.tx=rnd(60,W-60);b.ty=rnd(WB.y0+20,WB.y1-40)}
+  if(b.caught)spd=Math.min(spd,40);
+  const dx=b.tx-b.x,dy=b.ty-b.y,d=Math.hypot(dx,dy);
+  b.ang+=clamp(angDiff(Math.atan2(dy,dx),b.ang),-3*dt,3*dt);
+  const sp=d<12?8:spd;b.x+=Math.cos(b.ang)*sp*dt;b.y+=Math.sin(b.ang)*sp*dt;
+  for(const o of A.bots){if(o===b)continue;const ox=b.x-o.x,oy=b.y-o.y,dd=ox*ox+oy*oy;if(dd<1500&&dd>.01){const q=Math.sqrt(dd);b.x+=ox/q*(38.7-q)*.5;b.y+=oy/q*(38.7-q)*.5}}
+  b.x=clamp(b.x,WB.x0,WB.x1);b.y=clamp(b.y,WB.y0,WB.y1);
+  for(const r of A.rocks){const ddx=b.x-r.x,ddy=b.y-r.y,dd=Math.hypot(ddx,ddy)||1,m=r.r+18;if(dd<m){b.x=r.x+ddx/dd*m;b.y=r.y+ddy/dd*m}}
+ }
+ /* Kollisionen: Boote sind feste Körper */
+ const push=(o,r)=>{const dx=B.x-o.x,dy=B.y-o.y,d=Math.hypot(dx,dy)||.1;if(d<r){const q=(r-d),ux=dx/d,uy=dy/d;B.x+=ux*q*.5;B.y+=uy*q*.5;o.x-=ux*q*.5;o.y-=uy*q*.5;B.v*=.8;if(!o.bump||A.t-o.bump>.6){o.bump=A.t;beep(150,.05,'square',.03)}}};
+ for(const b of A.bots)push(b,36);
+ for(const pt of A.patrols)push(pt,40);
+ B.x=clamp(B.x,WB.x0,WB.x1);B.y=clamp(B.y,WB.y0,WB.y1);
+ if(A.patrols.length)updatePatrols(dt);
+ updateCam(dt);
+ A.rankT-=dt;if(A.rankT<=0){A.rankT=1;liveRank()}
+ for(const e of A.fx){e.t-=dt;if(e.k==='txt')e.y-=25*dt}
+ A.fx=A.fx.filter(e=>e.t>0);
+ if(A.t>=A.T)endRound();
+ else if(!A.fish.length){toast('🌊 Der See ist leer!');endRound()}
+}
+/* --- Zeichnen --- */
+function drawRock(c,r,t){
+ c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.arc(r.x,r.y,r.r+7+Math.sin(t*2+r.sd)*2,0,7);c.fill();
+ c.fillStyle='#6c757d';c.beginPath();c.arc(r.x,r.y,r.r,0,7);c.fill();
+ c.fillStyle='#8d99a3';c.beginPath();c.arc(r.x-r.r*.25,r.y-r.r*.25,r.r*.65,0,7);c.fill();
+ c.fillStyle='#adb5bd';c.beginPath();c.arc(r.x-r.r*.35,r.y-r.r*.35,r.r*.3,0,7);c.fill();
+}
+function drawFishTop(c,f,t,alpha){
+ const s=f.size;c.save();c.translate(f.x,f.y);c.rotate(f.ang);c.globalAlpha=alpha==null?.88:alpha;
+ if(f.kind==='G'){c.shadowColor='#ffd700';c.shadowBlur=14}else if(f.kind==='B'){c.shadowColor='#bfefff';c.shadowBlur=8}
+ c.fillStyle=f.color;c.beginPath();c.ellipse(0,0,s,s*.48,0,0,7);c.fill();
+ const w=Math.sin(t*9+f.ph)*s*.3;c.beginPath();c.moveTo(-s*.8,0);c.lineTo(-s*1.55,-s*.5+w);c.lineTo(-s*1.55,s*.5+w);c.closePath();c.fill();
+ c.shadowBlur=0;c.fillStyle='rgba(255,255,255,.35)';c.beginPath();c.ellipse(s*.1,-s*.14,s*.5,s*.14,0,0,7);c.fill();
+ c.fillStyle='#000';c.beginPath();c.arc(s*.55,-s*.2,s*.1,0,7);c.arc(s*.55,s*.2,s*.1,0,7);c.fill();
+ c.restore();
+}
+function drawJelly(c,j,t){
+ c.save();c.translate(j.x,j.y);
+ c.strokeStyle='rgba(224,170,255,.7)';c.lineWidth=2;
+ for(let i=0;i<8;i++){const a=i*Math.PI/4+t*.3;c.beginPath();c.moveTo(Math.cos(a)*j.r*.5,Math.sin(a)*j.r*.5);c.quadraticCurveTo(Math.cos(a)*j.r*1.2+Math.sin(t*3+i)*4,Math.sin(a)*j.r*1.2+Math.cos(t*3+i)*4,Math.cos(a)*j.r*1.7,Math.sin(a)*j.r*1.7);c.stroke()}
+ const g=c.createRadialGradient(0,0,2,0,0,j.r);g.addColorStop(0,'rgba(255,230,255,.95)');g.addColorStop(1,'rgba(190,110,240,.65)');
+ c.fillStyle=g;c.beginPath();c.arc(0,0,j.r*(1+Math.sin(t*3+j.ph)*.06),0,7);c.fill();
+ c.fillStyle='rgba(255,255,255,.7)';c.beginPath();c.arc(-j.r*.3,-j.r*.3,j.r*.25,0,7);c.fill();
+ c.restore();
+}
+function topHull(c,T){
+ c.beginPath();
+ if(T==='schlauch'){c.moveTo(-26,-9);c.lineTo(24,-9);c.arc(24,0,9,-Math.PI/2,Math.PI/2);c.lineTo(-26,9);c.arc(-26,0,9,Math.PI/2,Math.PI*1.5);c.closePath()}
+ else if(T==='trawler'){c.moveTo(-34,-12);c.lineTo(16,-12);c.quadraticCurveTo(40,-8,40,0);c.quadraticCurveTo(40,8,16,12);c.lineTo(-34,12);c.closePath()}
+ else{c.moveTo(-32,-10);c.lineTo(10,-11);c.quadraticCurveTo(38,-6,38,0);c.quadraticCurveTo(38,6,10,11);c.lineTo(-32,10);c.closePath()}
+}
+
+function drawPartsSide(c,b,topY){
+ const P=b.parts||{},t=Date.now()/1000;
+ c.save();c.lineJoin='round';c.lineCap='round';
+ // Seitenteile
+ if(P.seite==='ringe'){for(const x of [-20,0,20]){c.strokeStyle='#e63946';c.lineWidth=4;c.beginPath();c.arc(x,11,5.5,0,7);c.stroke();c.strokeStyle='#fff';c.lineWidth=1.6;c.beginPath();c.arc(x,11,5.5,0.4,1.2);c.stroke();c.beginPath();c.arc(x,11,5.5,3.5,4.3);c.stroke()}}
+ if(P.seite==='fender'){for(const x of [-26,-9,9,26]){c.fillStyle='#e8eef2';c.strokeStyle='#0005';c.lineWidth=1;c.beginPath();c.arc(x,15,4,0,7);c.fill();c.stroke()}}
+ if(P.seite==='kanonen'){for(const x of [-16,6]){c.fillStyle='#1b1b1b';c.beginPath();c.arc(x,10,5,0,7);c.fill();c.fillStyle='#777';c.beginPath();c.arc(x-1.2,8.8,1.6,0,7);c.fill();c.fillStyle='#333';c.fillRect(x+2,8.5,8,3.4)}}
+ if(P.seite==='lampions'){const cl=['#ff6b6b','#ffd166','#06d6a0','#4cc9f0','#ff6b6b','#ffd166','#06d6a0'];c.strokeStyle='#333';c.lineWidth=1;c.beginPath();for(let i=0;i<=24;i++){const u=i/24,x=-34+68*u,y=-3+Math.sin(u*Math.PI)*7;i?c.lineTo(x,y):c.moveTo(x,y)}c.stroke();
+  cl.forEach((col,i)=>{const u=(i+.5)/7,x=-34+68*u,y=-3+Math.sin(u*Math.PI)*7+4;c.fillStyle=col;c.globalAlpha=.35;c.beginPath();c.arc(x,y,7,0,7);c.fill();c.globalAlpha=1;c.beginPath();c.arc(x,y,3.4,0,7);c.fill()})}
+ // Aufbau
+ const bx=-24;
+ if(P.dach==='radar'){c.strokeStyle='#90a4ae';c.lineWidth=2;c.beginPath();c.moveTo(bx,0);c.lineTo(bx,-15);c.stroke();const rx=Math.abs(Math.cos(t*3))*9+1;c.fillStyle='#cfd8dc';c.strokeStyle='#0005';c.lineWidth=1;c.beginPath();c.ellipse(bx,-17,rx,2.8,0,0,7);c.fill();c.stroke()}
+ if(P.dach==='antenne'){c.strokeStyle='#78909c';c.lineWidth=1.6;c.beginPath();c.moveTo(bx,0);c.lineTo(bx,-30);c.moveTo(bx-6,-24);c.lineTo(bx+6,-24);c.moveTo(bx-4.5,-18);c.lineTo(bx+4.5,-18);c.moveTo(bx-3,-12);c.lineTo(bx+3,-12);c.stroke();c.fillStyle=Math.floor(t*2)%2?'#ff3b3b':'#7a1f1f';c.beginPath();c.arc(bx,-31,2.4,0,7);c.fill()}
+ if(P.dach==='flagge'){c.strokeStyle='#6b4f3a';c.lineWidth=2;c.beginPath();c.moveTo(bx,0);c.lineTo(bx,-30);c.stroke();const w=Math.sin(t*5)*2;c.fillStyle='#111';c.beginPath();c.moveTo(bx,-30);c.quadraticCurveTo(bx-12,-30+w,bx-22,-27+w);c.lineTo(bx-22,-17+w);c.quadraticCurveTo(bx-12,-19+w,bx,-17);c.closePath();c.fill();c.fillStyle='#fff';c.font='9px serif';c.textAlign='center';c.fillText('☠',bx-11,-21+w)}
+ if(P.dach==='licht'){c.fillStyle='#37474f';c.fillRect(20,-9,9,7);c.fillStyle='#ffe066';c.fillRect(28,-8,2.5,5);const g=c.createLinearGradient(30,0,78,0);g.addColorStop(0,'rgba(255,240,150,.55)');g.addColorStop(1,'rgba(255,240,150,0)');c.fillStyle=g;c.beginPath();c.moveTo(30,-6);c.lineTo(80,-20);c.lineTo(80,8);c.closePath();c.fill()}
+ // Antrieb
+ if(P.heck==='aussen'||P.heck==='doppel'||P.heck==='turbo'){const n=P.heck==='doppel'?2:1;for(let i=0;i<n;i++){const dy=n===2?(i?4:-2):0;c.fillStyle='#37474f';c.strokeStyle='#0008';c.lineWidth=1;c.beginPath();c.rect(-44+i*3,3+dy,8,13);c.fill();c.stroke();c.fillStyle='#b0bec5';c.fillRect(-45+i*3,3+dy,10,3);const a=t*18+i;c.strokeStyle='#90a4ae';c.lineWidth=2;c.beginPath();c.moveTo(-40+i*3,19+dy-Math.cos(a)*3);c.lineTo(-40+i*3,19+dy+Math.cos(a)*3);c.stroke()}}
+ if(P.heck==='turbo'){const f=Math.random()*5;c.fillStyle='#fb8500';c.beginPath();c.moveTo(-45,6);c.lineTo(-60-f,11);c.lineTo(-45,16);c.closePath();c.fill();c.fillStyle='#ffe066';c.beginPath();c.moveTo(-45,8);c.lineTo(-54-f/2,11);c.lineTo(-45,14);c.closePath();c.fill()}
+ if(P.heck==='rad'){c.save();c.translate(-41,12);c.rotate(t*3);c.strokeStyle='#8d5524';c.lineWidth=3;c.beginPath();c.arc(0,0,11,0,7);c.stroke();c.lineWidth=2;for(let i=0;i<6;i++){const a=i*Math.PI/3;c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(a)*11,Math.sin(a)*11);c.stroke();c.fillStyle='#c68642';c.fillRect(Math.cos(a)*11-2.5,Math.sin(a)*11-2.5,5,5)}c.restore()}
+ // Bug
+ if(P.bug&&P.bug!=='none'){c.font='24px serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#000';c.fillText(BUG_EMO[P.bug],41,-4)}
+ c.restore();
+}
+function drawPartsTop(c,b){
+ const P=b.parts||{},t=Date.now()/1000;
+ c.save();c.lineJoin='round';
+ if(P.dach==='licht'){const g=c.createLinearGradient(30,0,85,0);g.addColorStop(0,'rgba(255,240,150,.4)');g.addColorStop(1,'rgba(255,240,150,0)');c.fillStyle=g;c.beginPath();c.moveTo(30,0);c.lineTo(88,-20);c.lineTo(88,20);c.closePath();c.fill();c.fillStyle='#ffe066';c.fillRect(26,-3,5,6)}
+ if(P.seite==='ringe'){c.strokeStyle='#e63946';c.lineWidth=3;for(const x of [-12,2,16])for(const y of [-12,12]){c.beginPath();c.arc(x,y,3.6,0,7);c.stroke()}}
+ if(P.seite==='fender'){c.fillStyle='#e8eef2';c.strokeStyle='#0005';c.lineWidth=1;for(const x of [-22,-8,6,20])for(const y of [-13,13]){c.beginPath();c.arc(x,y,2.8,0,7);c.fill();c.stroke()}}
+ if(P.seite==='kanonen'){c.fillStyle='#222';for(const x of [-10,8])for(const y of [-1,1]){c.fillRect(x-2,y*10+(y>0?0:-5),4,5);c.fillRect(x-1,y*14+(y>0?0:-3),2,3)}}
+ if(P.seite==='lampions'){const cl=['#ff6b6b','#ffd166','#06d6a0','#4cc9f0','#ff6b6b','#ffd166','#06d6a0'];cl.forEach((col,i)=>{for(const y of [-9,9]){c.fillStyle=col;c.beginPath();c.arc(-30+i*10,y,2.6,0,7);c.fill()}})}
+ if(P.dach==='radar'){c.fillStyle='#cfd8dc';c.beginPath();c.arc(-24,0,5,0,7);c.fill();c.strokeStyle='#37474f';c.lineWidth=1.6;c.beginPath();c.moveTo(-24,0);c.lineTo(-24+Math.cos(t*3)*7,Math.sin(t*3)*7);c.stroke()}
+ if(P.dach==='antenne'){c.strokeStyle='#546e7a';c.lineWidth=1.4;c.beginPath();c.moveTo(-24,-5);c.lineTo(-24,5);c.moveTo(-28,0);c.lineTo(-20,0);c.stroke();c.fillStyle=Math.floor(t*2)%2?'#ff3b3b':'#7a1f1f';c.beginPath();c.arc(-24,0,2,0,7);c.fill()}
+ if(P.dach==='flagge'){c.fillStyle='#111';c.fillRect(-36,-4,16,8);c.fillStyle='#fff';c.beginPath();c.arc(-28,0,2,0,7);c.fill()}
+ if(P.heck==='aussen'||P.heck==='doppel'||P.heck==='turbo'){c.fillStyle='#37474f';if(P.heck==='doppel'){c.fillRect(-42,-8,7,6);c.fillRect(-42,2,7,6)}else c.fillRect(-42,-4,7,8)}
+ if(P.heck==='turbo'){const f=Math.random()*4;c.fillStyle='#fb8500';c.beginPath();c.moveTo(-42,-3);c.lineTo(-54-f,0);c.lineTo(-42,3);c.closePath();c.fill()}
+ if(P.heck==='rad'){c.fillStyle='#8d5524';c.fillRect(-42,-11,7,22);c.fillStyle='#c68642';for(let i=0;i<5;i++)c.fillRect(-42,-10+i*4.5+((t*8)%4.5),7,1.6)}
+ if(P.bug&&P.bug!=='none'){c.font='15px serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#000';c.fillText(BUG_EMO[P.bug],37,0)}
+ c.restore();
+}
+function drawBoatTop(c,x,y,ang,b,s,label,t,mini){
+ const T=b.type;
+ c.save();c.translate(x+5,y+7);c.rotate(ang);c.scale(s,s);topHull(c,T);c.fillStyle='rgba(0,30,50,.3)';c.fill();c.restore();
+ c.save();c.translate(x,y);c.rotate(ang);c.scale(s,s);
+ topHull(c,T);c.fillStyle=b.hull;c.fill();
+ c.save();c.clip();c.translate(0,-12);hullPattern(c,b);if(b.paint)c.drawImage(b.paint,-36,0,72,24);c.restore();
+ topHull(c,T);c.strokeStyle=b.trim;c.lineWidth=3;c.stroke();c.strokeStyle='rgba(0,0,0,.35)';c.lineWidth=1;c.stroke();
+ if(T==='kutter'||T==='segler'){
+  c.fillStyle=b.sail;c.strokeStyle='rgba(0,0,0,.3)';c.lineWidth=1;
+  c.beginPath();c.ellipse(-16,-2,15,4.5,0,0,7);c.fill();c.stroke();
+  if(T==='segler'){c.beginPath();c.ellipse(12,2,10,3.5,0,0,7);c.fill();c.stroke()}
+  c.fillStyle='#6b4f3a';c.beginPath();c.arc(-3,0,2.4,0,7);c.fill();
+ }else if(T==='trawler'){
+  c.fillStyle=b.sail;c.fillRect(-26,-9,24,18);c.strokeStyle='rgba(0,0,0,.35)';c.lineWidth=1;c.strokeRect(-26,-9,24,18);
+  c.fillStyle='#8ecae6';c.fillRect(-5,-7,3,14);
+  c.fillStyle=b.trim;c.beginPath();c.arc(-14,0,4.5,0,7);c.fill();c.fillStyle='rgba(0,0,0,.45)';c.beginPath();c.arc(-14,0,2.2,0,7);c.fill();
+ }else{
+  c.fillStyle='#333';c.fillRect(-35,-5,8,10);c.fillStyle='rgba(0,0,0,.25)';c.fillRect(-6,-8,5,16);
+ }
+ drawPartsTop(c,b);
+ c.restore();
+ c.save();c.font=Math.round(15*Math.max(.8,s))+'px serif';c.textAlign='center';c.textBaseline='middle';c.fillText(b.topper||'',x+Math.cos(ang)*12*s,y+Math.sin(ang)*12*s);c.restore();
+ if(label){c.save();c.font=(mini?'10px':'bold 12px')+' "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.globalAlpha=mini?.8:1;c.lineWidth=3;c.strokeStyle='#0b3d5c';c.strokeText(label,x,y-30*s-6);c.fillStyle='#fff';c.fillText(label,x,y-30*s-6);c.restore()}
+}
+function drawPatrol(c,p,t){
+ drawBoatTop(c,p.x,p.y,p.ang,PATROL_BOAT,.85,'Küstenwache',t,true);
+ const on=Math.floor(t*6)%2;c.fillStyle=on?'#ff3b3b':'#3b8bff';c.globalAlpha=.9;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();
+ if(p.tg){c.globalAlpha=.22;c.beginPath();c.arc(p.x,p.y,48,0,7);c.fill()}
+ c.globalAlpha=1;
+}
+function drawNet(c,t){
+ const N=A.net,B=A.boat;if(!N.out)return;
+ const sx=B.x-Math.cos(B.ang)*26,sy=B.y-Math.sin(B.ang)*26,R=N.R*(1+Math.max(0,N.pulse)*.5);
+ c.strokeStyle='#f1e3c0';c.lineWidth=2;c.beginPath();c.moveTo(sx,sy);c.lineTo(N.x,N.y);c.stroke();
+ c.save();c.translate(N.x,N.y);
+ c.fillStyle=N.tang>0?'rgba(200,120,255,.3)':'rgba(255,255,255,.14)';c.strokeStyle=N.tang>0?'#e0aaff':'#fff';c.lineWidth=2.5;
+ c.beginPath();c.arc(0,0,R,0,7);c.fill();c.stroke();
+ c.lineWidth=1;c.strokeStyle='rgba(255,255,255,.55)';
+ for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.moveTo(0,0);c.lineTo(Math.cos(a)*R,Math.sin(a)*R);c.stroke()}
+ c.beginPath();c.arc(0,0,R*.66,0,7);c.stroke();c.beginPath();c.arc(0,0,R*.33,0,7);c.stroke();
+ c.fillStyle='#fb8500';for(let i=0;i<12;i++){const a=i*Math.PI/6;c.beginPath();c.arc(Math.cos(a)*R,Math.sin(a)*R,3,0,7);c.fill()}
+ if(N.full){c.strokeStyle='#ff6b6b';c.lineWidth=4;c.beginPath();c.arc(0,0,R+7,0,7);c.stroke()}else if(N.tang<=0&&N.cd>0){c.strokeStyle='#ffe066';c.lineWidth=4;c.beginPath();c.arc(0,0,R+7,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-clamp(N.cd/N.cdMax,0,1)));c.stroke()}
+ c.restore();
+}
+function drawWater(c,t,vx,vy,W,H){
+ const g=c.createLinearGradient(0,vy,0,vy+H);g.addColorStop(0,'#1aa0c0');g.addColorStop(1,'#0c5d82');c.fillStyle=g;c.fillRect(vx,vy,W,H);
+ c.strokeStyle='rgba(255,255,255,.07)';c.lineWidth=2;
+ for(let k=Math.floor(vy/58);k<=Math.ceil((vy+H)/58);k++){c.beginPath();for(let x=vx-(vx%16);x<=vx+W+16;x+=16){const y=k*58+30+Math.sin(x*.018+t*.8+k)*9+Math.sin(x*.05-t*1.3+k*2)*4;if(x===vx-(vx%16))c.moveTo(x,y);else c.lineTo(x,y)}c.stroke()}
+ c.strokeStyle='rgba(235,225,170,.55)';c.lineWidth=70;c.strokeRect(0,0,WB.W,WB.H);
+ c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=4;c.setLineDash([14,10]);c.strokeRect(WB.x0-14,WB.y0-14,WB.x1-WB.x0+28,WB.y1-WB.y0+28);c.setLineDash([]);
+}
+function drawMini(c){
+ const mw=Math.min(130,CFG.W*.22),mh=mw*WB.H/WB.W,x0=CFG.W-mw-10,y0=AR.y0,s=mw/WB.W;
+ c.fillStyle='rgba(6,50,75,.55)';c.fillRect(x0,y0,mw,mh);c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1.5;c.strokeRect(x0,y0,mw,mh);
+ c.fillStyle='rgba(120,230,255,.7)';for(const f of A.fish)c.fillRect(x0+f.x*s,y0+f.y*s,1.4,1.4);
+ c.fillStyle='#fff';for(const b of A.bots)c.fillRect(x0+b.x*s-1,y0+b.y*s-1,2.4,2.4);
+ for(const p of A.patrols){c.fillStyle='#ff4d4d';c.fillRect(x0+p.x*s-2,y0+p.y*s-2,4,4)}
+ c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=1;c.strokeRect(x0+CAM.x*s,y0+CAM.y*s,CFG.W*s,CFG.H*s);
+ c.fillStyle='#ffe066';c.beginPath();c.arc(x0+A.boat.x*s,y0+A.boat.y*s,3.4,0,7);c.fill();
+}
+function draw(){
+ const c=cx,W=CFG.W,H=CFG.H,t=A.t,B=A.boat,N=A.net,m=DPR*KS,vx=CAM.x,vy=CAM.y;
+ const wt=()=>c.setTransform(m,0,0,m,-vx*m,-vy*m);
+ const iv=(x,y,p)=>x>vx-p&&x<vx+W+p&&y>vy-p&&y<vy+H+p;
+ wt();drawWater(c,t,vx,vy,W,H);
+ for(const r of A.rocks)if(iv(r.x,r.y,60))drawRock(c,r,t);
+ for(const e of A.fx){if(e.k==='foam'){c.fillStyle='rgba(255,255,255,'+(e.t/e.t0*.5)+')';c.beginPath();c.arc(e.x,e.y,3+(1-e.t/e.t0)*7,0,7);c.fill()}}
+ c.globalAlpha=.9;
+ for(const f of A.fish){if(!iv(f.x,f.y,40))continue;const spr=fishSprite(f.color,f.kind==='G'||f.kind==='B'?f.kind:''),k=f.size/12,ca=Math.cos(f.ang),sa=Math.sin(f.ang);c.setTransform(m*ca,m*sa,-m*sa,m*ca,m*(f.x-vx),m*(f.y-vy));c.drawImage(spr,-40*k,-18*k,64*k,36*k)}
+ c.globalAlpha=1;wt();
+ for(const j of A.jel)if(iv(j.x,j.y,60))drawJelly(c,j,t);
+ for(const e of A.fx){if(e.k==='ring'){const k=1-e.t/e.t0;c.strokeStyle=e.col;c.globalAlpha=1-k;c.lineWidth=3;c.beginPath();c.arc(e.x,e.y,e.R*(.3+.7*k),0,7);c.stroke();c.globalAlpha=1}}
+ A.bots.forEach(b=>{if(iv(b.x,b.y,60))drawBoatTop(c,b.x,b.y,b.ang,b.p.boat,.7,b.p.name,t,true)});
+ A.patrols.forEach(p=>{if(iv(p.x,p.y,60))drawPatrol(c,p,t)});
+ drawNet(c,t);
+ c.strokeStyle='rgba(255,224,102,'+(.55+.35*Math.sin(t*5))+')';c.lineWidth=3;c.beginPath();c.arc(B.x,B.y,34,0,7);c.stroke();
+ drawBoatTop(c,B.x,B.y,B.ang,BOAT,.75,BOAT.name,t);
+ for(const e of A.fx){if(e.k==='txt'){c.globalAlpha=clamp(e.t,0,1);c.fillStyle=e.col;c.font='bold 18px sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.strokeStyle='#000';c.lineWidth=3;c.strokeText(e.txt,e.x,e.y);c.fillText(e.txt,e.x,e.y);c.globalAlpha=1}}
+ c.setTransform(m,0,0,m,0,0);
+ c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
+ let msg='';
+ if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick ziehen = Kurs & Tempo · 🎣 Netz-Knopf: aus-/einholen';
+ else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'🌱 Fischt nachhaltig! Quote: '+A.quota+' Fische – damit der See überlebt.';
+ if(msg){c.strokeText(msg,W/2,AR.y0+26);c.fillText(msg,W/2,AR.y0+26)}
+ drawMini(c);
+ const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
+ $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
+ const have=A.cargo+A.net.n;
+ $('#h-cargo').textContent='🧺 '+A.cargo+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;
+ $('#h-stock').textContent='🐟 Bestand '+A.fish.length+'/'+CFG.K;$('#h-stock').style.display=revLvl()<2?'none':'';
+ $('#h-rank').textContent='🏅 Platz '+A.rank+'/'+G.P.length;
+ if(G.phase===2){const q=$('#h-quota');q.textContent=(have>A.quota?'⚠️ ':'📜 ')+'Quote '+have+'/'+A.quota;q.style.background=have>A.quota?'#ffd6d9':have===A.quota?'#d8f5e5':''}
+ const hb=$('#h-bar');hb.style.width=(tl/A.T*100)+'%';hb.style.background=tl<8?'#e63946':'#2a9d8f';
+}
+function loop(ts){if(!A||!A.running)return;if(A.paused){A.last=ts;draw();requestAnimationFrame(loop);return}const dt=Math.min(.05,(ts-A.last)/1000);A.last=ts;update(dt);if(A.running){draw();requestAnimationFrame(loop)}}
+function endRound(){if(!A.running)return;A.running=false;finishRound()}
+/* Steuerung */
+const KEYMAP={ArrowLeft:'l',a:'l',A:'l',ArrowRight:'r',d:'r',D:'r',ArrowUp:'u',w:'u',W:'u',ArrowDown:'d',s:'d',S:'d'};
+addEventListener('keydown',e=>{if(!A||!A.running||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;const k=e.key;
+ if(KEYMAP[k]){A.keys[KEYMAP[k]]=1;if(k.startsWith('Arrow'))e.preventDefault()}
+ else if(k===' '||k==='Enter'){e.preventDefault();if(!e.repeat)netPress()}});
+addEventListener('keyup',e=>{if(!A)return;const k=e.key;
+ if(KEYMAP[k])A.keys[KEYMAP[k]]=0;else if(k===' '||k==='Enter')netRelease()});
+const hold=(id,key)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(x){}if(A)A.keys[key]=1});
+ ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{if(A)A.keys[key]=0}));b.addEventListener('contextmenu',e=>e.preventDefault())};
+/* Joystick (analog): Richtung = Fahrtrichtung, Auslenkung = Tempo */
+{const jy=$('#joy'),kn=$('#joyKnob');let pid=null;
+ const setJ=e=>{const r=jy.getBoundingClientRect(),R=r.width/2,m=R-kn.offsetWidth/4;let dx=e.clientX-(r.left+R),dy=e.clientY-(r.top+R);const d=Math.hypot(dx,dy);if(d>m){dx*=m/d;dy*=m/d}
+  kn.style.transform=`translate(${dx}px,${dy}px)`;if(A)A.joy={x:dx/m,y:dy/m}};
+ const endJ=()=>{pid=null;kn.style.transform='';if(A)A.joy=null};
+ jy.addEventListener('pointerdown',e=>{e.preventDefault();pid=e.pointerId;try{jy.setPointerCapture(pid)}catch(x){}setJ(e)});
+ jy.addEventListener('pointermove',e=>{if(e.pointerId===pid){e.preventDefault();setJ(e)}});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>jy.addEventListener(ev,e=>{if(e.pointerId===pid)endJ()}));jy.addEventListener('contextmenu',e=>e.preventDefault());}
+{const nb=$('#bNet');nb.addEventListener('pointerdown',e=>{e.preventDefault();try{nb.setPointerCapture(e.pointerId)}catch(x){}netPress()});
+ ['pointerup','pointercancel'].forEach(ev=>nb.addEventListener(ev,()=>netRelease()));nb.addEventListener('contextmenu',e=>e.preventDefault())}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();netPress()});
+$('#bHome').onclick=()=>{if(A&&A.running)endRound()};
+
+/* ---------- Saisonende ---------- */
+function finishRound(){
+ if(MP.role==='player'){mpPlayerFinish();return}
+ const me=G.P[0],ph=G.phase;
+ if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0}
+  for(const b of A.bots)for(const e of b.evs)if(!e.done)execBot(b,e,true);
+ const Sstart=A.S0,Safter=A.fish.length,base=priceBase(Sstart),pr=A.price,Q=A.quota,tac=A.tac;
+ /* Spieler: Kontrolle im Hafen */
+ const pIll=polOn()?Math.max(0,A.cargo-Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
+ if(pIll>0){pViol=1;if(Math.random()<1-Math.pow(1-CFG.PATROL_P,pIll)){pCaught=true;confiscate(pIll);pFine+=Math.round(pIll*CFG.FINE_MULT*base)}}
+ const rows=[];
+ const eco=polOn()&&!pViol;
+ rows.push({p:me,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:pViol&&!(pFine>0)});
+ A.bots.forEach(b=>{
+  const ill=polOn()?Math.max(0,b.n-Q):0,viol=ill>0,caught=viol&&b.flag;
+  let keep=b.n,fine=0;if(caught){keep=b.n-ill;fine=Math.round(ill*CFG.FINE_MULT*base)}
+  const gold=Math.min(b.gold,keep*4),e=polOn()&&!viol;
+  rows.push({p:b.p,fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught});
+ });
+  settle(rows,Sstart,Safter,pr,Q,tac,A.cargo);
+}
+function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
+ const ph=G.phase;
+ let base;
+ /* Fangprämie (Spielrunde 1) */
+ let king=null;
+ if(ph===1){
+  const ord=[...rows].sort((a,b)=>b.fish-a.fish||b.gold-a.gold||(a.p.ord!=null?a.p.ord:a.p.id)-(b.p.ord!=null?b.p.ord:b.p.id));
+  CFG.KING_PRIZE.forEach((pz,i)=>{if(ord[i]&&ord[i].fish>0){ord[i].prize=pz;ord[i].place=i+1}});
+  king=ord[0];
+ }
+ let finesTotal=0,total=0;
+ rows.forEach(r=>{
+  r.fix=r.p.role.fix;
+  if(ph===2&&r.eco)r.prize=CFG.ECO_BONUS;
+  r.prize=r.prize||0;
+  r.net=r.income-r.fix-r.fine+r.prize;
+  r.p.coins+=r.net;r.p.fishTotal+=r.fish;r.p.lastFish=r.fish;
+  r.p.fines+=r.fine;if(r.viol)r.p.viol++;
+  finesTotal+=r.fine;total+=r.fish;
+ });
+ const gr=growth(Safter),farm=CFG.FARM*G.comm.farm;
+ const Snew=Math.min(CFG.K,Safter+gr+farm);
+ rows.forEach(r=>{
+  let b=0;
+  if(b){r.p.coins+=b;r.net+=b;r.bonus=b}
+  r.p.lastNet=r.net;
+  r.p.tag=ph===1?(r.place===1?'🏆 +'+r.prize:r.place===2?'🥈 +'+r.prize:r.place===3?'🥉 +'+r.prize:''):(!polOn()?(r.fish>Q?'📜 über Quote':'🌱 Quote ok'):r.caught?'🚔 −'+r.fine:r.sneaky?'😏 unentdeckt':'🌿 +'+(CFG.ECO_BONUS));
+ });
+ G.comm.fund+=Math.round(finesTotal*.5);
+ G.lastPlayer=lastPl;G.totalCatch+=total;G.totalFines+=finesTotal;
+ const empty=Snew<CFG.COLLAPSE;
+ const caughtN=rows.filter(r=>r.caught).length,ecoN=rows.filter(r=>r.eco).length,sneakyN=rows.filter(r=>r.sneaky).length;
+ let headline;
+ if(empty)headline='💀 Der See ist leer! Für alle endet die Fischerei.';
+ else if(ph===1&&Safter<Sstart*.6)headline=`🚨 Goldrausch! ${esc(king.p.name)} holt ${king.fish} Fische – der Bestand sinkt um ${Math.round((1-Safter/Sstart)*100)} %!`;
+ else if(ph===1)headline=`🐟 Gesamtfang ${total} Fische – der Bestand liegt bei ${Snew}.`;
+ else if(ph===2&&!polOn()){const ov=rows.filter(r=>r.fish>Q).length;headline=ov?`📜 ${ov} von ${rows.length} Booten haben mehr als die Quote gefangen – Bestand: ${Snew}.`:`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`}
+ else if(!caughtN&&!sneakyN)headline=`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`;
+ else headline=`🚔 Die Patrouille erwischt ${caughtN} Boote – Strafen: ${finesTotal} 💰. Bestand: ${Snew}.`;
+ G.hist.push({r:G.round,start:Sstart,after:Safter,end:Snew});
+ const sorted=rankPlayers(false);
+ G.last={rows,Sstart,Safter,gr,farm,Snew,pr,headline,empty,total,sorted,king,tac,Q,finesTotal,caughtN,ecoN,sneakyN,
+  avgBot:Math.round(rows.slice(1).reduce((s,r)=>s+r.fish,0)/(rows.length-1)*10)/10,msy:growth(Math.round(CFG.K/2))};
+ G.S=Snew;G.collapse=empty;
+ if(doRender!==false)renderResult();
+}
+
+function drawChart(canvas,hist){
+ const c=canvas.getContext('2d'),W=canvas.width,H=canvas.height,pad=34;c.clearRect(0,0,W,H);
+ c.fillStyle='#f4fbfd';c.fillRect(0,0,W,H);
+ const pts=[];hist.forEach((h,i)=>{pts.push([i,h.start]);pts.push([i+.5,h.after])});pts.push([hist.length,hist[hist.length-1].end]);
+ const xs=x=>pad+x/Math.max(1,hist.length)*(W-pad*1.6),ys=v=>H-pad-v/CFG.K*(H-pad*1.6);
+ c.strokeStyle='#cfe0e8';c.lineWidth=1;c.fillStyle='#456';c.font='12px sans-serif';
+ [0,.25,.5,.75,1].map(q=>Math.round(CFG.K*q)).forEach(v=>{c.beginPath();c.moveTo(pad,ys(v));c.lineTo(W-pad/2,ys(v));c.stroke();c.fillText(v,6,ys(v)+4)});
+ c.setLineDash([6,4]);c.strokeStyle='#2a9d8f';c.beginPath();c.moveTo(pad,ys(CFG.K/2));c.lineTo(W-pad/2,ys(CFG.K/2));c.stroke();c.setLineDash([]);c.fillStyle='#2a9d8f';c.fillText('größter Zuwachs (≈'+CFG.K/2+')',pad+6,ys(CFG.K/2)-5);
+ c.strokeStyle='#e63946';c.setLineDash([3,3]);c.beginPath();c.moveTo(pad,ys(CFG.COLLAPSE));c.lineTo(W-pad/2,ys(CFG.COLLAPSE));c.stroke();c.setLineDash([]);
+ c.strokeStyle='#0b3d5c';c.lineWidth=3;c.beginPath();pts.forEach(([x,v],i)=>i?c.lineTo(xs(x),ys(v)):c.moveTo(xs(x),ys(v)));c.stroke();
+ pts.forEach(([x,v],i)=>{c.fillStyle=i%2===1?'#e63946':'#2a9d8f';c.beginPath();c.arc(xs(x),ys(v),4,0,7);c.fill()});
+ c.fillStyle='#456';hist.forEach((h,i)=>c.fillText('S'+h.r,xs(i)-6,H-10));
+}
+function drawCompare(canvas,h1,h2){
+ const c=canvas.getContext('2d'),W=canvas.width,H=canvas.height,pad=38;c.clearRect(0,0,W,H);
+ c.fillStyle='#f4fbfd';c.fillRect(0,0,W,H);
+ const n=Math.max(h1.length,h2.length,1);
+ const xs=i=>pad+i/n*(W-pad*1.6),ys=v=>H-pad-v/CFG.K*(H-pad*1.6);
+ c.strokeStyle='#cfe0e8';c.lineWidth=1;c.fillStyle='#456';c.font='12px sans-serif';
+ [0,.25,.5,.75,1].map(q=>Math.round(CFG.K*q)).forEach(v=>{c.beginPath();c.moveTo(pad,ys(v));c.lineTo(W-pad/2,ys(v));c.stroke();c.fillText(v,6,ys(v)+4)});
+ const line=(h,col)=>{const v=[h.length?h[0].start:CFG.S0,...h.map(x=>x.end)];c.strokeStyle=col;c.lineWidth=4;c.beginPath();v.forEach((y,i)=>i?c.lineTo(xs(i),ys(y)):c.moveTo(xs(i),ys(y)));c.stroke();c.fillStyle=col;v.forEach((y,i)=>{c.beginPath();c.arc(xs(i),ys(y),5,0,7);c.fill()})};
+ line(h1,'#e63946');line(h2,'#2a9d8f');
+ c.fillStyle='#456';for(let i=0;i<=n;i++)c.fillText(i===0?'Start':'S'+i,xs(i)-12,H-12);
+ c.font='bold 13px sans-serif';c.fillStyle='#e63946';c.fillText('● Spielrunde 1: freie Fischerei',pad+8,16);c.fillStyle='#2a9d8f';c.fillText('● Spielrunde 2: mit Quote & Kontrolle',pad+8,34);
+}
+/* --- Bestenliste --- */
+const MEDAL=['🥇','🥈','🥉'];
+function lbRow(p,coinsOverride){
+ const d=p.prevRank-p.rank;
+ const arrow=d>0?`<span class="pos">▲${d}</span>`:d<0?`<span class="neg">▼${-d}</span>`:'<span class="small">–</span>';
+ return `<tr class="${p.isP?'me':''}"><td>${p.rank<=3?MEDAL[p.rank-1]:p.rank}</td><td>${arrow}</td><td>${p.role.emoji} ${esc(p.name)}${p.isP?' <small>(du · '+esc(msName(BOAT.name))+')</small>':''}</td><td>${p.lastFish}</td><td class="small">${p.tag||''}</td><td><b>${coinsOverride==null?p.coins:coinsOverride}</b></td></tr>`;
+}
+function leaderboardHTML(sorted,expanded){
+ const me=G.P[0];let rows;
+ if(expanded)rows=sorted.map(p=>lbRow(p));
+ else{
+  const idx=new Set();for(let i=0;i<10;i++)idx.add(i);for(let i=me.rank-2;i<=me.rank;i++)if(i>=0&&i<sorted.length)idx.add(i);
+  const arr=[...idx].sort((a,b)=>a-b);rows=[];let prev=-1;
+  arr.forEach(i=>{if(prev>=0&&i>prev+1)rows.push('<tr><td colspan="6" class="small" style="text-align:center">⋮</td></tr>');rows.push(lbRow(sorted[i]));prev=i});
+ }
+ return `<table><tr><th>#</th><th></th><th>Boot</th><th>Fang</th><th>Saison</th><th>Münzen</th></tr>${rows.join('')}</table>`;
+}
+function attachLbToggle(getSorted){
+ let all=false;
+ $('#lbToggle').onclick=()=>{all=!all;$('#lbBox').innerHTML=leaderboardHTML(getSorted(),all);$('#lbToggle').textContent=all?'🔽 Nur Top 10 + meine Umgebung':'📜 Alle '+G.P.length+' anzeigen'};
+}
+function renderResult(){
+ const L=G.last,me=G.P[0],ph=G.phase,fact=FACTS[FACT_SEQ[ph][(G.round-1)%5]],m=fact.m,lv=revLvl();
+ const Q=QUIZ[QUIZ_SEQ[ph][(G.round-1)%5]],showQ=!(ph===1&&G.round===1);
+ const R1h=ph===2&&G.res[1]?G.res[1].hist:null,r1=R1h&&R1h[G.round-1];
+ const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Nutzen-Check: Regeln im Vergleich</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Saisonstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Saison</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See – und er wächst nach. Das ist der Nutzen der gemeinsamen Regel.':'Beobachte, wie sich der Bestand mit den Regeln entwickelt.'}</p></div>`:'';
+ const myRow=L.rows[0];
+ let special='';
+ if(ph===1){
+  const k=L.king;
+  special=`<div class="card" style="border:4px solid #fb8500"><h3>🏆 Fangkönig der Saison: ${k.p.role.emoji} ${esc(k.p.name)}${k.p.isP?' (du!)':''}</h3>
+  <p><b>${k.fish} Fische</b> gefangen – dafür gibt es <b>${k.prize} 💰 Fangprämie</b>. Platz 2 und 3 bekommen ${CFG.KING_PRIZE[1]} und ${CFG.KING_PRIZE[2]} 💰.</p>
+  <p class="small">In der freien Fischerei wird belohnt, wer am meisten rausholt – und wer am meisten rausholt, steht in der Bestenliste oben.</p>
+  ${myRow.prize?`<p>🎉 <b>Du bekommst ${myRow.prize} 💰 Fangprämie</b> (Platz ${myRow.place} der Fänger)!</p>`:''}</div>`;
+ }else{
+  const overN=L.rows.filter(r=>r.fish>L.Q).length;
+  special=G.round<2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🌱 Bilanz der Fischereibehörde</h3>
+  <p>Erlaubt (TAC): <b>${L.tac}</b> · Tatsächlich gefangen: <b>${L.total}</b> · Quote pro Boot: <b>${L.Q}</b></p>
+  <p>📜 <b>${overN}</b> von ${L.rows.length} Booten haben mehr als die Quote gefangen – ohne Kontrolle passiert ihnen nichts.</p>
+  <p class="small">${myRow.fish>L.Q?'Du hast über der Quote gefischt. Ohne jede Kontrolle bleibt das folgenlos – aber der See leidet.':'Du hast dich an die Quote gehalten – das war gut für den See.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`:`<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Bilanz der Fischereibehörde</h3>
+  <p>Erlaubt (TAC): <b>${L.tac}</b> · Tatsächlich gefangen: <b>${L.total}</b> · Quote pro Boot: <b>${L.Q}</b></p>
+  <p>🌿 <b>${L.ecoN}</b> Boote hielten sich an die Quote (Öko-Siegel +${Math.round((CFG.ECO_MULT-1)*100)} % und ${CFG.ECO_BONUS} 💰) · 🚔 <b>${L.caughtN}</b> erwischt (Strafen ${L.finesTotal} 💰) · 😏 <b>${L.sneakyN}</b> unentdeckt</p>
+  <p class="small">${myRow.caught?'🚔 Du wurdest erwischt: Überfang beschlagnahmt und '+myRow.fine+' 💰 Strafe.':myRow.sneaky?'😏 Du hast über der Quote gefischt und Glück gehabt – ohne Kontrolle gibt es aber kein Öko-Siegel. Auf Dauer lohnt sich das nicht.':'🌿 Du hast dich an die Quote gehalten: Öko-Siegel und Prämie sind deins.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`;
+ }
+ const end=G.collapse||G.round>=G.rounds;
+ $('#s-result').innerHTML=`
+ <h1 class="hero" style="font-size:34px">Spielrunde ${ph} · Saison ${G.round} – Bestenliste</h1>
+ <div class="news">📰 ${L.headline}</div>
+ ${special}
+ <div class="card"><h3>🏅 Bestenliste nach Saison ${G.round}</h3>
+  <p class="small">Du: Platz <b>${me.rank}</b> von ${G.P.length} · Fang ${myRow.fish} (Ø der anderen: ${L.avgBot}) · Saison ${myRow.net>=0?'+':''}${myRow.net} 💰</p>
+  <div id="lbBox">${leaderboardHTML(L.sorted,false)}</div>
+  <button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
+ ${lv<2?`<div class="card" style="border:4px solid #f4a261"><h3>⚠️ Achtung: Der Fischbestand sinkt!</h3><p>Vor der Saison schwammen <b>${L.Sstart}</b> Fische in der Bucht. Ihr habt zusammen <b class="neg">${L.total}</b> gefangen – jetzt sind es nur noch <b>${L.Safter}</b>. Ein Teil wächst zwar nach (+${L.gr}), aber was gefangen wurde, fehlt im See. Beobachte ab jetzt den Bestand!</p></div>`:` <div class="card"><h3>🌊 Was passierte mit der Bucht?</h3>
+ <p>Bestand <b>${L.Sstart}</b> → Gesamtfang <b class="neg">−${L.total}</b> ${lv>=3?` (nachhaltig wären ≈${L.msy})`:''} → <b>${L.Safter}</b> → Nachwuchs <b class="pos">+${L.gr}${L.farm?' +'+L.farm+' (Zucht)':''}</b> → <b style="font-size:20px">${L.Snew}</b></p>
+ <canvas id="chart1" width="700" height="230"></canvas></div>`}
+ ${nutzen}
+ <div class="grid g2"><div class="meme"><div>${m[1]}</div><div class="e">${m[0]}</div><div>${m[2]}</div></div><div class="fact"><b>💡 Wusstest du?</b><p>${fact.t}</p></div></div>
+ ${showQ?quizCard(Q,'qz','🧠 Bonusfrage',CFG.QUIZ_REWARD):''}
+ <button class="btn green" id="toNext">${end?'🏁 Weiter':'🛠 Zu den Upgrades'}</button>`;
+ if(lv>=2)drawChart($('#chart1'),G.hist);attachLbToggle(()=>L.sorted);
+ attachQuiz('qz',Q,CFG.QUIZ_REWARD);
+ $('#toNext').onclick=()=>{if(end)endPhase();else enterUpgrades()};
+ show('s-result');
+ if(L.empty)beep(100,.6,'sawtooth',.08);
+}
+
+/* ---------- Upgrades & Gemeindekasse ---------- */
+function enterUpgrades(){
+ let sum=0,cnt=0;
+ if(G.phase===2&&G.round>=2&&!MP.role)G.P.slice(1).forEach(p=>{const amt=Math.floor(p.role.contrib*Math.max(0,p.coins-8));if(amt>0){p.coins-=amt;p.contrib+=amt;G.comm.fund+=amt;sum+=amt;cnt++}});
+ G.botContrib={sum,cnt};
+ renderUpgrades();
+}
+function pips(l,m){return '●'.repeat(l)+'○'.repeat(m-l)}
+function renderUpgrades(){
+ const me=G.P[0];
+ const commKeys=Object.keys(COMM).filter(k=>k!=='wache'&&!(k==='sonar'&&G.phase===2));
+ $('#s-upg').innerHTML=`
+ <h1 class="hero" style="font-size:34px">${G.phase===1?'Hafen':'Hafen & Dorfversammlung'}</h1>
+ <div class="card"><div class="row" style="justify-content:space-between"><h3>⚓ Mein Boot</h3><span class="pill">💰 ${me.coins} Münzen</span></div>
+ <p class="small">Private Upgrades machen dich effizienter${G.phase===1?'':' – nützlich, auch wenn du dich an die Quote hältst (gezielt Groß- und Goldfische fangen!).'}</p>
+ <div class="grid g2">${Object.entries(PRIV).map(([k,u])=>{const l=me.upg[k],mx=l>=u.max,cost=u.cost[l];return `<div class="upg"><h4>${u.emoji} ${u.name} <span class="pips">${pips(l,u.max)}</span></h4><p>${u.desc}</p><button class="btn" data-p="${k}" ${mx||me.coins<cost?'disabled':''}>${mx?'MAX':'Kaufen · '+cost+' 💰'}</button></div>`}).join('')}</div></div>
+ ${G.phase===1||MP.role||G.round<2?'':` <div class="card"><div class="row" style="justify-content:space-between"><h3>🏛 Gemeindekasse</h3><span class="pill">🏦 ${G.comm.fund} Münzen im Topf</span></div>
+ <p>Hier zahlen alle freiwillig ein${G.phase===2?' – dazu fließt die Hälfte der Strafgelder in die Kasse':''}. Die Projekte nützen <b>allen ${G.P.length} Booten</b> – auch denen, die nichts beitragen (Trittbrettfahrer!). Diese Runde zahlten <b>${G.botContrib.cnt}</b> Boote zusammen <b>${G.botContrib.sum} 💰</b> ein.</p>
+ <div class="row"><span>Dein Beitrag:</span>${[10,20,40].map(n=>`<button class="btn ghost" data-c="${n}" ${me.coins<n?'disabled':''}>+${n}</button>`).join('')}<span class="small">(du hast bisher ${me.contrib} eingezahlt)</span></div>
+ <div class="grid g2" style="margin-top:12px">${commKeys.map(k=>{const u=COMM[k],l=G.comm[k],mx=l>=u.max,cost=mx?0:commCost(k,l),ok=!mx&&G.comm.fund>=cost;return `<div class="upg"><h4>${u.emoji} ${u.name} <span class="pips">${pips(l,u.max)}</span></h4><p>${u.desc}</p>${mx?'':`<div class="bar" style="height:16px;margin-bottom:6px"><i style="width:${Math.min(100,G.comm.fund/cost*100)}%;background:#3a86ff"></i><span>${G.comm.fund}/${cost}</span></div>`}<button class="btn blue" data-m="${k}" ${ok?'':'disabled'}>${mx?'MAX':ok?'Beschließen!':'Zu wenig im Topf'}</button></div>`}).join('')}</div></div>`}
+ ${MP.role?'<div class="pill" style="font-size:18px">⏳ Warte, bis der Lehrer die nächste Saison startet …</div>':'<button class="btn green" id="nextS">'+('🌅 Saison '+(G.round+1)+' starten')+'</button>'}`;
+ document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const k=b.dataset.p,l=me.upg[k],c=PRIV[k].cost[l];if(me.coins>=c&&l<PRIV[k].max){me.coins-=c;me.upg[k]++;beep(700,.12);renderUpgrades()}});
+ document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const n=+b.dataset.c;if(me.coins>=n){me.coins-=n;me.contrib+=n;G.comm.fund+=n;beep(600,.08);renderUpgrades()}});
+ document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const k=b.dataset.m,l=G.comm[k],c=commCost(k,l);if(G.comm.fund>=c&&l<COMM[k].max){G.comm.fund-=c;G.comm[k]++;beep(880,.2);toast('🏛 Beschlossen: '+COMM[k].name);renderUpgrades()}});
+ if($('#nextS'))$('#nextS').onclick=()=>{G.round++;renderDecision()};
+ show('s-upg');
+}
+
+/* ---------- Ende einer Spielrunde ---------- */
+function endPhase(){
+ const ph=G.phase,sorted=byCoins(),me=G.P[0];
+ const myRank=sorted.indexOf(me)+1;
+ G.res[ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank,myCoins:me.coins,winner:sorted[0],myFish:me.fishTotal,viol:me.viol};
+ if(ph===1)renderPhase1End(sorted,myRank);else renderFinal(sorted,myRank);
+}
+function podiumHTML(sorted){
+ return `<div class="grid g4" style="margin:8px 0">${sorted.slice(0,3).map((p,i)=>`<div class="role" style="text-align:center;cursor:default;${p.isP?'border-color:#fb8500;background:#fff4e0':''}"><div class="em">${MEDAL[i]}</div><b>${p.role.emoji} ${esc(p.name)}${p.isP?' (du)':''}</b><small>${p.coins} 💰 · ${p.fishTotal} Fische gesamt</small></div>`).join('')}</div>`;
+}
+function renderPhase1End(sorted,myRank){
+ const R=G.res[1],w=sorted[0],me=G.P[0];
+ sorted.forEach((p,i)=>{p.prevRank=p.rank;p.rank=i+1;});
+ $('#s-final').innerHTML=`
+ <h1 class="hero" style="font-size:36px">${R.empty?'💀 Der See ist leer!':'🏁 Ende der Spielrunde 1'}</h1>
+ <div class="news">${R.empty?`Nach Saison ${R.seasons} gibt es keine Fische mehr – die Fischerei ist am Ende.`:`Nach ${R.seasons} Saisons sind nur noch ${R.endS} von ${CFG.K} Fischen übrig.`}</div>
+ <div class="card" style="border:4px solid #fb8500"><h3>🏆 Der beste Fischer erreicht Platz 1</h3>
+  <p><b>${w.role.emoji} ${esc(w.name)}${w.isP?' – das bist DU!':''}</b> hat mit <b>${w.fishTotal} gefangenen Fischen</b> und <b>${w.coins} 💰</b> gewonnen. ${w.isP?'Du hast konsequent am meisten rausgeholt – und wurdest dafür belohnt.':`Du landest auf Platz <b>${myRank}</b> mit ${me.coins} 💰 und ${me.fishTotal} Fischen.`}</p>
+  ${podiumHTML(sorted)}</div>
+ <div class="card"><h3>…aber was bleibt?</h3>
+  <p>Alle ${G.P.length} Boote zusammen fingen <b>${R.total} Fische</b>. ${R.empty?'Jetzt ist der See leer: <b>niemand</b> kann mehr fischen, auch der Sieger nicht.':'Der See ist fast leer – die Fänge brechen ein.'}</p>
+  <canvas id="chart1" width="700" height="230"></canvas></div>
+ ${quizCard({q:'Warum ist der See leer, obwohl niemand das wollte?',o:['Weil alle zu langsam waren','Weil für jeden Einzelnen ein Fisch mehr Gewinn brachte, die Kosten des leeren Sees aber alle gemeinsam tragen','Weil die Fische weggeschwommen sind','Weil der Preis zu niedrig war'],a:1,e:'Genau.'},'refl','🤔 Auswertung: Was ist passiert?',0)}
+ <div class="card" id="reveal" style="display:none;border:4px solid #e63946"><h3>📉 Tragödie der Allmende</h3><p>Die Bucht ist ein <b>Allmendegut</b>: Niemand kann von der Nutzung ausgeschlossen werden (nicht ausschließbar), aber jeder Fisch, den du fängst, fehlt den anderen (<b>Rivalität</b>). Der Nutzen eines Fisches gehört ganz dir, die Kosten eines leeren Sees tragen alle. Also ist es für jeden vernünftig, schnell mehr zu fangen – und für alle zusammen ein Verlust. Garrett Hardin nannte das 1968 die <b>Tragödie der Allmende</b>.</p><table class="small" style="width:100%"><tr><th></th><th>Die anderen fangen wenig</th><th>Die anderen fangen viel</th></tr><tr><td><b>Ich fange wenig</b></td><td>👍 alle gut (See bleibt)</td><td>😖 ich habe wenig, der See ist trotzdem leer</td></tr><tr><td><b>Ich fange viel</b></td><td>🤑 ich gewinne</td><td>💀 alle verlieren</td></tr></table><p class="small">Für jeden Einzelnen ist „viel fangen“ die beste Antwort – das ist ein <b>Gefangenendilemma</b>. Wie kommt man da raus? Das probierst du in Spielrunde 2.</p></div>
+ <div class="card"><h3>🏅 Endstand Spielrunde 1</h3><div id="lbBox">${leaderboardHTML(sorted,false)}</div><button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
+ <div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2: Was, wenn es Regeln gibt?</h3>
+  <p>Gleicher See, gleiche ${G.P.length} Boote – aber jetzt soll <b>jeder nachhaltig fischen</b>, damit der See überlebt. Die Behörde gibt dafür <b>Fangquoten</b> vor.</p>
+  <button class="btn" id="toPhase2">🚔 Spielrunde 2 starten</button></div>`;
+ drawChart($('#chart1'),R.hist.length?R.hist:[{r:1,start:CFG.S0,after:0,end:0}]);
+ attachQuiz('refl',{a:1,e:'Genau: Der Nutzen ist privat, die Kosten sind gemeinsam.'},0,()=>{$('#reveal').style.display='block'});attachLbToggle(()=>sorted);
+ $('#toPhase2').onclick=()=>{if(MP.role)toast('Der Lehrer startet Spielrunde 2');else startPhase(2)};
+ show('s-final');
+}
+function renderFinal(sorted,myRank){
+ const R1=G.res[1],R2=G.res[2],me=G.P[0];
+ sorted.forEach((p,i)=>{p.rank=i+1});
+ const more=R2.total>R1.total;
+ const badges=[];
+ if(!R2.viol)badges.push('🌿 Musterfischer:in – nie über der Quote');
+ if(R2.viol&&R2.fines>0||me.fines>0)badges.push('🚔 Strafzettel kassiert');
+ if(myRank===1)badges.push('🏆 Platz 1 in Spielrunde 2');
+ if(R1.myRank===1)badges.push('👑 Fangkönig:in der freien Fischerei');
+ if(R2.endS>=CFG.K*.7)badges.push('🌊 Lebendiger See');
+ if(me.contrib>=60)badges.push('🤝 Gemeinwohl-Held:in');
+ const txt=`Fischer Allmende: Spielrunde 1 Platz ${R1.myRank} (See ${R1.empty?'leer':R1.endS}), Spielrunde 2 Platz ${myRank} (See ${R2.endS}/${CFG.K}). Gesamtfang ${R1.total} → ${R2.total}.`;
+ $('#s-final').innerHTML=`
+ <h1 class="hero" style="font-size:36px">🏁 Auswertung</h1>
+ <div class="news">${more?`Mit Regeln wurde insgesamt MEHR gefangen – ${R2.total} statt ${R1.total} Fische – und der See lebt noch (${R2.endS} Fische)!`:`Mit Regeln lebt der See (${R2.endS} Fische) – und die Fischerei hat Zukunft.`}</div>
+ <div class="card"><h3>🏆 Endstand Spielrunde 2</h3>${podiumHTML(sorted)}
+  <div id="lbBox">${leaderboardHTML(sorted,false)}</div><button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button>
+  <div>${badges.map(b=>`<span class="badge">${b}</span>`).join('')}</div></div>
+ <div class="card"><h3>⚖️ Vergleich: freie Fischerei vs. Quote & Kontrolle</h3>
+  <table><tr><th></th><th>🌊 Spielrunde 1<br>frei</th><th>🚔 Spielrunde 2<br>geregelt</th></tr>
+  <tr><td>Saisons gefischt</td><td>${R1.seasons}${R1.empty?' (dann leer)':''}</td><td>${R2.seasons}</td></tr>
+  <tr><td>Gesamtfang aller Boote</td><td class="${more?'neg':'pos'}">${R1.total}</td><td class="${more?'pos':'neg'}">${R2.total}</td></tr>
+  <tr><td>Bestand am Ende</td><td class="neg">${R1.endS} / ${CFG.K}</td><td class="pos">${R2.endS} / ${CFG.K}</td></tr>
+  <tr><td>Strafen insgesamt</td><td>–</td><td>${R2.fines} 💰</td></tr>
+  <tr><td>Dein Platz</td><td>${R1.myRank}. (${R1.myCoins} 💰)</td><td>${myRank}. (${R2.myCoins} 💰)</td></tr>
+  <tr><td>Reichstes Boot</td><td>${R1.winner.role.emoji} ${esc(R1.winner.name)}</td><td>${sorted[0].role.emoji} ${esc(sorted[0].name)}</td></tr></table>
+  <canvas id="chart2" width="700" height="260" style="margin-top:10px"></canvas></div>
+ <div class="card"><h3>🎓 Fazit: Das Gemeinschaftsprinzip</h3>
+ <ul>
+ <li><b>Ohne Regeln</b> belohnt der Markt kurzfristig den Rücksichtslosesten – am Ende ist der See leer und alle verlieren (Tragödie der Allmende, Hardin 1968).</li>
+ <li><b>Gesamtfangmenge und Quote:</b> Erst wenn die Menge begrenzt und fair verteilt ist, muss keiner mehr „mitgieren“. ${more?'Zusammen wurde sogar mehr gefangen.':'Der See bleibt dafür dauerhaft lebendig.'}</li>
+ <li><b>Quote ohne Kontrolle</b> reicht nicht: In Saison 1 der Spielrunde 2 haben sich viele nicht daran gehalten – wer sich daran hielt, war der Dumme. Erst Kontrolle und Strafen machen Schwarzfischen unattraktiv: Überfang wird beschlagnahmt, die Strafe übersteigt den Gewinn.</li>
+ <li><b>Anreize</b> (Öko-Siegel, Prämie) belohnen Regeltreue. Ostrom: klare Grenzen, gemeinsam beschlossene Regeln, Kontrolle, abgestufte Sanktionen.</li>
+ ${MP.role?'':'<li><b>Gemeindekasse:</b> Gemeinsame Projekte nützen allen – auch denen, die nichts einzahlen (Trittbrettfahrer). Freiwillig zahlen nur wenige ein; deshalb sind verbindliche Regeln oft nötig.</li>'}
+ <li><b>Produktionsfaktor Natur:</b> erneuerbar, aber nur, wenn der Bestand nicht schneller schrumpft, als er nachwächst.</li></ul></div>
+ ${quizCard(QUIZ[QUIZ_SEQ[3][0]],'ft1','🎯 Abschlusstest 1/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][1]],'ft2','🎯 Abschlusstest 2/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][2]],'ft3','🎯 Abschlusstest 3/3',0)}
+ <div class="card"><h3>💬 Diskussionsfragen</h3><ol>
+ <li>Wann hast du in Spielrunde 1 mehr gefangen, weil „die anderen es ja auch tun“?</li>
+ <li>Warum hat der Sieger von Runde 1 langfristig trotzdem verloren?</li>
+ <li>Wer legt die Quote fest? Wie fair ist eine gleiche Quote für alle?</li>
+ <li>Was passiert, wenn Kontrollen selten sind oder Strafen zu niedrig?</li>
+ <li>Wo gibt es in der Realität Fangquoten? (EU-TAC, Island, Norwegen …) Welche anderen Allmenden gibt es?</li></ol></div>
+ <div class="row"><button class="btn" id="again">🔁 Nochmal spielen</button><button class="btn blue" id="copyRes">📋 Ergebnis kopieren</button></div>`;
+ drawCompare($('#chart2'),R1.hist,R2.hist);
+ [0,1,2].forEach(k=>attachQuiz('ft'+(k+1),QUIZ[QUIZ_SEQ[3][k]],0));attachLbToggle(()=>sorted);
+ if(MP.role)$('#again').style.display='none';
+ $('#again').onclick=()=>{renderRoles();show('s-start')};
+ $('#copyRes').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Ergebnis kopieren:',txt)})};
+ show('s-final');
+}
+
+/* ---------- Boot-Werft ---------- */
+const esc=s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const rndName=()=>BOAT_NAMES[rint(0,BOAT_NAMES.length-1)];
+const BOAT={name:'',type:'kutter',hull:'#e63946',trim:'#ffffff',sail:'#ffffff',pattern:'none',topper:'🎣',parts:{bug:'none',dach:'none',heck:'none',seite:'none'},paint:document.createElement('canvas')};
+BOAT.paint.width=288;BOAT.paint.height=96;
+let yTab='hull';const brush={color:'#3a86ff',size:10,erase:false};
+const YO=225,YS=3.1;
+function hullPath(c,T){
+ c.beginPath();
+ if(T==='schlauch'){c.moveTo(-26,2);c.lineTo(26,2);c.arc(26,12,10,-Math.PI/2,Math.PI/2);c.lineTo(-26,22);c.arc(-26,12,10,Math.PI/2,Math.PI*1.5);c.closePath()}
+ else if(T==='trawler'){c.moveTo(-34,0);c.lineTo(36,0);c.lineTo(28,23);c.lineTo(-30,23);c.closePath()}
+ else{c.moveTo(-32,0);c.lineTo(32,0);c.lineTo(22,19);c.lineTo(-22,19);c.closePath()}
+}
+function hullPattern(c,b){
+ const p=b.pattern;c.fillStyle=b.trim;c.strokeStyle=b.trim;
+ if(p==='stripe'){for(let i=-36;i<36;i+=12)c.fillRect(i,0,6,26)}
+ else if(p==='dots'){for(let i=-30;i<36;i+=12)for(let j=6;j<26;j+=9){c.beginPath();c.arc(i+(j>10?6:0),j,2.8,0,7);c.fill()}}
+ else if(p==='check'){for(let i=0;i<6;i++)for(let j=0;j<3;j++)if((i+j)%2===0)c.fillRect(-36+i*12,j*8,12,8)}
+ else if(p==='wave'){c.lineWidth=2.5;for(let j=7;j<26;j+=8){c.beginPath();for(let x=-36;x<=36;x+=4)c.lineTo(x,j+Math.sin(x*.35)*2.5);c.stroke()}}
+ c.fillRect(-36,0,72,3);
+}
+function drawBoatCustom(c,x,y,b,s,label){
+ c.save();c.translate(x,y);c.scale(s,s);
+ const T=b.type;let topY=-42;
+ if(T==='kutter'||T==='segler'){
+  c.fillStyle='#6b4f3a';c.fillRect(-1.5,-36,3,38);
+  c.fillStyle=b.sail;c.strokeStyle='#0004';c.lineWidth=1;
+  c.beginPath();c.moveTo(2,-34);c.lineTo(27,-7);c.lineTo(2,-7);c.closePath();c.fill();c.stroke();
+  if(T==='segler'){c.beginPath();c.moveTo(-3,-28);c.lineTo(-22,-7);c.lineTo(-3,-7);c.closePath();c.fill();c.stroke()}
+ }else if(T==='trawler'){
+  topY=-32;
+  c.fillStyle=b.sail;c.fillRect(-12,-18,24,19);
+  c.fillStyle='#8ecae6';c.fillRect(-8,-14,7,7);c.fillRect(2,-14,7,7);
+  c.fillStyle=b.trim;c.fillRect(-14,-21,28,4);c.fillRect(16,-24,6,24);
+  c.fillStyle='#0004';c.fillRect(16,-24,6,3);
+ }else{
+  topY=-22;
+  c.fillStyle='#333';c.fillRect(-38,4,7,12);
+  c.fillStyle='#6b4f3a';c.fillRect(-1,-14,2,16);
+ }
+ c.save();hullPath(c,T);c.fillStyle=b.hull;c.fill();c.clip();
+ hullPattern(c,b);
+ if(b.paint)c.drawImage(b.paint,-36,0,72,24);
+ c.restore();
+ hullPath(c,T);c.strokeStyle='#0006';c.lineWidth=1.5;c.stroke();
+ drawPartsSide(c,b,topY);
+ c.font='18px serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#000';c.fillText(b.topper||'',0,topY);
+ if(label){c.font='bold 12px "Trebuchet MS",sans-serif';c.lineWidth=3;c.strokeStyle='#0b3d5c';c.strokeText(label,0,topY-16);c.fillStyle='#fff';c.fillText(label,0,topY-16)}
+ c.restore();
+}
+function saveBoat(){try{const o={...BOAT};delete o.paint;o.paintURL=BOAT.paint.toDataURL();localStorage.setItem('fg_boat',JSON.stringify(o))}catch(e){}}
+function loadBoat(){try{
+ const o=JSON.parse(localStorage.getItem('fg_boat')||'null');if(!o)return;
+ ['name','type','hull','trim','sail','pattern','topper'].forEach(k=>{if(o[k])BOAT[k]=o[k]});
+ if(o.parts)for(const k in PARTS)if(PARTS[k].some(x=>x[0]===o.parts[k]))BOAT.parts[k]=o.parts[k];
+ if(o.paintURL){const im=new Image();im.onload=()=>{BOAT.paint.getContext('2d').drawImage(im,0,0);drawYard()};im.src=o.paintURL}
+}catch(e){}}
+function drawYard(){
+ const cvY=$('#yc');if(!cvY)return;const c=cvY.getContext('2d');
+ const g=c.createLinearGradient(0,0,0,340);g.addColorStop(0,'#bfeaf5');g.addColorStop(.6,'#e6f7fa');g.addColorStop(.61,'#2bb3d4');g.addColorStop(1,'#0b5d7a');
+ c.fillStyle=g;c.fillRect(0,0,360,340);
+ drawBoatCustom(c,180,YO,BOAT,YS,null);
+ c.font='bold 24px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.lineWidth=5;c.strokeStyle='#0b3d5c';
+ const nm=msName(BOAT.name||'Boot');c.strokeText(nm,180,328);c.fillStyle='#fff';c.fillText(nm,180,328);
+}
+const activeColor=()=>yTab==='brush'?brush.color:BOAT[yTab];
+function setColor(col){if(yTab==='brush'){brush.color=col;brush.erase=false}else BOAT[yTab]=col;renderYardCtl();drawYard();saveBoat()}
+function renderYardCtl(){
+ const chips=(id,items,isSel,onPick)=>{const el=$(id);el.innerHTML=items.map((it,i)=>`<button class="chip ${isSel(it)?'sel':''}" data-i="${i}">${it[1]}</button>`).join('');el.querySelectorAll('button').forEach(b=>b.onclick=()=>onPick(items[+b.dataset.i]))};
+ const upd=()=>{renderYardCtl();drawYard();saveBoat()};
+ chips('#bTypes',Object.entries(BOAT_TYPES).map(([k,v])=>[k,v.emoji+' '+v.name]),it=>it[0]===BOAT.type,it=>{BOAT.type=it[0];upd()});
+ chips('#bTabs',[['hull','🚢 Rumpf'],['trim','🎀 Muster & Rand'],['sail','⛵ Segel/Aufbau'],['brush','🖌️ Pinsel']],it=>it[0]===yTab,it=>{yTab=it[0];renderYardCtl()});
+ chips('#bPats',BOAT_PATTERNS,it=>it[0]===BOAT.pattern,it=>{BOAT.pattern=it[0];upd()});
+ chips('#bTops',BOAT_TOPPERS.map(t=>[t,t]),it=>it[0]===BOAT.topper,it=>{BOAT.topper=it[0];upd()});
+ for(const k of Object.keys(PARTS))chips('#bP_'+k,PARTS[k],it=>it[0]===BOAT.parts[k],it=>{BOAT.parts[k]=it[0];upd()});
+ $('#bPRnd').onclick=()=>{for(const k of Object.keys(PARTS))BOAT.parts[k]=pick(PARTS[k].slice(1))[0];upd()};
+ const cur=String(activeColor()).toLowerCase();
+ $('#bPal').innerHTML=BOAT_COLORS.map(col=>`<span class="sw ${col===cur&&!brush.erase?'sel':''}" data-c="${col}" style="background:${col}"></span>`).join('');
+ $('#bPal').querySelectorAll('.sw').forEach(sw=>sw.onclick=()=>setColor(sw.dataset.c));
+ $('#bCol').value=/^#[0-9a-f]{6}$/.test(cur)?cur:'#ffffff';
+ $('#bBrush').style.display=yTab==='brush'?'':'none';
+ $('#bSize').value=brush.size;
+ $('#bEra').classList.toggle('sel',brush.erase);
+}
+function yPaint(a,b){
+ const p=BOAT.paint.getContext('2d');p.lineCap='round';p.lineJoin='round';p.lineWidth=brush.size;p.strokeStyle=brush.color;
+ p.globalCompositeOperation=brush.erase?'destination-out':'source-over';
+ p.beginPath();p.moveTo(a.x,a.y);p.lineTo(b.x+.01,b.y);p.stroke();p.globalCompositeOperation='source-over';
+}
+function buildYard(){
+ $('#boatYard').innerHTML=`<h2>🎨 Werft – dein Boot</h2>
+ <p class="small" style="margin-top:0">Nur Optik – aber alle sehen, wer da gerade die Bucht leerfischt. 😉 Wähle den Bootstyp, Farben, Muster – oder male mit dem Pinsel direkt auf den Rumpf!</p>
+ <div class="yard"><div><canvas id="yc" width="360" height="340"></canvas></div>
+ <div class="yctl">
+  <div><label><b>Bootsname:</b> <input type="text" id="bName" maxlength="16" placeholder="z. B. Seelöwe"></label> <button class="btn ghost" id="bDice" style="padding:6px 12px;font-size:16px" title="Zufallsname">🎲</button></div>
+  <div><b>Bootstyp</b><div class="chips" id="bTypes"></div></div>
+  <div><b>Anmalen:</b><div class="chips" id="bTabs"></div>
+   <div id="bPal" style="margin-top:6px"></div>
+   <label class="small">eigene Farbe: <input type="color" id="bCol"></label></div>
+  <div id="bBrush"><b>Pinsel</b> – Dicke <input type="range" id="bSize" min="3" max="28" style="width:140px;vertical-align:middle">
+   <div class="chips"><button class="chip" id="bEra">🧽 Radierer</button><button class="chip" id="bFill">🪣 Rumpf füllen</button><button class="chip" id="bClear">🗑 Bemalung löschen</button></div></div>
+  <div><b>Muster</b><div class="chips" id="bPats"></div></div>
+  <div><b>Maskottchen</b><div class="chips" id="bTops"></div></div>
+  <div><b>🔧 Anbauteile</b> <span class="small">(nur Optik)</span>${Object.keys(PARTS).map(k=>`<div class="prow"><b>${PART_TITLES[k]}</b><div class="chips" id="bP_${k}"></div></div>`).join('')}
+   <button class="chip" id="bPRnd">🎲 Zufällig bestücken</button></div>
+ </div></div>`;
+ $('#bName').value=BOAT.name;
+ $('#bName').oninput=e=>{BOAT.name=e.target.value;drawYard();saveBoat()};
+ $('#bDice').onclick=()=>{BOAT.name=rndName();$('#bName').value=BOAT.name;drawYard();saveBoat()};
+ $('#bCol').oninput=e=>setColor(e.target.value.toLowerCase());
+ $('#bSize').oninput=e=>{brush.size=+e.target.value};
+ $('#bEra').onclick=()=>{brush.erase=!brush.erase;renderYardCtl()};
+ $('#bFill').onclick=()=>{const p=BOAT.paint.getContext('2d');p.globalCompositeOperation='source-over';p.fillStyle=brush.color;p.fillRect(0,0,288,96);drawYard();saveBoat()};
+ $('#bClear').onclick=()=>{BOAT.paint.getContext('2d').clearRect(0,0,288,96);drawYard();saveBoat()};
+ const cvY=$('#yc');let yDraw=false,yLast=null;
+ const yPos=e=>{const r=cvY.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*360-(180-36*YS),y:(e.clientY-r.top)/r.height*340-YO}};
+ cvY.addEventListener('pointerdown',e=>{e.preventDefault();if(yTab!=='brush'){yTab='brush';renderYardCtl()}yDraw=true;yLast=yPos(e);try{cvY.setPointerCapture(e.pointerId)}catch(x){}yPaint(yLast,yLast);drawYard()});
+ cvY.addEventListener('pointermove',e=>{if(!yDraw)return;const p=yPos(e);yPaint(yLast,p);yLast=p;drawYard()});
+ const yEnd=()=>{if(yDraw){yDraw=false;saveBoat()}};
+ cvY.addEventListener('pointerup',yEnd);cvY.addEventListener('pointercancel',yEnd);
+ renderYardCtl();drawYard();
+}
+
+
+/* ---------- Lehrer-Verwaltung (⚙️) ---------- */
+const TP=document.createElement('div');TP.id='tp';document.body.appendChild(TP);
+let tpUnlocked=false,tpPaused=false;
+function setStock(n){
+ n=clamp(Math.round(n),0,CFG.K);
+ if(A&&A.running){
+  while(A.fish.length>n){const f=A.fish.splice(rint(0,A.fish.length-1),1)[0];f.dead=true}
+  while(A.fish.length<n){const si=rint(0,A.schools.length-1);A.fish.push(newFish(A.schools[si],si))}
+ }else if(G)G.S=n;
+}
+const curStock=()=>A&&A.running?A.fish.length:(G?G.S:0);
+function silentSeason(){startRound(CFG.ROUND_TIME);A.running=false;finishRound()}
+function skipSeason(){
+ if(!G)return;
+ if(A&&A.running){A.running=false;finishRound();return}
+ silentSeason();
+}
+function skipPhase(){
+ if(!G)return;let guard=0;
+ if(A&&A.running){A.running=false;finishRound()}
+ else silentSeason();
+ while(!(G.collapse||G.round>=G.rounds)&&guard++<20){G.round++;silentSeason()}
+ endPhase();
+}
+function tpRefresh(){
+ if(!G)return;
+ if(A&&A.running){ // live in der laufenden Saison
+  A.T=Math.max(A.t+5,CFG.ROUND_TIME);
+  if(G.phase===2){while(A.patrols.length>CFG.PATROLS)A.patrols.pop();while(A.patrols.length<CFG.PATROLS)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0})}
+  return;
+ }
+ const sc=document.querySelector('.screen.active');if(sc&&sc.id==='s-decide')renderDecision();
+}
+function tpClose(){TP.classList.remove('show');if(tpPaused&&A&&A.running){A.paused=false}tpPaused=false}
+function tpOpen(){
+ if(TP_LOCK)return;
+ if(CFG.TEACHER_PIN&&!tpUnlocked){const v=prompt('Lehrer-PIN:');if(v!==String(CFG.TEACHER_PIN))return;tpUnlocked=true}
+ if(A&&A.running&&!A.paused){A.paused=true;tpPaused=true}
+ tpRender();TP.classList.add('show');
+}
+function qrURL(){
+ const base=(document.querySelector('#tpU')||{}).value||'';if(!base.trim())return '';
+ let u;try{u=new URL(base.trim())}catch(e){return ''}
+ u.hash='';u.search='';
+ if(TP.querySelector('#tpSM').checked)u.searchParams.set('s','1');
+ if(TP.querySelector('#tpWC').checked){u.searchParams.set('r',CFG.ROUNDS);u.searchParams.set('t',CFG.ROUND_TIME);u.searchParams.set('p',CFG.PATROLS);u.searchParams.set('f',CFG.FINE_MULT);u.searchParams.set('c',Math.round(CFG.PATROL_P*100));u.searchParams.set('g',CFG.R);u.searchParams.set('s0',CFG.S0)}
+ return u.toString();
+}
+function qrDraw(text,px){
+ const q=qrcode(0,'M');q.addData(text);q.make();const n=q.getModuleCount(),m=4,sz=n+2*m,cv=document.createElement('canvas');
+ const k=Math.max(2,Math.floor(px/sz));cv.width=cv.height=sz*k;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);c.fillStyle='#000';
+ for(let r=0;r<n;r++)for(let col=0;col<n;col++)if(q.isDark(r,col))c.fillRect((col+m)*k,(r+m)*k,k,k);
+ return cv;
+}
+function qrMake(){
+ const box=TP.querySelector('#tpQBox'),url=qrURL();
+ if(!url){box.innerHTML='<p style="color:#c1121f"><b>Bitte eine gültige Web-Adresse eintragen</b> (beginnt mit https://).</p>';return}
+ const cv=qrDraw(url,360);cv.style.cssText='width:260px;height:260px;image-rendering:pixelated;border:6px solid #fff;border-radius:8px;background:#fff';
+ box.innerHTML='';const row=document.createElement('div');row.className='row';row.style.alignItems='flex-start';box.appendChild(row);row.appendChild(cv);
+ const side=document.createElement('div');side.style.flex='1';side.innerHTML=`<p class="small" style="word-break:break-all"><b>Link im Code:</b><br>${esc(url)}</p><div class="row"><button class="btn" id="qBig">🖥 Groß anzeigen (Beamer)</button><button class="btn blue" id="qDl">💾 Als Bild speichern</button><button class="btn ghost" id="qCp">📋 Link kopieren</button></div>`;row.appendChild(side);
+ side.querySelector('#qBig').onclick=()=>{let ov=document.getElementById('qrov');if(!ov){ov=document.createElement('div');ov.id='qrov';ov.className='qrov';document.body.appendChild(ov)}ov.innerHTML='<h1 style="margin:0;color:#0b3d5c">🎣 Fischer Allmende – Code scannen und mitspielen!</h1>';const big=qrDraw(url,900);ov.appendChild(big);const b=document.createElement('button');b.className='btn';b.textContent='✖ Schließen';b.onclick=()=>ov.classList.remove('show');ov.appendChild(b);ov.classList.add('show')};
+ side.querySelector('#qDl').onclick=()=>{const a=document.createElement('a');a.href=qrDraw(url,900).toDataURL('image/png');a.download='fischgruende-qr.png';a.click()};
+ side.querySelector('#qCp').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Link kopieren:',url)})};
+}
+function applyURLParams(){
+ try{const q=new URLSearchParams(location.search);if(![...q.keys()].length)return;
+  const num=(k,lo,hi)=>{if(!q.has(k))return null;const v=+q.get(k);return isFinite(v)?clamp(v,lo,hi):null};
+  let v;
+  if((v=num('r',1,12))!=null)CFG.ROUNDS=v;if((v=num('t',10,300))!=null)CFG.ROUND_TIME=v;if((v=num('p',0,12))!=null)CFG.PATROLS=Math.round(v);
+  if((v=num('f',0,20))!=null)CFG.FINE_MULT=v;if((v=num('c',0,100))!=null)CFG.PATROL_P=v/100;if((v=num('g',.1,3))!=null)CFG.R=v;if((v=num('s0',20,CFG.K))!=null)CFG.S0=Math.round(v);
+  if(q.get('s')==='1'){['teachBtn','bTeach'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});TP_LOCK=true}
+ }catch(e){}
+}
+let TP_LOCK=false;
+function tpRender(){
+ const playing=!!(A&&A.running),inG=!!G;
+ const st=inG?`Spielrunde ${G.phase}/2 · Saison ${G.round}/${G.rounds} · Bestand <b>${curStock()}</b>/${CFG.K}${playing?' · ⏱ '+Math.max(0,Math.round(A.T-A.t))+' s übrig':''}${G.collapse?' · See leer':''}`:'Kein Spiel läuft';
+ TP.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">⚙️ Lehrer-Verwaltung</h2><button class="btn ghost" id="tpX">✖ Schließen${tpPaused?' & weiter':''}</button></div>
+ <div class="st" style="margin-top:8px">${st}${tpPaused?' · ⏸ pausiert':''}</div>
+ ${inG?`<h3>🐟 Fischbestand</h3><div class="row"><button class="btn blue" data-s="-50">−50</button><button class="btn blue" data-s="50">+50</button><button class="btn blue" data-s="100">+100</button><button class="btn blue" data-s="max">Voll (${CFG.K})</button><button class="btn blue" data-s="half">Hälfte</button><button class="btn blue" data-s="low">Fast leer (20)</button>
+  <label>Genau<input type="number" id="tpS" min="0" max="${CFG.K}" value="${curStock()}"></label><button class="btn" id="tpSet">Setzen</button></div>
+ <h3>⏯ Saison & Runden</h3><div class="row">
+  ${playing?`<button class="btn ghost" id="tpPause">${A.paused?'▶ Weiter':'⏸ Pause'}</button><button class="btn" id="tpEnd">⏹ Saison jetzt beenden</button><button class="btn ghost" id="tpPlus">+15 s</button>`:''}
+  <button class="btn green" id="tpSkip">⏭ Saison überspringen</button><button class="btn green" id="tpSkipPh">⏭⏭ Spielrunde überspringen</button></div>
+ <p class="small" style="margin:6px 0 0">Überspringen: Die KI-Boote fischen die Saison automatisch, du selbst fängst nichts.</p>
+ <div class="row" style="margin-top:8px"><button class="btn ghost" id="tpP1">↺ Spielrunde 1 neu starten</button><button class="btn ghost" id="tpP2">▶ Spielrunde 2 starten</button><button class="btn ghost" id="tpNew">🏠 Zurück zum Start</button></div>
+ `:`<p>Kein Spiel läuft – die Einstellungen unten gelten für die nächsten Spiele.</p>`}
+ <h3>🔧 Einstellungen (sofort wirksam)</h3><div class="row">
+  <label>Saisondauer (s)<input type="number" id="tpT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
+  <label>Saisons je Runde<input type="number" id="tpR" min="1" max="12" value="${G?G.rounds:CFG.ROUNDS}"></label>
+  <label>Start-Bestand<input type="number" id="tpS0" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
+  <label>Patrouillen<input type="number" id="tpPa" min="0" max="12" value="${CFG.PATROLS}"></label>
+  <label>Strafe (× Preis)<input type="number" id="tpF" min="0" max="20" step="0.5" value="${CFG.FINE_MULT}"></label>
+  <label>Kontrolle je Fisch (%)<input type="number" id="tpC" min="0" max="100" value="${Math.round(CFG.PATROL_P*100)}"></label>
+  <label>Wachstumsrate<input type="number" id="tpG" min="0.1" max="3" step="0.1" value="${CFG.R}"></label>
+  <button class="btn" id="tpApply">Übernehmen</button></div>
+ <h3>📱 QR-Code für die Klasse</h3>
+ <p class="small" style="margin:0 0 6px">Die Schüler scannen den Code und starten das Spiel mit deinen aktuellen Einstellungen. Das Spiel muss dafür im Internet oder im Schulnetz erreichbar sein (Adresse eintragen).</p>
+ ${location.protocol==='file:'?'<p class="small" style="color:#c1121f"><b>Hinweis:</b> Diese Datei liegt nur auf deinem Gerät. Lade sie hoch (z. B. Schul-Cloud, Vercel, Netlify) und trage die Webadresse unten ein.</p>':''}
+ <div class="row"><label style="flex:1;min-width:240px">Adresse des Spiels (URL)<input type="text" id="tpU" style="width:100%" value="${location.protocol==='file:'?'':location.origin+location.pathname}" placeholder="https://…/fischgruende.html"></label></div>
+ <div class="row"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="tpSM" checked> Schüler-Modus (⚙️ ausblenden)</label><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="tpWC" checked> Einstellungen im Code mitgeben</label><button class="btn" id="tpQR">📱 QR-Code erzeugen</button></div>
+ <div id="tpQBox" style="margin-top:8px"></div>
+ </div>`;
+ const $$=s=>TP.querySelector(s),on=(s,f)=>{const e=$$(s);if(e)e.onclick=f};
+ on('#tpX',tpClose);on('#tpQR',qrMake);
+ const sure=(s,fn)=>{const b=$$(s);if(!b)return;let armed=false;b.onclick=()=>{if(!armed){armed=true;const l=b.textContent;b.textContent='❓ Sicher? Nochmal klicken';setTimeout(()=>{armed=false;b.textContent=l},4000);return}fn()}};
+ TP.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const v=b.dataset.s,c=curStock();setStock(v==='max'?CFG.K:v==='half'?CFG.K/2:v==='low'?20:c+ +v);tpRefresh();tpRender();toast('🐟 Bestand: '+curStock())});
+ on('#tpSet',()=>{setStock(+$$('#tpS').value);tpRefresh();tpRender();toast('🐟 Bestand: '+curStock())});
+ on('#tpPause',()=>{A.paused=!A.paused;tpPaused=A.paused;tpRender()});
+ on('#tpPlus',()=>{A.T+=15;tpRender()});
+ on('#tpEnd',()=>{tpPaused=false;TP.classList.remove('show');endRound()});
+ sure('#tpSkip',()=>{tpPaused=false;TP.classList.remove('show');skipSeason()})
+ sure('#tpSkipPh',()=>{tpPaused=false;TP.classList.remove('show');skipPhase()})
+ sure('#tpP1',()=>{A&&(A.running=false);tpPaused=false;TP.classList.remove('show');startPhase(1)})
+ sure('#tpP2',()=>{A&&(A.running=false);tpPaused=false;TP.classList.remove('show');startPhase(2)})
+ sure('#tpNew',()=>{A&&(A.running=false);tpPaused=false;G=null;TP.classList.remove('show');show('s-start')})
+ on('#tpApply',()=>{
+  CFG.ROUND_TIME=clamp(+$$('#tpT').value||60,10,300);CFG.ROUNDS=clamp(+$$('#tpR').value||5,1,12);if(G)G.rounds=CFG.ROUNDS;CFG.S0=clamp(+$$('#tpS0').value||390,20,CFG.K);CFG.PATROLS=clamp(+$$('#tpPa').value,0,12);
+  CFG.FINE_MULT=Math.max(0,+$$('#tpF').value);CFG.PATROL_P=clamp(+$$('#tpC').value/100,0,1);CFG.R=clamp(+$$('#tpG').value||1.2,.1,3);
+  tpRefresh();toast('✅ Einstellungen übernommen');tpRender();
+ });
+}
+$('#teachBtn').onclick=tpOpen;$('#bTeach').onclick=tpOpen;
+renderRoles();
+
+
+/* =====================================================================
+   MEHRSPIELER (Lehrer-Lobby + Schüler per QR-Code) – braucht api/room.js + Redis
+   ===================================================================== */
+const MP={role:null,code:'',hk:'',id:'',api:'',off:0,meta:null,players:[],reports:{},timer:null,key:'',applied:{},calcBusy:false,started:{}};
+const mpNow=()=>Date.now()+MP.off;
+const mpApiBase=()=>MP.api||CFG.API_URL||new URL('/api/room',location.href).href;
+async function mpCall(a,body){
+ const r=await fetch(mpApiBase(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({a,code:MP.code,hk:MP.hk},body||{}))});
+ const j=await r.json().catch(()=>({error:'Keine Antwort'}));
+ if(!r.ok||j.error)throw new Error(j.error||('Fehler '+r.status));
+ if(j.now)MP.off=j.now-Date.now();
+ return j;
+}
+async function mpState(){
+ const r=await fetch(mpApiBase()+'?a=state&code='+encodeURIComponent(MP.code),{cache:'no-store'});
+ const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||'Fehler');return j;
+}
+function mpCfg(c){if(!c)return;['ROUND_TIME','ROUNDS','S0','PATROLS','FINE_MULT','PATROL_P','R'].forEach(k=>{if(c[k]!=null)CFG[k]=c[k]})}
+const mpBoatData=b=>({type:b.type,hull:b.hull,trim:b.trim,sail:b.sail,pattern:b.pattern,topper:b.topper,parts:b.parts});
+function mpWait(html){$('#s-wait').innerHTML=`<h1 class="hero" style="font-size:34px">🎣 Fischer Allmende</h1><div class="card" style="text-align:center"><canvas id="wthumb" width="130" height="90" style="width:110px"></canvas>${html}</div>`;show('s-wait');const t=$('#wthumb');if(t)drawBoatCustom(t.getContext('2d'),65,55,BOAT,1.2,null)}
+const rowName=p=>esc((p.alias||p.name)||'?');
+
+/* ---------- Schüler ---------- */
+function mpPlayerInit(code){
+ MP.role='player';MP.code=code.toUpperCase();
+ const q=new URLSearchParams(location.search);if(q.get('api'))MP.api=q.get('api');
+ ['teachBtn','bTeach'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});TP_LOCK=true;
+ $('#startBtn').textContent='⛵ Beitreten';
+ $('#startBtn').onclick=mpJoin;
+ const sub=document.querySelector('#s-start .sub');if(sub)sub.textContent='Raum '+MP.code+' – gib deinen Namen ein und baue dein Boot.';
+ try{const sv=JSON.parse(sessionStorage.getItem('fg_mp_'+MP.code)||'null');if(sv&&sv.id){MP.id=sv.id;mpPlayerStart()}}catch(e){}
+}
+async function mpJoin(){
+ const nm=($('#nameIn').value||'').trim();
+ if(!nm){toast('Bitte gib deinen Namen ein');return}
+ saveBoat();
+ try{
+  const j=await mpCall('join',{name:nm,boat:mpBoatData(BOAT),id:MP.id});
+  MP.id=j.id;MP.myName=nm;try{sessionStorage.setItem('fg_mp_'+MP.code,JSON.stringify({id:j.id}))}catch(e){}
+  mpPlayerStart();
+ }catch(e){toast('⚠️ '+e.message)}
+}
+function mpPlayerStart(){
+ mpWait('<h2>✅ Du bist dabei!</h2><p>Warte, bis der Lehrer das Spiel startet …</p><p class="small" id="mpN"></p>');
+ clearInterval(MP.timer);MP.timer=setInterval(mpPlayerPoll,1800);mpPlayerPoll();
+ setInterval(()=>{mpPlayTick()},250);
+}
+async function mpPlayerPoll(){
+ try{const j=await mpState();if(j.now)MP.off=j.now-Date.now();mpOnMeta(j.meta,j.n)}catch(e){}
+}
+function mpBuildClientG(m){
+ mpCfg(m.cfg);
+ const mkp=(e,i)=>{const me=e.rid===MP.id;return {id:i,ord:i,rid:e.rid,human:!!e.human,role:me?ROLES.fischer:ROLES[e.strat||'kalle'],isP:me,name:e.name,coins:0,contrib:0,fishTotal:0,lastFish:0,lastNet:0,tag:'',fines:0,viol:0,rank:0,prevRank:0,skill:me?1:rnd(.75,1.3),upg:{hook:0,winch:0,cargo:0,motor:0,cool:0},boat:me?null:e.boat}};
+ const list=m.roster.map((e,i)=>mkp(e,i));
+ const mi=list.findIndex(p=>p.isP);
+ if(mi>0){const [x]=list.splice(mi,1);list.unshift(x)}
+ G={rounds:CFG.ROUNDS,phase:1,round:1,S:CFG.S0,hist:[],lastPlayer:0,collapse:false,last:null,res:{},totalCatch:0,totalFines:0,comm:{fund:0,laich:0,farm:0,wache:0,sonar:0},quiz:shuffle(QUIZ.map((_,i)=>i)),P:list};
+}
+function mpOnMeta(m,n){
+ if(!m)return;MP.meta=m;
+ if(m.state==='lobby'){const e=$('#mpN');if(e)e.textContent=(n||0)+' Spieler in der Lobby';return}
+ if(MP.role!=='player')return;
+ if(!G){
+  if(!m.roster||!m.roster.some(e=>e.rid===MP.id)){mpWait('<h2>Zu spät!</h2><p>Das Spiel läuft bereits ohne dich. Frag deinen Lehrer.</p>');return}
+  mpBuildClientG(m);
+ }
+ const k=m.ph+':'+m.rd,onPlay=document.querySelector('#s-play.active');
+ if(m.names)G.P.forEach(p=>{if(m.names[p.rid])p.name=m.names[p.rid]});
+ if(m.state==='prep'){
+  if(MP.key!=='prep:'+k&&!onPlay){
+   MP.key='prep:'+k;
+   if(G.phase!==m.ph||(m.rd===1&&!G.hist.length===false&&m.ph!==G.phase)){startPhase(m.ph)}
+   if(G.phase!==m.ph)startPhase(m.ph);
+   G.round=m.rd;G.S=m.S;G.collapse=false;renderDecision();
+  }
+ }else if(m.state==='play'){
+  if(MP.key!=='play:'+k&&!MP.started[k]){MP.key='play:'+k;MP.startAt=m.startAt;MP.playK=k;
+   if(G.phase!==m.ph)startPhase(m.ph);G.round=m.rd;G.S=m.S;if(!document.querySelector('#s-decide.active'))renderDecision()}
+ }else if(m.state==='result'&&m.result){
+  if(!MP.applied[k]&&MP.reported!==undefined){mpApplyResult(m.result)}
+  else if(!MP.applied[k]&&!MP.started[k]){/* verpasst */}
+ }else if(m.state==='phaseEnd'){
+  if(MP.key!=='end:'+m.ph){MP.key='end:'+m.ph;if(!G.res[G.phase]||true){if(m.result&&!MP.applied[m.result.ph+':'+m.result.rd])mpApplyResult(m.result,true);endPhase()}}
+ }else if(m.state==='done'){
+  if(MP.key!=='done'){MP.key='done';endPhase()}
+ }
+}
+function mpPlayTick(){
+ if(MP.role!=='player'||!MP.startAt||!G)return;
+ const k=MP.playK,left=MP.startAt-mpNow();
+ const c=document.getElementById('mpCount');
+ if(left>0){if(c)c.textContent='🚦 Start in '+Math.ceil(left/1000)+' …';return}
+ if(MP.started[k])return;
+ MP.started[k]=1;MP.startAt=0;MP.reported=undefined;
+ if(left<-8000){mpWait('<h2>Saison läuft schon</h2><p>Du bist zu spät. Beim nächsten Mal bist du dabei.</p>');return}
+ startRound(Math.max(15,CFG.ROUND_TIME+left/1000));
+}
+async function mpPlayerFinish(){
+ const me=G.P[0],ph=G.phase;
+ if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0}
+ const base=priceBase(A.S0),Q=A.quota,pr=A.price;
+ const pIll=polOn()?Math.max(0,A.cargo-Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
+ if(pIll>0){pViol=1;if(Math.random()<1-Math.pow(1-CFG.PATROL_P,pIll)){pCaught=true;confiscate(pIll);pFine+=Math.round(pIll*CFG.FINE_MULT*base)}}
+ const eco=polOn()&&!pViol;
+ const rep={fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:!!pViol&&!(pFine>0)};
+ MP.reported=rep;
+ mpWait(`<h2>🎣 Saison geschafft!</h2><p>Dein Fang: <b>${rep.fish} Fische</b>.</p><p>Warte auf die anderen Fischer und die Auswertung …</p>`);
+ for(let i=0;i<4;i++){try{await mpCall('report',{id:MP.id,ph:G.phase,rd:G.round,rep});break}catch(e){await new Promise(r=>setTimeout(r,800))}}
+}
+function mpApplyResult(res,silent){
+ const k=res.ph+':'+res.rd;if(MP.applied[k])return;MP.applied[k]=1;
+ const rows=[];
+ const mk=p=>{const r=res.rows[p.rid];if(r)rows.push(Object.assign({p},r))};
+ G.P.filter(p=>!p.dummy).forEach(mk);
+ settle(rows,res.Sstart,res.Safter,res.pr,res.Q,res.tac,rows[0]?rows[0].fish:0,!silent&&MP.role==='player');
+}
+
+/* ---------- Lehrer ---------- */
+function mpHostInit(){
+ MP.role=null; // wird erst mit "Lobby öffnen" aktiv
+ $('#teachBtn').style.display='none';
+ try{const sv=JSON.parse(localStorage.getItem('fg_host')||'null');if(sv&&sv.code&&Date.now()-sv.t<10*3600e3){MP.hostSaved=sv}}catch(e){}
+ mpHostRender();
+}
+const hostFields=()=>`<div class="row">
+ <label>Saisondauer (s)<input type="number" id="hsT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
+ <label>Saisons je Runde<input type="number" id="hsR" min="1" max="12" value="${CFG.ROUNDS}"></label>
+ <label>Start-Bestand<input type="number" id="hsS" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
+ <label>Patrouillen (Runde 2)<input type="number" id="hsP" min="0" max="12" value="${CFG.PATROLS}"></label>
+ <label>Strafe (× Preis)<input type="number" id="hsF" min="0" max="20" step=".5" value="${CFG.FINE_MULT}"></label>
+ <label>Kontrolle je Fisch (%)<input type="number" id="hsC" min="0" max="100" value="${Math.round(CFG.PATROL_P*100)}"></label>
+ <label>Wachstumsrate<input type="number" id="hsG" min=".1" max="3" step=".1" value="${CFG.R}"></label></div>`;
+function mpReadFields(){
+ const v=id=>+document.getElementById(id).value;
+ CFG.ROUND_TIME=clamp(v('hsT')||60,10,300);CFG.ROUNDS=clamp(v('hsR')||5,1,12);CFG.S0=clamp(v('hsS')||390,20,CFG.K);CFG.PATROLS=clamp(Math.round(v('hsP')),0,12);
+ CFG.FINE_MULT=Math.max(0,v('hsF'));CFG.PATROL_P=clamp(v('hsC')/100,0,1);CFG.R=clamp(v('hsG')||1.2,.1,3);
+}
+const mpCfgObj=()=>({ROUND_TIME:CFG.ROUND_TIME,ROUNDS:CFG.ROUNDS,S0:CFG.S0,PATROLS:CFG.PATROLS,FINE_MULT:CFG.FINE_MULT,PATROL_P:CFG.PATROL_P,R:CFG.R});
+function mpHostRender(){
+ const H=$('#s-host');
+ if(!MP.code){
+  H.innerHTML=`<h1 class="hero" style="font-size:40px">👩‍🏫 Lehrer-Verwaltung</h1><p class="sub">Stelle das Spiel ein, öffne die Lobby und lass die Klasse per QR-Code beitreten.</p>
+  <div class="card"><h3>🔧 Spieleinstellungen</h3>${hostFields()}</div>
+  <div class="card"><h3>🌐 Adressen</h3>
+   <label style="display:block">Adresse dieses Spiels (für den QR-Code)<input type="text" id="hsU" style="width:100%" value="${location.protocol==='file:'?'':location.origin+location.pathname}" placeholder="https://…/index.html"></label>
+   <label style="display:block;margin-top:8px">Server-Adresse (API)<input type="text" id="hsA" style="width:100%" value="${MP.api||CFG.API_URL||''}" placeholder="leer = gleiche Seite (/api/room)"></label>
+   ${location.protocol==='file:'?'<p class="small" style="color:#c1121f"><b>Hinweis:</b> Du hast die Datei lokal geöffnet. Für die Lobby muss das Spiel online liegen (z. B. Vercel). Trage dann dessen Adresse ein.</p>':''}</div>
+  <div class="row"><button class="btn" id="hsOpen">🚪 Lobby öffnen</button>${MP.hostSaved?'<button class="btn blue" id="hsRes">↩ Laufende Lobby '+MP.hostSaved.code+' fortsetzen</button>':''}<button class="btn ghost" id="hsSolo">🎮 Einzelspiel zum Ausprobieren</button></div><p id="hsErr" class="small" style="color:#c1121f"></p>`;
+  $('#hsOpen').onclick=async()=>{try{mpReadFields();MP.api=($('#hsA').value||'').trim();MP.gameUrl=($('#hsU').value||'').trim();
+    const j=await(async()=>{const r=await fetch(mpApiBase(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({a:'create',cfg:mpCfgObj()})});const o=await r.json();if(!r.ok||o.error)throw new Error(o.error||'Server nicht erreichbar');return o})();
+    MP.code=j.code;MP.hk=j.hk;MP.off=j.now-Date.now();MP.role='host';
+    try{localStorage.setItem('fg_host',JSON.stringify({code:MP.code,hk:MP.hk,api:MP.api,url:MP.gameUrl,t:Date.now()}))}catch(e){}
+    mpHostStart();}catch(e){$('#hsErr').textContent='⚠️ '+e.message+' – läuft der Server (api/room.js + Redis)?'}};
+  if($('#hsRes'))$('#hsRes').onclick=()=>{const sv=MP.hostSaved;MP.api=sv.api||'';MP.gameUrl=sv.url||'';MP.code=sv.code;MP.hk=sv.hk;MP.role='host';mpHostStart()};
+  $('#hsSolo').onclick=()=>{$('#teachBtn').style.display='';show('s-start')};
+  show('s-host');return;
+ }
+ mpHostPaint();show('s-host');
+}
+function mpHostStart(){clearInterval(MP.timer);MP.timer=setInterval(mpHostPoll,2000);mpHostPoll()}
+async function mpHostPoll(){
+ try{
+  const j=await mpCall('hstate');MP.players=j.players;MP.reports=j.reports;MP.meta=j.meta;
+  if(MP.meta.cfg)mpCfg(MP.meta.cfg);
+  if(MP.meta.roster&&!G)mpHostBuildG();
+  mpHostAuto();mpHostPaint();
+ }catch(e){const x=document.getElementById('hsStat');if(x)x.textContent='⚠️ '+e.message}
+}
+function mpJoinLink(){
+ let u;try{u=new URL(MP.gameUrl||location.href.split('?')[0])}catch(e){u=new URL(location.href)}
+ u.search='';u.hash='';u.searchParams.set('room',MP.code);if(MP.api)u.searchParams.set('api',MP.api);return u.toString();
+}
+function mpHostBuildG(){
+ const m=MP.meta;mpCfg(m.cfg);
+ const dummy={id:0,ord:-1,rid:'host',dummy:true,isP:true,role:ROLES.fischer,name:'Lehrer',coins:-1e9,contrib:0,fishTotal:0,lastFish:0,lastNet:0,tag:'',fines:0,viol:0,rank:0,prevRank:0,skill:1,upg:{hook:0,winch:0,cargo:0,motor:0,cool:0},boat:null};
+ const list=[dummy].concat(m.roster.map((e,i)=>({id:i+1,ord:i,rid:e.rid,human:!!e.human,role:ROLES[e.strat||'kalle'],isP:false,name:e.name,coins:0,contrib:0,fishTotal:0,lastFish:0,lastNet:0,tag:'',fines:0,viol:0,rank:0,prevRank:0,skill:rnd(.75,1.3),upg:{hook:0,winch:0,cargo:0,motor:0,cool:0},boat:e.boat})));
+ G={rounds:CFG.ROUNDS,phase:m.ph||1,round:m.rd||1,S:m.S,hist:[],lastPlayer:0,collapse:false,last:null,res:{},totalCatch:0,totalFines:0,comm:{fund:0,laich:0,farm:0,wache:0,sonar:0},quiz:[],P:list};
+ G.P.forEach(p=>{p.coins=p.dummy?-1e9:p.role.start});
+}
+async function mpSet(patch){const j=await mpCall('set',{patch});MP.meta=Object.assign({},MP.meta,patch,{v:j.v});mpHostPaint()}
+async function mpHostStartGame(){
+ const hs=MP.players.filter(Boolean);if(!hs.length){toast('Noch niemand in der Lobby');return}
+ const names=shuffle(BOT_NAMES).filter(n=>!hs.some(p=>(p.alias||p.name).toLowerCase()===n.toLowerCase()));
+ const mix=[];Object.entries(BOT_MIX).forEach(([id,n])=>{for(let i=0;i<n;i++)mix.push(id)});shuffle(mix);
+ const roster=hs.map(p=>({rid:p.id,name:p.alias||p.name,boat:p.boat,human:true,strat:'kalle'}));
+ let k=0;while(roster.length<CFG.BOATS){roster.push({rid:'b'+k,name:names[k%names.length]+(k>=names.length?' II':''),boat:randBoat(),human:false,strat:mix[k%mix.length]});k++}
+ G=null;MP.applied={};MP.calcBusy=false;
+ await mpSet({state:'prep',ph:1,rd:1,S:CFG.S0,roster,cfg:mpCfgObj(),result:null,startAt:0,names:{}});
+ mpHostBuildG();mpHostPaint();
+}
+function mpHostAuto(){
+ const m=MP.meta;if(!m||m.state!=='play'||MP.calcBusy||!G)return;
+ const k=m.ph+':'+m.rd,reps=MP.reports[k]||{},hs=m.roster.filter(e=>e.human);
+ const all=hs.every(e=>reps[e.rid]),late=mpNow()>m.startAt+CFG.ROUND_TIME*1000+10000;
+ if((all&&mpNow()>m.startAt+CFG.ROUND_TIME*1000-2000)||late)mpHostCalc();
+}
+async function mpHostCalc(){
+ if(MP.calcBusy)return;MP.calcBusy=true;
+ const m=MP.meta,ph=m.ph,reps=MP.reports[ph+':'+m.rd]||{};
+ try{
+  await mpSet({state:'calc'});
+  G.phase=ph;G.round=m.rd;G.S=m.S;
+  startRound(CFG.ROUND_TIME);A.running=false;
+  for(const b of A.bots)for(const e of b.evs)if(!e.done)execBot(b,e,true);
+  const Sstart=A.S0,base=priceBase(Sstart),Q=A.quota,tac=A.tac,rows={};let ghost=0,taken=0;
+  A.bots.forEach(b=>{
+   if(b.p.human){ghost+=b.n;const r=reps[b.p.rid];if(r){rows[b.p.rid]=r;taken+=r.fish}else rows[b.p.rid]={fish:0,gold:0,income:0,fine:0,viol:false,eco:false,caught:false,sneaky:false};return}
+   const ill=polOn()?Math.max(0,b.n-Q):0,viol=ill>0,caught=viol&&b.flag;let keep=b.n,fine=0;if(caught){keep=b.n-ill;fine=Math.round(ill*CFG.FINE_MULT*base)}
+   const gold=Math.min(b.gold,keep*4),e=polOn()&&!viol;
+   rows[b.p.rid]={fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught};
+  });
+  const Safter=Math.max(0,A.fish.length+ghost-taken);
+  const res={ph,rd:m.rd,Sstart,Safter,pr:A.price,Q,tac,rows};
+  A.running=false;
+  mpApplyResult(res,true);
+  const L=G.last,end=G.collapse||m.rd>=CFG.ROUNDS;
+  await mpSet({state:'result',result:res,Snew:L.Snew,end,empty:G.collapse});
+ }catch(e){toast('⚠️ '+e.message)}
+ MP.calcBusy=false;show('s-host');
+}
+function mpHostPaint(){
+ const H=$('#s-host'),m=MP.meta||{state:'lobby'};
+ if(!H.querySelector('#hsStat'))H.innerHTML=`<h1 class="hero" style="font-size:36px">👩‍🏫 Lehrer-Verwaltung</h1><div class="card" id="hsTop"></div><div id="hsMid"></div>`;
+ const link=mpJoinLink();
+ const top=$('#hsTop');
+ if(!top.dataset.code){top.dataset.code=MP.code;
+  top.innerHTML=`<div class="row" style="align-items:flex-start"><div id="hsQR"></div><div style="flex:1;min-width:230px"><h2 style="margin:0">Raum <span style="letter-spacing:4px">${MP.code}</span></h2>
+   <p class="small" style="word-break:break-all">${esc(link)}</p><div class="row"><button class="btn blue" id="hsBig">🖥 QR groß (Beamer)</button><button class="btn ghost" id="hsCp">📋 Link kopieren</button></div><p id="hsStat" class="small"></p></div></div>`;
+  try{const cv=qrDraw(link,360);cv.style.cssText='width:200px;height:200px;image-rendering:pixelated;border:6px solid #fff;border-radius:8px;background:#fff';$('#hsQR').appendChild(cv)}catch(e){}
+  $('#hsBig').onclick=()=>{let ov=document.getElementById('qrov');if(!ov){ov=document.createElement('div');ov.id='qrov';ov.className='qrov';document.body.appendChild(ov)}ov.innerHTML='<h1 style="margin:0;color:#0b3d5c">🎣 Fischer Allmende – Code scannen und mitspielen! Raum '+MP.code+'</h1>';ov.appendChild(qrDraw(link,900));const b=document.createElement('button');b.className='btn';b.textContent='✖ Schließen';b.onclick=()=>ov.classList.remove('show');ov.appendChild(b);ov.classList.add('show')};
+  $('#hsCp').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Link:',link)})};
+ }
+ const mid=$('#hsMid'),ps=MP.players||[];
+ const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
+ const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Saison ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Saison läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Saison ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet'}[m.state]||m.state;
+ let btn='';
+ if(m.state==='lobby')btn=`<button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
+ else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Saison ${m.rd} starten (Countdown 8 s)</button>`;
+ else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Saison jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
+ else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Saison ${m.rd+1} vorbereiten</button>`;
+ else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
+ mid.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">${stateTxt}</h3><span class="pill">${ps.length} Spieler</span></div><div class="row" style="margin-top:8px">${btn}</div></div>
+ <div class="card"><h3>👥 Spieler</h3><div id="hsPl"></div></div>
+ ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}`;
+ const pl=$('#hsPl');
+ pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
+ pl.querySelectorAll('canvas[data-b]').forEach(c=>{const p=ps.find(x=>x.id===c.dataset.b);if(p)try{drawBoatCustom(c.getContext('2d'),55,36,Object.assign({parts:{}},p.boat),.75,null)}catch(e){}});
+ pl.querySelectorAll('[data-al]').forEach(i=>{i.onchange=async()=>{try{await mpCall('alias',{id:i.dataset.al,alias:i.value});const nm=i.value.trim();if(m.roster){const names=Object.assign({},m.names||{});names[i.dataset.al]=nm||(ps.find(x=>x.id===i.dataset.al)||{}).name;const p=G&&G.P.find(x=>x.rid===i.dataset.al);if(p)p.name=names[i.dataset.al];await mpSet({names})}toast('✔ Name gespeichert')}catch(e){toast('⚠️ '+e.message)}}});
+ pl.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{if(m.state!=='lobby'){toast('Nach dem Start kann niemand entfernt werden');return}try{await mpCall('kick',{id:b.dataset.k});mpHostPoll()}catch(e){}});
+ const on=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f};
+ on('hsGo',mpHostStartGame);
+ on('hsPlay',()=>mpSet({state:'play',startAt:mpNow()+8000}));
+ on('hsEnd',()=>mpHostCalc());
+ on('hsNext',()=>{G.round=m.rd+1;G.S=m.Snew;mpSet({state:'prep',rd:m.rd+1,S:m.Snew,startAt:0})});
+ on('hsPE',async()=>{G.phase=m.ph;try{await mpSet({state:'phaseEnd'});const sorted=byCoins().filter(p=>!p.dummy);G.res[m.ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank:0,myCoins:0,winner:sorted[0]}}catch(e){}});
+ on('hsP2',()=>{G.phase=2;G.round=1;G.S=CFG.S0;G.hist=[];G.collapse=false;G.last=null;G.totalCatch=0;G.totalFines=0;G.P.forEach(p=>{p.coins=p.dummy?-1e9:p.role.start;p.fishTotal=0;p.lastFish=0;p.fines=0;p.viol=0;p.tag=''});mpSet({state:'prep',ph:2,rd:1,S:CFG.S0,startAt:0,result:null,end:false,empty:false})});
+ on('hsDone',()=>mpSet({state:'done'}));
+}
+function mpStartup(){
+ const q=new URLSearchParams(location.search);
+ if(q.get('room')){mpPlayerInit(q.get('room'));show('s-start');return}
+ if(q.get('s')==='1'){show('s-start');return} // Schüler-Einzelspiel über alten Code
+ mpHostInit();
+}
+
+loadBoat();if(!BOAT.name)BOAT.name=rndName();applyURLParams();buildYard();setInterval(()=>{if(document.querySelector('#s-start.active')||document.querySelector('#s-decide.active'))drawYard()},120);
+mpStartup();
+</script>
+</body>
+</html>
