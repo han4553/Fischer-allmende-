@@ -1609,7 +1609,8 @@ renderRoles();
    ===================================================================== */
 const MP={role:null,code:'',hk:'',id:'',api:'',off:0,meta:null,players:[],reports:{},timer:null,key:'',applied:{},calcBusy:false,started:{}};
 const mpNow=()=>Date.now()+MP.off;
-const mpApiBase=()=>MP.api||CFG.API_URL||new URL('/api/room',location.href).href;
+const PROD_URL='https://fischer-allmende.vercel.app';
+const mpApiBase=()=>MP.api||CFG.API_URL||(location.protocol==='file:'?PROD_URL+'/api/room':new URL('/api/room',location.href).href);
 async function mpCall(a,body){
  const r=await fetch(mpApiBase(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(Object.assign({a,code:MP.code,hk:MP.hk},body||{}))});
  const j=await r.json().catch(()=>({error:'Keine Antwort'}));
@@ -1749,9 +1750,9 @@ function mpHostRender(){
   H.innerHTML=`<h1 class="hero" style="font-size:40px">👩‍🏫 Lehrer-Verwaltung</h1><p class="sub">Stelle das Spiel ein, öffne die Lobby und lass die Klasse per QR-Code beitreten.</p>
   <div class="card"><h3>🔧 Spieleinstellungen</h3>${hostFields()}</div>
   <div class="card"><h3>🌐 Adressen</h3>
-   <label style="display:block">Adresse dieses Spiels (für den QR-Code)<input type="text" id="hsU" style="width:100%" value="${location.protocol==='file:'?'':location.origin+location.pathname}" placeholder="https://…/index.html"></label>
+   <label style="display:block">Adresse dieses Spiels (für den QR-Code)<input type="text" id="hsU" style="width:100%" value="${location.protocol==='file:'?PROD_URL+'/':location.origin+location.pathname}" placeholder="https://…/Fischer-Allmende.html"></label>
    <label style="display:block;margin-top:8px">Server-Adresse (API)<input type="text" id="hsA" style="width:100%" value="${MP.api||CFG.API_URL||''}" placeholder="leer = gleiche Seite (/api/room)"></label>
-   ${location.protocol==='file:'?'<p class="small" style="color:#c1121f"><b>Hinweis:</b> Du hast die Datei lokal geöffnet. Für die Lobby muss das Spiel online liegen (z. B. Vercel). Trage dann dessen Adresse ein.</p>':''}</div>
+   ${location.protocol==='file:'?'<p class="small" style="color:#8a5a00"><b>Hinweis:</b> Du hast die Datei lokal geöffnet. Die Lobby nutzt deshalb den Server auf '+PROD_URL.replace('https://','')+'. Die Schüler:innen scannen den QR-Code und landen auf dieser Online-Adresse. Am einfachsten öffnest du die Lehrer-Ansicht direkt dort.</p>':''}</div>
   <div class="row"><button class="btn" id="hsOpen">🚪 Lobby öffnen</button>${MP.hostSaved?'<button class="btn blue" id="hsRes">↩ Laufende Lobby '+MP.hostSaved.code+' fortsetzen</button>':''}<button class="btn ghost" id="hsSolo">🎮 Einzelspiel zum Ausprobieren</button></div><p id="hsErr" class="small" style="color:#c1121f"></p>`;
   $('#hsOpen').onclick=async()=>{try{mpReadFields();MP.api=($('#hsA').value||'').trim();MP.gameUrl=($('#hsU').value||'').trim();
     const j=await(async()=>{const r=await fetch(mpApiBase(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({a:'create',cfg:mpCfgObj()})});const o=await r.json();if(!r.ok||o.error)throw new Error(o.error||'Server nicht erreichbar');return o})();
