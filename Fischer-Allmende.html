@@ -471,12 +471,17 @@ const FSPR={};
 const BIGCOL=['#4f7cac','#6c63c9','#2e86ab','#9aa5b1','#1d6f8a'];
 /* Fischarten: klein (Wert 1) · normal (1) · Großfisch (2) · Goldfisch (3) – 'ex' = Mehrwert über 1 */
 function newFish(sc,si){
- const r=Math.random(),loner=Math.random()<.22;
+ const r=Math.random(),loner=Math.random()<.3;
  let kind='S',size=rnd(6,8),ex=0,color=FCOL[rint(0,4)];
  if(r<CFG.GOLD_CHANCE){kind='G';size=12;ex=4;color='#ffca28'}
  else if(r<CFG.GOLD_CHANCE+CFG.BIG_CHANCE){kind='B';size=rnd(18,23);ex=2;color=BIGCOL[rint(0,BIGCOL.length-1)]}
  else if(r<.78){kind='N';size=rnd(9,12)}
- return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,330):rnd(30,170),ang:rnd(0,6.28),size,kind,ex,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
+ let far=false;
+ if((kind==='G'||kind==='B')&&A&&A.schools&&A.schools.length&&Math.random()<.8){ /* seltene, teure Fische meist weit weg vom Hafen */
+  const hx=(HB.x0+HB.x1)/2,hy=(HB.y0+HB.y1)/2,thr=.5*Math.hypot(HB.W/2,HB.H/2);
+  for(let k=0;k<25;k++){const j=rint(0,A.schools.length-1),q=A.schools[j];if(Math.hypot(q.x-hx,q.y-hy)>=thr){sc=q;si=j;far=true;break}}
+ }
+ return {x:sc.x+rnd(-90,90),y:sc.y+rnd(-70,70),s:si,a:rnd(0,6.28),w:rnd(.35,1.2)*(Math.random()<.5?-1:1),rad:loner?rnd(150,380):far?rnd(25,110):rnd(30,190),ang:rnd(0,6.28),size,kind,ex,gold:kind==='G',dead:false,color,ph:rnd(0,6)};
 }
 function fishSprite(color,gold){
  const key=color+(gold||'');if(FSPR[key])return FSPR[key];
@@ -555,8 +560,14 @@ function startRound(T){
   net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
   cap:capOf(),cargo:0,hold:0,landed:0,trips:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
   bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:rnd(WB.x0+20,WB.x1-20),y:rnd(WB.y0+20,WB.y1-20),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
- const ns=S<6?1:clamp(Math.round(S/11),10,40);
- for(let i=0;i<ns;i++){const sp=rnd(25,45),an=rnd(0,6.28);A.schools.push({x:rnd(150,WW-150),y:rnd(150,WH-150),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
+ const ns=S<6?1:clamp(Math.round(S/8),12,50);
+ { /* Schwärme gleichmäßig über die ganze Karte verteilen (gejitterte Rasterzellen) */
+  const cols=Math.max(1,Math.round(Math.sqrt(ns*WW/WH))),rows=Math.max(1,Math.ceil(ns/cols)),cells=[];
+  for(let cy=0;cy<rows;cy++)for(let cx=0;cx<cols;cx++)cells.push([cx,cy]);
+  for(let i=cells.length-1;i>0;i--){const j=rint(0,i),t=cells[i];cells[i]=cells[j];cells[j]=t}
+  for(let i=0;i<ns;i++){const [cx,cy]=cells[i%cells.length],sp=rnd(25,45),an=rnd(0,6.28);
+   A.schools.push({x:clamp((cx+rnd(.1,.9))*WW/cols,100,WW-100),y:clamp((cy+rnd(.1,.9))*WH/rows,WB.y0+60,WB.y1-60),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
+ }
  for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si))}
  for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<230||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
  const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
