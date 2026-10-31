@@ -119,7 +119,6 @@ body.playing{overflow:hidden}
 #playHud .hud{margin:0;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px}
 #playHud .pill{padding:3px 10px;font-size:13px;pointer-events:auto}
 #playHud #bTeach{padding:5px 10px;font-size:14px;pointer-events:auto;box-shadow:0 3px 0 #b8c4cc}
-#playHud #bHome{padding:5px 12px;font-size:14px;margin-left:auto;pointer-events:auto;box-shadow:0 3px 0 #b8c4cc}
 #playHud .bar{background:#0006}
 #playCtrl{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:10px 14px max(12px,env(safe-area-inset-bottom));pointer-events:none}
 #playCtrl .pad,#playCtrl .netbtn,#joy{pointer-events:auto;opacity:.92}
@@ -170,10 +169,10 @@ body.playing{overflow:hidden}
       <span class="pill" id="h-time">⏱ 0</span>
       <span class="pill" id="h-rank">🏅 Platz 1/30</span>
       <span class="pill" id="h-cargo">🧺 0/10</span>
+      <span class="pill" id="h-landed">⚓ 0</span>
       <span class="pill" id="h-quota">📜 Quote</span>
       <span class="pill" id="h-stock">🐟 Bestand 0</span>
       <span class="pill" id="h-price">💰 0</span>
-      <button class="btn ghost" id="bHome">⚓ Hafen</button>
       <button class="btn ghost" id="bTeach" title="Lehrer-Verwaltung">⚙️</button>
     </div>
     <div class="bar" style="height:10px;margin-top:4px"><i id="h-bar" style="width:100%;background:#2a9d8f"></i></div>
@@ -215,7 +214,7 @@ const CFG={
   S0:390,           // Start-Bestand
   R:1.2,            // Wachstumsrate (höher = Bucht erholt sich schneller)
   COLLAPSE:15,      // Bestand darunter = See leer -> Spielrunde endet
-  BASECARGO:16,     // Laderaum pro Saison (Fische)
+  BASECARGO:8,      // Laderaum pro Fahrt (Fische im Boot, bis zum Entladen im Hafen)
   BOTCAP:14,        // max. Fang eines KI-Boots pro Saison
   NET_BAG:6, NET_R:26, NET_CAP:3, NET_CD:1.5, // Netzradius, Fische pro Zug (NET_BAG = Fassungsvermögen des Netzes; voll = einholen!), Sekunden zwischen zwei Zügen
   PRICE_BASE:2,     // Mindestpreis pro Fisch (Münzen)
@@ -249,7 +248,7 @@ const ROLES={
 const PRIV={
  hook:{name:'Größeres Netz',emoji:'🪝',max:3,cost:[20,35,50],desc:'Größeres Netz: mehr Fläche, mehr Fische pro Zug'},
  winch:{name:'Starke Winde',emoji:'⚙️',max:3,cost:[15,30,45],desc:'Das Netz fängt schneller nach (kürzere Pause zwischen Zügen)'},
- cargo:{name:'Laderaum',emoji:'🧰',max:3,cost:[15,25,40],desc:'+4 Fische Platz pro Saison'},
+ cargo:{name:'Laderaum',emoji:'🧰',max:3,cost:[15,25,40],desc:'+2 Fische Platz im Boot'},
  motor:{name:'Außenborder',emoji:'🚤',max:3,cost:[15,25,35],desc:'Dein Boot wird schneller'},
  cool:{name:'Kühlkette',emoji:'🧊',max:2,cost:[25,45],desc:'+10 % Verkaufspreis je Stufe'}
 };
@@ -337,7 +336,7 @@ const commCost=(k,l)=>Math.round(COMM[k].cost[l]*1);
 const hasSonar=()=>G.comm.sonar>0||G.phase===2;
 const priceBase=S=>CFG.PRICE_BASE+CFG.PRICE_SLOPE*(1-S/CFG.K);
 const price=S=>priceBase(S)*(1+.1*G.P[0].upg.cool);
-const capOf=()=>CFG.BASECARGO+4*G.P[0].upg.cargo;
+const capOf=()=>CFG.BASECARGO+2*G.P[0].upg.cargo;
 const tacNow=()=>G.S>=CFG.K/2?Math.round(G.S-CFG.K/2):Math.round(growth(G.S)*.4);
 const quotaNow=()=>Math.max(1,Math.floor(tacNow()/G.P.length));
 const fmt=n=>(Math.round(n*10)/10).toString().replace('.',',');
@@ -449,7 +448,7 @@ function renderDecision(){
  ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Mit ⚓ Hafen kannst du früher Feierabend machen.</p>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, fahr zum großen ⚓ Hafengebäude (unten auf der Karte): Dort wird der Fisch entladen und du fischst mit leerem Boot weiter.</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
@@ -462,6 +461,7 @@ ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ 
 let A=null;const cv=$('#cv'),cx=cv.getContext('2d');
 const FCOL=['#ff8a65','#4dd0e1','#9575cd','#81c784','#f06292'];
 const AR={x0:24,y0:24,x1:800-24,y1:480-24};  /* sichtbarer Spielbereich auf dem Bildschirm (ohne HUD/Tasten) */
+let HB={x0:0,x1:0,y0:0,W:0,H:0};
 let WB={x0:40,y0:40,x1:1900,y1:1100,W:1940,H:1140};  /* Weltgrenzen */
 let CAM={x:0,y:0};
 let KS=1,DPR=1,useFS=true;
@@ -548,23 +548,23 @@ function startRound(T){
  show('s-play');fitWorld();
  const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
  const WW=Math.round(CFG.W*CFG.WORLD),WH=Math.round(CFG.H*CFG.WORLD);
- WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};
+ WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};HB={x0:WW/2-150,x1:WW/2+150,y0:WH-170,W:WW,H:WH};
  A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
-  boat:{x:WW/2,y:WH/2,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
+  boat:{x:WW/2,y:WH-170-62,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
   bs:105*(1+.2*me.upg.motor)*me.role.speed,ev:evFor(G.phase,G.round),windAng:rnd(0,6.28),curAng:rnd(0,6.28),
   net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
-  cap:capOf(),cargo:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
+  cap:capOf(),cargo:0,hold:0,landed:0,trips:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
   bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:rnd(WB.x0+20,WB.x1-20),y:rnd(WB.y0+20,WB.y1-20),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
  const ns=S<6?1:clamp(Math.round(S/11),10,40);
  for(let i=0;i<ns;i++){const sp=rnd(25,45),an=rnd(0,6.28);A.schools.push({x:rnd(150,WW-150),y:rnd(150,WH-150),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
  for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si))}
- for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<160||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
+ for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<160||Math.hypot(x-WW/2,y-(WH-230))<260||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
  const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
  if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
  A.bots.forEach(b=>{const n=botTarget(b.p);for(let k=0;k<n;k++)b.evs.push({t:rnd(3,T-2),prep:false,done:false,f:null});b.evs.sort((a,c)=>a.t-c.t)});
  $('#h-price').textContent='💰 '+fmt(A.price)+'/Fisch';
  $('#h-quota').style.display=ph2?'':'none';
- $('#bHome').classList.remove('pulse');setNetBtn();
+ setNetBtn();
  CAM.x=A.boat.x-CFG.W/2;CAM.y=A.boat.y-(AR.y0+AR.y1)/2;camClamp();
  A.last=performance.now();requestAnimationFrame(loop);
 }
@@ -579,7 +579,7 @@ function botTarget(p){
  let t;
  switch(p.role.id){
   case 'tessa':t=share*2.2*pr+r*.8;break;
-  case 'kalle':t=share*1.4*pr+(G.lastPlayer>CFG.BASECARGO?1:0);break;
+  case 'kalle':t=share*1.4*pr+(G.lastPlayer>16?1:0);break;
   case 'elif':t=share*.85*pr;break;
   default:t=share*.95*pr;
  }
@@ -598,25 +598,29 @@ function setNetBtn(){const b=$('#bNet'),N=A&&A.net,o=N&&N.out;b.classList.toggle
  b.innerHTML=!o?'🎣 NETZ AUSWERFEN<br><small>Netz ist an Bord</small>':N.full?'🪢 NETZ VOLL!<br><small>jetzt einholen ('+N.n+'/'+N.bag+')</small>':'🪢 NETZ EINHOLEN<br><small>Netz '+N.n+'/'+N.bag+'</small>'}
 function haulIn(){
  const N=A.net;if(!N.out)return;
- if(N.n){A.cargo+=N.n;A.gold+=N.gold;A.plain+=N.n;
+ if(N.n){A.cargo+=N.n;A.hold+=N.n;A.gold+=N.gold;A.plain+=N.n;
   A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'+'+N.n+' 🧺',t:1.2,col:'#ffe066'});beep(660,.1,'square',.04);
   if(G.phase===2){
    if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
-   else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt – ⚓ Hafen!');$('#bHome').classList.add('pulse')}
+   else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt: '+A.quota+'/'+A.quota)}
   }
-  if(A.cargo>=A.cap){toast('🧺 Laderaum voll – zurück in den Hafen!');$('#bHome').classList.add('pulse')}}
+  if(A.hold>=A.cap){toast('🧺 Boot voll – ab zum Hafen ⚓ (unten auf der Karte)!')}}
  N.n=0;N.gold=0;N.full=false;N.out=false;beep(300,.1,'triangle');setNetBtn();
+}
+function unloadHold(){
+ const n=A.hold;if(n<=0)return;A.landed+=n;A.hold=0;A.trips++;A.dockFlash=1;
+ A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-40,txt:'⚓ '+n+' 🐟 entladen',t:1.6,col:'#9be7a5'});beep(520,.12,'triangle',.05);setTimeout(()=>beep(780,.14,'triangle',.05),110);
 }
 function netPress(){
  if(!A||!A.running)return;const N=A.net,B=A.boat;
  if(N.out){haulIn();return}
- if(A.cargo>=A.cap){toast('🧺 Laderaum voll – zurück in den Hafen!');$('#bHome').classList.add('pulse');return}
+ if(A.hold>=A.cap){toast('🧺 Boot voll – erst im Hafen ⚓ entladen!');return}
  N.out=true;N.cd=.5;N.tang=0;N.n=0;N.gold=0;N.full=false;N.x=B.x-Math.cos(B.ang)*64;N.y=B.y-Math.sin(B.ang)*64;beep(420,.1,'triangle');setNetBtn();
  if(G.phase===2&&A.cargo>=A.quota)toast('🚔 Quote erreicht – jeder weitere Fisch ist Schwarzfang!');
 }
 function netRelease(){}
 function sweep(){
- const N=A.net,space=Math.min(N.bag-N.n,A.cap-A.cargo-N.n);
+ const N=A.net,space=Math.min(N.bag-N.n,A.cap-A.hold-N.n);
  if(space<=0){N.full=true;return}
  const inside=A.fish.filter(f=>Math.hypot(f.x-N.x,f.y-N.y)<N.R+f.size*.3).sort((a,b)=>Math.hypot(a.x-N.x,a.y-N.y)-Math.hypot(b.x-N.x,b.y-N.y));
  const take=inside.slice(0,Math.min(N.cap,space));const g0=N.gold;
@@ -624,7 +628,7 @@ function sweep(){
  take.forEach(f=>{A.fish.splice(A.fish.indexOf(f),1);f.dead=true;N.n++;N.gold+=f.ex||0});
  N.cd=N.cdMax;N.pulse=.45;
  A.fx.push({k:'txt',x:N.x,y:N.y-20,txt:'+'+take.length+' 🐟'+(N.gold-g0>0?' ✨+'+(N.gold-g0)+'💰':''),t:1.2,col:'#ffe066'});beep(560+take.length*60,.12);
- if(N.n>=N.bag||A.cargo+N.n>=A.cap){N.full=true;toast('🪢 Netz voll – jetzt einholen!');beep(740,.2,'square',.05)}
+ if(N.n>=N.bag||A.hold+N.n>=A.cap){N.full=true;toast('🪢 Netz voll – jetzt einholen!');beep(740,.2,'square',.05)}
  setNetBtn();
 }
 function confiscate(n){A.cargo=Math.max(0,A.cargo-n);A.gold=Math.min(A.gold,A.cargo*4)}
@@ -689,6 +693,9 @@ function update(dt){
  B.x+=Math.cos(B.ang)*B.v*dt;B.y+=Math.sin(B.ang)*B.v*dt;
  if(B.x<WB.x0){B.x=WB.x0;B.v*=.5}if(B.x>WB.x1){B.x=WB.x1;B.v*=.5}if(B.y<WB.y0){B.y=WB.y0;B.v*=.5}if(B.y>WB.y1){B.y=WB.y1;B.v*=.5}
  for(const r of A.rocks){const dx=B.x-r.x,dy=B.y-r.y,d=Math.hypot(dx,dy)||1,m=r.r+18;if(d<m){B.x=r.x+dx/d*m;B.y=r.y+dy/d*m;B.v*=.6}}
+ if(B.x>HB.x0-20&&B.x<HB.x1+20&&B.y>HB.y0-20){const pt=B.y-(HB.y0-20),pl=B.x-(HB.x0-20),pr=(HB.x1+20)-B.x,mn=Math.min(pt,pl,pr);if(mn===pt)B.y=HB.y0-20;else if(mn===pl)B.x=HB.x0-20;else B.x=HB.x1+20;B.v*=.6}
+ A.atHarbor=B.x>HB.x0-12&&B.x<HB.x1+12&&B.y>HB.y0-105;
+ if(A.atHarbor&&A.hold>0)unloadHold();
  A.foamT-=dt;if(Math.abs(B.v)>20&&A.foamT<=0){A.foamT=.05;A.fx.push({k:'foam',x:B.x-Math.cos(B.ang)*28+rnd(-4,4),y:B.y-Math.sin(B.ang)*28+rnd(-4,4),t:.9,t0:.9})}
  if(N.pulse>0)N.pulse-=dt;
  if(N.out){
@@ -865,10 +872,46 @@ function drawWater(c,t,vx,vy,W,H){
  c.strokeStyle='rgba(235,225,170,.55)';c.lineWidth=70;c.strokeRect(0,0,WB.W,WB.H);
  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=4;c.setLineDash([14,10]);c.strokeRect(WB.x0-14,WB.y0-14,WB.x1-WB.x0+28,WB.y1-WB.y0+28);c.setLineDash([]);
 }
+function drawHarbor(c,t){
+ const x0=HB.x0,x1=HB.x1,y0=HB.y0,w=x1-x0,H=HB.H,cx0=(x0+x1)/2;
+ /* Anlegezone im Wasser */
+ const hot=A.hold>0,pl=.5+.5*Math.sin(t*5);
+ c.save();c.setLineDash([16,10]);c.lineWidth=4;c.strokeStyle=hot?'rgba(255,224,102,'+(.6+.4*pl)+')':'rgba(255,255,255,.45)';
+ c.fillStyle=hot?'rgba(255,224,102,'+(.10+.10*pl)+')':'rgba(255,255,255,.07)';
+ c.beginPath();c.rect(x0-12,y0-105,w+24,105);c.fill();c.stroke();c.setLineDash([]);
+ c.font='bold 17px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.fillStyle=hot?'#fff3b0':'rgba(255,255,255,.75)';c.strokeStyle='rgba(0,0,0,.45)';c.lineWidth=3;
+ const lab=hot?'⬇ HIER ENTLADEN ⬇':'⚓ Anlegestelle';c.strokeText(lab,cx0,y0-82);c.fillText(lab,cx0,y0-82);c.restore();
+ /* Kai */
+ c.fillStyle='#9a8f7e';c.fillRect(x0-30,y0-14,w+60,H-y0+14);
+ c.fillStyle='#b9ae9b';c.fillRect(x0-30,y0-14,w+60,10);
+ c.fillStyle='#6d5a3f';for(let x=x0-24;x<x1+30;x+=26)c.fillRect(x,y0-4,3,6);
+ /* Lagerhalle */
+ const bx=x0+14,bw=w-28,by=y0+14,bh=H-y0-6;
+ c.fillStyle='#b5412f';c.fillRect(bx,by+30,bw,bh);
+ c.fillStyle='rgba(0,0,0,.14)';for(let y=by+40;y<by+bh;y+=14)c.fillRect(bx,y,bw,2);
+ c.fillStyle='#6b2a22';c.beginPath();c.moveTo(bx-12,by+34);c.lineTo(cx0,by-26);c.lineTo(bx+bw+12,by+34);c.closePath();c.fill();
+ c.fillStyle='#8a3a2c';c.beginPath();c.moveTo(bx-4,by+32);c.lineTo(cx0,by-16);c.lineTo(bx+bw+4,by+32);c.closePath();c.fill();
+ c.fillStyle='#fff3d6';c.fillRect(cx0-70,by+34,140,34);c.strokeStyle='#4a1d17';c.lineWidth=3;c.strokeRect(cx0-70,by+34,140,34);
+ c.fillStyle='#1d3557';c.font='bold 25px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('⚓ HAFEN',cx0,by+52);
+ c.fillStyle='#3b2a24';c.fillRect(cx0-34,by+78,68,bh-62);c.fillStyle='#4f3830';c.fillRect(cx0-30,by+82,60,bh-66);
+ c.fillStyle='#ffd166';for(const dx of [-110,-80,80,110]){c.fillRect(cx0+dx-12,by+78,24,20);}
+ /* Kisten & Fässer */
+ c.fillStyle='#c8963e';c.fillRect(x0-22,y0-6,22,18);c.fillRect(x1+2,y0-6,22,18);c.strokeStyle='#7a5a1f';c.lineWidth=2;c.strokeRect(x0-22,y0-6,22,18);c.strokeRect(x1+2,y0-6,22,18);
+ c.font='16px sans-serif';c.fillText('🐟',x0-11,y0+3);c.fillText('🐟',x1+13,y0+3);
+ /* Kran */
+ const kx=x1-18;c.strokeStyle='#e9c46a';c.lineWidth=7;c.beginPath();c.moveTo(kx,y0-4);c.lineTo(kx,y0-70);c.lineTo(kx-52,y0-70);c.stroke();
+ c.strokeStyle='#333';c.lineWidth=2;c.beginPath();c.moveTo(kx-46,y0-70);c.lineTo(kx-46,y0-40+Math.sin(t*2)*6);c.stroke();
+ c.fillStyle='#e63946';c.fillRect(kx-52,y0-40+Math.sin(t*2)*6,12,10);
+ /* Fahne */
+ c.strokeStyle='#ddd';c.lineWidth=3;c.beginPath();c.moveTo(cx0,by-26);c.lineTo(cx0,by-66);c.stroke();
+ c.fillStyle='#2a9d8f';c.beginPath();c.moveTo(cx0,by-66);c.lineTo(cx0+32,by-58+Math.sin(t*4)*3);c.lineTo(cx0,by-48);c.closePath();c.fill();
+ c.textBaseline='alphabetic';
+}
 function drawMini(c){
  const mw=Math.min(130,CFG.W*.22),mh=mw*WB.H/WB.W,x0=CFG.W-mw-10,y0=AR.y0,s=mw/WB.W;
  c.fillStyle='rgba(6,50,75,.55)';c.fillRect(x0,y0,mw,mh);c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=1.5;c.strokeRect(x0,y0,mw,mh);
  c.fillStyle='rgba(120,230,255,.7)';for(const f of A.fish)c.fillRect(x0+f.x*s,y0+f.y*s,1.4,1.4);
+ c.fillStyle='#e07a5f';c.fillRect(x0+HB.x0*s,y0+HB.y0*s,(HB.x1-HB.x0)*s,mh-HB.y0*s);c.font='9px sans-serif';c.textAlign='center';c.fillText('⚓',x0+(HB.x0+HB.x1)/2*s,y0+mh-2);
  c.fillStyle='#fff';for(const b of A.bots)c.fillRect(x0+b.x*s-1,y0+b.y*s-1,2.4,2.4);
  for(const p of A.patrols){c.fillStyle='#ff4d4d';c.fillRect(x0+p.x*s-2,y0+p.y*s-2,4,4)}
  c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=1;c.strokeRect(x0+CAM.x*s,y0+CAM.y*s,CFG.W*s,CFG.H*s);
@@ -888,6 +931,7 @@ function draw(){
  for(const e of A.fx){if(e.k==='ring'){const k=1-e.t/e.t0;c.strokeStyle=e.col;c.globalAlpha=1-k;c.lineWidth=3;c.beginPath();c.arc(e.x,e.y,e.R*(.3+.7*k),0,7);c.stroke();c.globalAlpha=1}}
  A.bots.forEach(b=>{if(iv(b.x,b.y,60))drawBoatTop(c,b.x,b.y,b.ang,b.p.boat,.7,b.p.name,t,true)});
  A.patrols.forEach(p=>{if(iv(p.x,p.y,60))drawPatrol(c,p,t)});
+ drawHarbor(c,t);
  drawNet(c,t);
  c.strokeStyle='rgba(255,224,102,'+(.55+.35*Math.sin(t*5))+')';c.lineWidth=3;c.beginPath();c.arc(B.x,B.y,34,0,7);c.stroke();
  drawBoatTop(c,B.x,B.y,B.ang,BOAT,.75,BOAT.name,t);
@@ -896,7 +940,7 @@ function draw(){
  drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
- if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick ziehen = Kurs & Tempo · 🎣 Netz-Knopf: aus-/einholen';
+ if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · ⚓ Boot voll? Fang im Hafen entladen';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
 const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
  if(msg)fitT(msg,AR.y0+26);
@@ -905,7 +949,8 @@ const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.s
  const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
  const have=A.cargo+A.net.n;
- $('#h-cargo').textContent='🧺 '+A.cargo+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;
+ $('#h-cargo').textContent='🧺 '+A.hold+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;$('#h-cargo').style.background=A.hold>=A.cap?'#ffd6d9':'';
+ $('#h-landed').textContent='⚓ '+A.landed+' entladen';
  $('#h-stock').textContent='🐟 Bestand '+A.fish.length+'/'+CFG.K;$('#h-stock').style.display=revLvl()<2?'none':'';
  $('#h-rank').textContent='🏅 Platz '+A.rank+'/'+G.P.length;
  if(G.phase===2){const q=$('#h-quota');q.textContent=(have>A.quota?'⚠️ ':'📜 ')+'Quote '+have+'/'+A.quota;q.style.background=have>A.quota?'#ffd6d9':have===A.quota?'#d8f5e5':''}
@@ -933,7 +978,6 @@ const hold=(id,key)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preve
 {const nb=$('#bNet');nb.addEventListener('pointerdown',e=>{e.preventDefault();try{nb.setPointerCapture(e.pointerId)}catch(x){}netPress()});
  ['pointerup','pointercancel'].forEach(ev=>nb.addEventListener(ev,()=>netRelease()));nb.addEventListener('contextmenu',e=>e.preventDefault())}
 cv.addEventListener('pointerdown',e=>{e.preventDefault();netPress()});
-$('#bHome').onclick=()=>{if(A&&A.running)endRound()};
 
 /* ---------- Saisonende ---------- */
 function finishRound(){
