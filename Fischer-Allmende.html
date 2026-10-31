@@ -1475,6 +1475,7 @@ function mpBuildClientG(m){
 }
 function mpOnMeta(m,n){
  if(!m)return;MP.meta=m;
+ if(m.state==='ended'){if(MP.role==='player'&&MP.key!=='ended'){MP.key='ended';MP.startAt=0;if(typeof A!=='undefined'&&A)A.running=false;let t='';if(G&&G.P&&G.P[0]){const so=byCoins().filter(p=>!p.dummy),pl=so.indexOf(G.P[0])+1;t=`<p>Dein Stand: <b>${G.P[0].coins} 💰</b> – Platz <b>${pl}</b> von ${so.length}.</p>`}mpWait('<h2>🏁 Der Lehrer hat das Spiel beendet</h2>'+t+'<p>Danke fürs Mitspielen!</p>')}return}
  if(m.state==='lobby'){const e=$('#mpN');if(e)e.textContent=(n||0)+' Spieler in der Lobby';return}
  if(MP.role!=='player')return;
  if(!G){
@@ -1649,13 +1650,14 @@ function mpHostPaint(){
  }
  const mid=$('#hsMid'),ps=MP.players||[];
  const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
- const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Saison ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Saison läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Saison ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet'}[m.state]||m.state;
+ const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Saison ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Saison läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Saison ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
  let btn='';
  if(m.state==='lobby')btn=`<button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
  else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Saison ${m.rd} starten (Countdown 8 s)</button>`;
  else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Saison jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
  else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Saison ${m.rd+1} vorbereiten</button>`;
  else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
+ if(m.state!=='done'&&m.state!=='ended')btn+=` <button class="btn ghost" id="hsStop" style="background:#ffe3e3;color:#a4161a">⛔ Spiel beenden</button>`;
  mid.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">${stateTxt}</h3><span class="pill">${ps.length} Spieler</span></div><div class="row" style="margin-top:8px">${btn}</div></div>
  <div class="card"><h3>👥 Spieler</h3><div id="hsPl"></div></div>
  ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}`;
@@ -1666,6 +1668,7 @@ function mpHostPaint(){
  pl.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{if(m.state!=='lobby'){toast('Nach dem Start kann niemand entfernt werden');return}try{await mpCall('kick',{id:b.dataset.k});mpHostPoll()}catch(e){}});
  const on=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f};
  on('hsGo',mpHostStartGame);
+ on('hsStop',async()=>{if(!confirm('Spiel für ALLE Spieler jetzt beenden?'))return;try{await mpSet({state:'ended'});try{localStorage.removeItem('fg_host')}catch(e){}toast('Spiel beendet')}catch(e){toast('⚠️ '+e.message)}});
  on('hsPlay',()=>mpSet({state:'play',startAt:mpNow()+8000}));
  on('hsEnd',()=>mpHostCalc());
  on('hsNext',()=>{G.round=m.rd+1;G.S=m.Snew;mpSet({state:'prep',rd:m.rd+1,S:m.Snew,startAt:0})});
