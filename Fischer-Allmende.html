@@ -169,7 +169,7 @@ body.playing{overflow:hidden}
       <span class="pill" id="h-time">⏱ 0</span>
       <span class="pill" id="h-rank">🏅 Platz 1/30</span>
       <span class="pill" id="h-cargo">🧺 0/10</span>
-      <span class="pill" id="h-landed">⚓ 0</span>
+      <span class="pill" id="h-landed">📦 0</span>
       <span class="pill" id="h-quota">📜 Quote</span>
       <span class="pill" id="h-stock">🐟 Bestand 0</span>
       <span class="pill" id="h-price">💰 0</span>
@@ -448,7 +448,7 @@ function renderDecision(){
  ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, fahr zum großen ⚓ Hafengebäude (in der Kartenmitte): Dort wird der Fisch entladen und du fischst mit leerem Boot weiter.</p>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, fahr zum Hafengebäude (in der Kartenmitte): Dort wird der Fisch entladen und du fischst mit leerem Boot weiter.</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
@@ -604,17 +604,17 @@ function haulIn(){
    if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
    else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt: '+A.quota+'/'+A.quota)}
   }
-  if(A.hold>=A.cap){toast('🧺 Boot voll – ab zum Hafen ⚓ (in der Kartenmitte)!')}}
+  if(A.hold>=A.cap){toast('🧺 Boot voll – ab zum Hafen (Insel in der Kartenmitte)!')}}
  N.n=0;N.gold=0;N.full=false;N.out=false;beep(300,.1,'triangle');setNetBtn();
 }
 function unloadHold(){
  const n=A.hold;if(n<=0)return;A.landed+=n;A.hold=0;A.trips++;A.dockFlash=1;
- A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-40,txt:'⚓ '+n+' 🐟 entladen',t:1.6,col:'#9be7a5'});beep(520,.12,'triangle',.05);setTimeout(()=>beep(780,.14,'triangle',.05),110);
+ A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-40,txt:n+' 🐟 entladen',t:1.6,col:'#9be7a5'});beep(520,.12,'triangle',.05);setTimeout(()=>beep(780,.14,'triangle',.05),110);
 }
 function netPress(){
  if(!A||!A.running)return;const N=A.net,B=A.boat;
  if(N.out){haulIn();return}
- if(A.hold>=A.cap){toast('🧺 Boot voll – erst im Hafen ⚓ entladen!');return}
+ if(A.hold>=A.cap){toast('🧺 Boot voll – erst im Hafen entladen!');return}
  N.out=true;N.cd=.5;N.tang=0;N.n=0;N.gold=0;N.full=false;N.x=B.x-Math.cos(B.ang)*64;N.y=B.y-Math.sin(B.ang)*64;beep(420,.1,'triangle');setNetBtn();
  if(G.phase===2&&A.cargo>=A.quota)toast('🚔 Quote erreicht – jeder weitere Fisch ist Schwarzfang!');
 }
@@ -887,22 +887,45 @@ function drawHarbor(c,t){
  c.fillStyle='#6bb35a';c.beginPath();c.ellipse(cx0,cy0-4,w/2+8,h/2+6,0,0,7);c.fill();
  /* Anlegesteg */
  c.fillStyle='#8a6a43';c.fillRect(cx0-12,y1+8,24,26);c.strokeStyle='#5c4326';c.lineWidth=2;for(let y=y1+12;y<y1+34;y+=7){c.beginPath();c.moveTo(cx0-12,y);c.lineTo(cx0+12,y);c.stroke()}
- /* Hafenhäuschen (Dach von oben) */
- const hx=cx0-34,hy=cy0-30,hw=68,hh=44;
- c.fillStyle='rgba(0,0,0,.2)';c.fillRect(hx+4,hy+5,hw,hh);
- c.fillStyle='#8a3a2c';c.fillRect(hx,hy,hw,hh/2);c.fillStyle='#b5412f';c.fillRect(hx,hy+hh/2,hw,hh/2);
- c.fillStyle='#5a221a';c.fillRect(hx,hy+hh/2-2,hw,4);c.strokeStyle='#3b1712';c.lineWidth=3;c.strokeRect(hx,hy,hw,hh);
- c.fillStyle='#fff3d6';c.fillRect(cx0-26,cy0-19,52,18);c.strokeStyle='#4a1d17';c.lineWidth=2;c.strokeRect(cx0-26,cy0-19,52,18);
- c.fillStyle='#1d3557';c.font='bold 13px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('⚓ HAFEN',cx0,cy0-10);
- /* Kisten, Kran, Fahne, Palme */
- c.font='11px sans-serif';
- for(const [kx,ky] of [[cx0+46,cy0+10],[cx0-46,cy0+14]]){c.fillStyle='#c8963e';c.fillRect(kx-9,ky-8,18,16);c.strokeStyle='#7a5a1f';c.lineWidth=2;c.strokeRect(kx-9,ky-8,18,16);c.fillStyle='#000';c.fillText('🐟',kx,ky+1)}
- const kx=cx0+30,ky=cy0+16;c.strokeStyle='#e9c46a';c.lineWidth=5;c.beginPath();c.moveTo(kx,ky);c.lineTo(kx+26,ky+26);c.stroke();
- c.fillStyle='#e9c46a';c.beginPath();c.arc(kx,ky,6,0,7);c.fill();
- c.strokeStyle='#333';c.lineWidth=1.5;c.beginPath();c.moveTo(kx+26,ky+26);c.lineTo(kx+26,ky+38+Math.sin(t*2)*3);c.stroke();c.fillStyle='#e63946';c.fillRect(kx+22,ky+38+Math.sin(t*2)*3,8,7);
- c.strokeStyle='#ddd';c.lineWidth=2.5;c.beginPath();c.moveTo(hx+6,hy+6);c.lineTo(hx+6,hy-26);c.stroke();
- c.fillStyle='#2a9d8f';c.beginPath();c.moveTo(hx+6,hy-26);c.lineTo(hx+30,hy-20+Math.sin(t*4)*2);c.lineTo(hx+6,hy-13);c.closePath();c.fill();
- c.font='22px sans-serif';c.fillStyle='#000';c.fillText('🌴',cx0-52,cy0-22);
+ /* Isometrisches Hafenhaus */
+ const ox=cx0,oy=cy0+10,P=(u,v,z)=>[ox+(u-v),oy+(u+v)/2-z];
+ const poly=(pts,fill,stroke)=>{c.beginPath();pts.forEach((q,k)=>k?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke()}};
+ const box=(u0,u1,v0,v1,z0,z1,top,lf,rt)=>{poly([P(u0,v1,z0),P(u1,v1,z0),P(u1,v1,z1),P(u0,v1,z1)],lf,'rgba(0,0,0,.35)');poly([P(u1,v0,z0),P(u1,v1,z0),P(u1,v1,z1),P(u1,v0,z1)],rt,'rgba(0,0,0,.35)');poly([P(u0,v0,z1),P(u1,v0,z1),P(u1,v1,z1),P(u0,v1,z1)],top,'rgba(0,0,0,.35)')};
+ const U=24,V=16,Hh=26,R=14,o=4;
+ c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(ox+8,oy+8,U+V+6,(U+V)/2+4,0,0,7);c.fill();
+ /* Kisten hinten */
+ box(-U-14,-U-4,-6,4,0,8,'#e0b25a','#c8963e','#a47a2c');
+ /* Wände */
+ poly([P(-U,V,0),P(U,V,0),P(U,V,Hh),P(-U,V,Hh)],'#f3e6c4','#8a7650');
+ poly([P(U,-V,0),P(U,V,0),P(U,V,Hh),P(U,-V,Hh)],'#d3bf93','#8a7650');
+ /* Sockel */
+ poly([P(-U,V,0),P(U,V,0),P(U,V,5),P(-U,V,5)],'#8c8f94');poly([P(U,-V,0),P(U,V,0),P(U,V,5),P(U,-V,5)],'#6f7378');
+ /* Tor + Fenster (linke Wand) */
+ poly([P(-8,V,0),P(8,V,0),P(8,V,17),P(-8,V,17)],'#5b3b26','#2d1b10');
+ poly([P(-8,V,17),P(0,V,22),P(8,V,17)],'#5b3b26','#2d1b10');
+ for(const uu of [-18,18]){poly([P(uu-4,V,10),P(uu+4,V,10),P(uu+4,V,19),P(uu-4,V,19)],'#7fd0e8','#3b2a1a');}
+ poly([P(U,-5,10),P(U,5,10),P(U,5,19),P(U,-5,19)],'#7fd0e8','#3b2a1a');
+ /* Dach: hinten, vorne, Giebel */
+ poly([P(-U-o,-V-o,Hh-1),P(U+o,-V-o,Hh-1),P(U+o,0,Hh+R),P(-U-o,0,Hh+R)],'#7a2a22','#4a1510');
+ poly([P(U,-V,Hh),P(U,V,Hh),P(U,0,Hh+R)],'#d3bf93','#8a7650');
+ poly([P(-U-o,0,Hh+R),P(U+o,0,Hh+R),P(U+o,V+o,Hh-1),P(-U-o,V+o,Hh-1)],'#c0392b','#5a1a14');
+ c.strokeStyle='rgba(0,0,0,.2)';c.lineWidth=1;for(let k=1;k<5;k++){const f=k/5,z=Hh+R-(R+1)*f,v=(V+o)*f;c.beginPath();c.moveTo(...P(-U-o,v,z));c.lineTo(...P(U+o,v,z));c.stroke()}
+ poly([P(-U-o,0,Hh+R),P(U+o,0,Hh+R),P(U+o,2,Hh+R),P(-U-o,2,Hh+R)],'#8e2a20');
+ /* Schornstein */
+ box(-14,-8,-6,0,Hh+2,Hh+14,'#b8b8b8','#9a9a9a','#7c7c7c');
+ /* Schild an der Wand */
+ c.save();c.setTransform(c.getTransform());c.translate(...P(-17,V,24));c.transform(1,.5,0,1,0,0);
+ c.fillStyle='#fff3d6';c.fillRect(0,-8,34,13);c.strokeStyle='#4a1d17';c.lineWidth=1.5;c.strokeRect(0,-8,34,13);
+ c.fillStyle='#1d3557';c.font='bold 10px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('HAFEN',17,-1);c.restore();
+ /* Fahne auf dem First */
+ const fp=P(U+o-2,0,Hh+R);c.strokeStyle='#ddd';c.lineWidth=2.5;c.beginPath();c.moveTo(fp[0],fp[1]);c.lineTo(fp[0],fp[1]-26);c.stroke();
+ c.fillStyle='#2a9d8f';c.beginPath();c.moveTo(fp[0],fp[1]-26);c.lineTo(fp[0]+22,fp[1]-21+Math.sin(t*4)*2);c.lineTo(fp[0],fp[1]-15);c.closePath();c.fill();
+ /* Kisten vorne + Kran */
+ box(U+6,U+18,6,16,0,10,'#e0b25a','#c8963e','#a47a2c');
+ box(-U-18,-U-8,V-2,V+8,0,8,'#e0b25a','#c8963e','#a47a2c');
+ const k0=P(U+2,-V-6,0),k1=P(U+2,-V-6,40),k2=P(U+2,-V+22,38);c.strokeStyle='#e9c46a';c.lineWidth=4;c.beginPath();c.moveTo(k0[0],k0[1]);c.lineTo(k1[0],k1[1]);c.lineTo(k2[0],k2[1]);c.stroke();
+ c.strokeStyle='#333';c.lineWidth=1.5;c.beginPath();c.moveTo(k2[0],k2[1]);c.lineTo(k2[0],k2[1]+14+Math.sin(t*2)*3);c.stroke();c.fillStyle='#e63946';c.fillRect(k2[0]-4,k2[1]+14+Math.sin(t*2)*3,8,7);
+ c.font='22px sans-serif';c.fillStyle='#000';c.textAlign='center';c.textBaseline='middle';c.fillText('🌴',cx0-56,cy0+4);
  c.textBaseline='alphabetic';
 }
 function drawMini(c){
@@ -938,7 +961,7 @@ function draw(){
  drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
- if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · ⚓ Boot voll? Fang im Hafen entladen';
+ if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · 📦 Boot voll? Fang im Hafen entladen';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
 const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
  if(msg)fitT(msg,AR.y0+26);
@@ -948,7 +971,7 @@ const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.s
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
  const have=A.cargo+A.net.n;
  $('#h-cargo').textContent='🧺 '+A.hold+(A.net.n?'+'+A.net.n:'')+'/'+A.cap;$('#h-cargo').style.background=A.hold>=A.cap?'#ffd6d9':'';
- $('#h-landed').textContent='⚓ '+A.landed+' entladen';
+ $('#h-landed').textContent='📦 '+A.landed+' entladen';
  $('#h-stock').textContent='🐟 Bestand '+A.fish.length+'/'+CFG.K;$('#h-stock').style.display=revLvl()<2?'none':'';
  $('#h-rank').textContent='🏅 Platz '+A.rank+'/'+G.P.length;
  if(G.phase===2){const q=$('#h-quota');q.textContent=(have>A.quota?'⚠️ ':'📜 ')+'Quote '+have+'/'+A.quota;q.style.background=have>A.quota?'#ffd6d9':have===A.quota?'#d8f5e5':''}
