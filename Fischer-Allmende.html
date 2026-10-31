@@ -231,7 +231,7 @@ const CFG={
   SET_BONUS:4,      // Extrapunkte für jedes komplette Farbset (5 Farben)
   GOLD_MULT:3,      // (Großfisch = Wert 3, Goldfisch = Wert 5)
   BIG_CHANCE:0.14,  // Anteil Großfische (Wert 2)
-  QUIZ_REWARD:6,    // Münzen für richtige Quizantwort
+  QUIZ_REWARD:4,    // Münzen für richtige Quizantwort (2 Fragen je Saison)
   FARM:4, STIPEND:4, TIM_DIV:0.0125, // Fischzucht, Elifs Stipendium, Tims Dividende (x Bestand)
   KING_PRIZE:[25,15,8],  // Spielrunde 1: Fangprämie für Platz 1/2/3 der Fänger
   PATROLS:4,        // Spielrunde 2: Zahl der Patrouillenboote
@@ -292,7 +292,23 @@ const QUIZ=[
  {q:'Was ist eine Fangquote (TAC)?',o:['Mindestfang pro Boot','Erlaubte Höchstmenge, die gefangen werden darf','Preis pro Fisch','Ein Fischfest'],a:1,e:'Die Gesamtfangmenge wird so festgelegt, dass sich der Bestand erholen kann – und auf die Boote aufgeteilt.'},
  {q:'Warum braucht eine Quote Kontrollen und Strafen?',o:['Damit sich alle daran halten – sonst lohnt sich Schummeln','Damit Fische billiger werden','Nur zur Dekoration','Weil Fische sonst weglaufen'],a:0,e:'Ohne Kontrolle lohnt es sich für den Einzelnen, über die Quote zu fischen (Trittbrettfahrer). Strafen müssen höher sein als der Schwarzfang-Gewinn.'},
  {q:'Wofür steht ein Öko-Siegel wie MSC?',o:['Höchster Preis egal wie','Nachhaltig bewirtschaftete Fischerei','Nur für Süßwasser','Für Zuchtlachs'],a:1,e:'Siegel schaffen Anreize: Wer nachhaltig fischt, kann oft höhere Preise erzielen.'},
- {q:'Natur als Produktionsfaktor ist …',o:['unbegrenzt','begrenzt, erneuerbare Teile brauchen Regenerationszeit','nur Boden','kostenlos und unendlich'],a:1,e:'Erneuerbar heißt nicht unendlich: Nutzung darf die Regeneration nicht überschreiten.'}
+ {q:'Natur als Produktionsfaktor ist …',o:['unbegrenzt','begrenzt, erneuerbare Teile brauchen Regenerationszeit','nur Boden','kostenlos und unendlich'],a:1,e:'Erneuerbar heißt nicht unendlich: Nutzung darf die Regeneration nicht überschreiten.'},
+ {q:'Welche drei Produktionsfaktoren unterscheidet die klassische VWL?',o:['Geld, Gold, Zeit','Boden (Natur), Arbeit, Kapital','Angebot, Nachfrage, Preis','Staat, Haushalt, Unternehmen'],a:1,e:'Boden/Natur, Arbeit und Kapital. Heute kommt oft Wissen als vierter Faktor dazu.'},
+ {q:'Zu welchem Produktionsfaktor zählt der Fischbestand in der Bucht?',o:['Arbeit','Kapital','Natur (Boden)','Wissen'],a:2,e:'Fische sind eine natürliche Ressource: Natur als Produktionsfaktor – und anders als Boden ist sie hier erneuerbar.'},
+ {q:'Was sind Opportunitätskosten eines Fisches, den du heute fängst?',o:['Der Preis auf dem Markt','Der entgangene Nutzen der besten Alternative, z. B. der Fisch, der nachwachsen und später gefangen werden könnte','Die Betriebskosten des Bootes','Die Strafe bei Kontrolle'],a:1,e:'Opportunitätskosten = Wert der besten nicht gewählten Alternative. Wer heute viel fängt, verzichtet auf künftige Erträge.'},
+ {q:'Was bedeutet Nachhaltigkeit nach dem Brundtland-Bericht (1987)?',o:['Möglichst billig produzieren','Heutige Bedürfnisse befriedigen, ohne die Möglichkeiten künftiger Generationen zu gefährden','Nur noch Bio-Produkte kaufen','Alles verbieten, was Gewinn bringt'],a:1,e:'Kern: Generationengerechtigkeit – nicht mehr verbrauchen, als nachwachsen kann.'},
+ {q:'„Für jeden ist viel fangen die beste Antwort – egal, was die anderen tun.“ Wie heißt das in der Spieltheorie?',o:['Kooperative Strategie','Dominante Strategie','Zufallsstrategie','Gleichgewichtspreis'],a:1,e:'Eine dominante Strategie ist unabhängig vom Verhalten der anderen die beste – im Gefangenendilemma führt sie trotzdem zum schlechtesten Gesamtergebnis.'},
+ {q:'Welches Beispiel ist KEIN typisches Allmendegut?',o:['Fischbestände im offenen Meer','Die Erdatmosphäre als Müllkippe für CO₂','Gemeinsame Almwiese eines Dorfes','Ein eingezäuntes Privatgrundstück'],a:3,e:'Beim Privatgut kann der Eigentümer andere ausschließen – dann ist es kein Allmendegut.'},
+ {q:'Wie kann der Staat externe Kosten „internalisieren“?',o:['Durch eine Umweltabgabe oder handelbare Zertifikate','Durch mehr Werbung','Indem er die Preise freigibt','Durch niedrigere Löhne'],a:0,e:'Abgaben (Pigou-Steuer) oder Zertifikate machen den Verursacher zum Zahler – so fließen die Kosten in seine Entscheidung ein.'},
+ {q:'Was ist der Vorteil handelbarer Fangquoten (z. B. in Island)?',o:['Alle fangen gleich viel','Die Gesamtmenge bleibt begrenzt und die Quoten wandern zu den kostengünstigsten Fischern','Der Fisch wird immer billiger','Es braucht keine Kontrolle mehr'],a:1,e:'Die Gesamtmenge schützt den Bestand, der Handel sorgt dafür, dass effizient gefischt wird. Kontrolle braucht es trotzdem.'},
+ {q:'Warum wächst ein Fischbestand bei mittlerer Größe am schnellsten?',o:['Weil dann die Preise am höchsten sind','Bei kleinem Bestand fehlen Elterntiere, bei vollem Bestand ist Nahrung und Platz knapp','Weil dann die Fischer pausieren','Weil Fische Gruppen mögen'],a:1,e:'Logistisches Wachstum: erst steigt der Zuwachs, dann bremsen knappe Ressourcen. Der größte Zuwachs liegt etwa bei der Hälfte der Kapazität.'},
+ {q:'Du willst mit einem festen Einsatz (60 Sekunden, ein Boot) möglichst viel Ertrag erzielen. Welches Prinzip ist das?',o:['Minimalprinzip','Maximalprinzip','Nachhaltigkeitsprinzip','Subsidiaritätsprinzip'],a:1,e:'Maximalprinzip: gegebener Einsatz, maximaler Ertrag. Minimalprinzip: gegebenes Ziel mit minimalem Einsatz.'},
+ {q:'Was unterscheidet ein öffentliches Gut von einem Allmendegut?',o:['Beim öffentlichen Gut gibt es keine Rivalität im Konsum','Öffentliche Güter sind immer teurer','Allmendegüter gehören dem Staat','Es gibt keinen Unterschied'],a:0,e:'Beide sind schwer ausschließbar. Aber beim öffentlichen Gut (z. B. Leuchtturm) mindert meine Nutzung nicht die der anderen – beim Allmendegut schon.'},
+ {q:'Welches Prinzip gehört zu Ostroms Erfolgsfaktoren für Gemeingüter?',o:['Keine Regeln, damit alle frei sind','Nutzer überwachen sich gegenseitig, Verstöße werden abgestuft bestraft','Alle Rechte liegen bei einer Person','Strafen sollen möglichst hoch und sofort sein'],a:1,e:'Ostrom: klare Grenzen, Regeln passend zur Situation, Mitbestimmung, Überwachung und abgestufte Sanktionen.'},
+ {q:'Die Betriebskosten deines Bootes fallen jede Saison an – egal, wie viel du fängst. Wie nennt man solche Kosten?',o:['Variable Kosten','Fixkosten','Grenzkosten','Opportunitätskosten'],a:1,e:'Fixkosten sind unabhängig von der Menge. Variable Kosten wachsen mit dem Fang.'},
+ {q:'Warum zahlen freiwillig oft nur wenige in gemeinsame Kassen ein?',o:['Weil alle den Nutzen haben, auch wer nichts zahlt (Trittbrettfahren)','Weil Geld nichts nützt','Weil Beiträge verboten sind','Weil niemand die Projekte will'],a:0,e:'Wenn der Nutzen allen zufällt, lohnt sich Abwarten für den Einzelnen – deshalb braucht es oft verbindliche Regeln.'},
+ {q:'Warum ist die Atmosphäre (Klima) ein besonders schwieriges Allmendeproblem?',o:['Weil es zu viele Fische gibt','Weil sehr viele Staaten beteiligt sind und es keine Weltpolizei gibt, die Regeln durchsetzt','Weil Luft teuer ist','Weil niemand sie nutzt'],a:1,e:'Je mehr Beteiligte und je schwächer die Durchsetzung, desto schwerer ist Kooperation – siehe internationale Klimaabkommen.'},
+ {q:'Eine Fangquote begrenzt die Menge. Was macht dagegen eine Fangabgabe (Steuer pro Fisch)?',o:['Sie verbietet das Fischen','Sie verteuert jeden Fisch und beeinflusst so den Preis','Sie erhöht die Fischzahl','Sie ersetzt den Bestand'],a:1,e:'Mengensteuerung (Quote) vs. Preissteuerung (Abgabe): Beide sollen die Nutzung auf ein nachhaltiges Maß bringen.'}
 ];
 
 /* 8) BOOT-WERFT (Bemalen & Aussuchen) */
@@ -386,7 +402,7 @@ function startPhase(ph){
 
 /* ---------- Lernmodule: Infos & Abfragen ---------- */
 const FACT_SEQ={1:[8,0,1,7,9],2:[4,5,6,3,2]};
-const QUIZ_SEQ={1:[7,8,0,1,4],2:[9,10,11,2,3],3:[5,6,12]};
+const QUIZ_SEQ={1:[[],[13,14],[8,25],[15,21],[16,7]],2:[[9,28],[10,19],[11,23],[2,24],[3,27]],3:[5,6,12,17,20]}; // je Saison 2 Fragen (Spielrunde 1, Saison 1: keine), am Ende 5 Abschlussfragen
 function quizCard(Q,id,title,reward){
  return `<div class="card quiz" id="${id}"><h3>${title||'🧠 Bonusfrage'}${reward?` (+${reward} Münzen)`:''}</h3><p><b>${Q.q}</b></p><div class="qo">${Q.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><p class="small qe"></p></div>`;
 }
@@ -1174,7 +1190,7 @@ function attachLbToggle(getSorted){
 }
 function renderResult(){
  const L=G.last,me=G.P[0],ph=G.phase,fact=FACTS[FACT_SEQ[ph][(G.round-1)%5]],m=fact.m,lv=revLvl();
- const Q=QUIZ[QUIZ_SEQ[ph][(G.round-1)%5]],showQ=!(ph===1&&G.round===1);
+ const Qs=(QUIZ_SEQ[ph][(G.round-1)%5]||[]).map(i=>QUIZ[i]);
  const R1h=ph===2&&G.res[1]?G.res[1].hist:null,r1=R1h&&R1h[G.round-1];
  const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Vergleich mit Spielrunde 1</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Saisonstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Saison</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See als in der freien Fischerei.':'Der Bestand entwickelt sich anders als in Spielrunde 1.'}</p></div>`:'';
  const myRow=L.rows[0];
@@ -1210,10 +1226,10 @@ function renderResult(){
  <canvas id="chart1" width="700" height="230"></canvas></div>`}
  ${nutzen}
  <div class="grid g2"><div class="meme"><div>${m[1]}</div><div class="e">${m[0]}</div><div>${m[2]}</div></div><div class="fact"><b>💡 Wusstest du?</b><p>${fact.t}</p></div></div>
- ${showQ?quizCard(Q,'qz','🧠 Bonusfrage',CFG.QUIZ_REWARD):''}
+ ${Qs.map((q,k)=>quizCard(q,'qz'+k,'🧠 Bonusfrage '+(k+1)+'/'+Qs.length,CFG.QUIZ_REWARD)).join('')}
  <button class="btn green" id="toNext">${end?'🏁 Weiter':'🛠 Zu den Upgrades'}</button>`;
  if(lv>=2)drawChart($('#chart1'),G.hist);attachLbToggle(()=>L.sorted);
- attachQuiz('qz',Q,CFG.QUIZ_REWARD);
+ Qs.forEach((q,k)=>attachQuiz('qz'+k,q,CFG.QUIZ_REWARD));
  $('#toNext').onclick=()=>{if(end)endPhase();else enterUpgrades()};
  show('s-result');
  if(L.empty)beep(100,.6,'sawtooth',.08);
@@ -1316,7 +1332,7 @@ function renderFinal(sorted,myRank){
  ${MP.role?'':'<li><b>Gemeindekasse:</b> Gemeinsame Projekte nützen allen – auch denen, die nichts einzahlen (Trittbrettfahrer). Freiwillig zahlen nur wenige ein; deshalb sind verbindliche Regeln oft nötig.</li>'}
  <li><b>Qualität statt Masse:</b> Bei begrenzter Menge lohnt es sich, wertvolle Fische (seltene Farben, Großfische, ein komplettes Farbset) zu fangen – so entsteht aus derselben Naturnutzung mehr Wert.</li>
  <li><b>Produktionsfaktor Natur:</b> erneuerbar, aber nur, wenn der Bestand nicht schneller schrumpft, als er nachwächst.</li></ul></div>
- ${quizCard(QUIZ[QUIZ_SEQ[3][0]],'ft1','🎯 Abschlusstest 1/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][1]],'ft2','🎯 Abschlusstest 2/3',0)}${quizCard(QUIZ[QUIZ_SEQ[3][2]],'ft3','🎯 Abschlusstest 3/3',0)}
+ ${QUIZ_SEQ[3].map((qi,k)=>quizCard(QUIZ[qi],'ft'+(k+1),'🎯 Abschlusstest '+(k+1)+'/'+QUIZ_SEQ[3].length,0)).join('')}
  <div class="card"><h3>💬 Diskussionsfragen</h3><ol>
  <li>Wann hast du in Spielrunde 1 mehr gefangen, weil „die anderen es ja auch tun“?</li>
  <li>Warum hat der Sieger von Runde 1 langfristig trotzdem verloren?</li>
@@ -1325,7 +1341,7 @@ function renderFinal(sorted,myRank){
  <li>Wo gibt es in der Realität Fangquoten? (EU-TAC, Island, Norwegen …) Welche anderen Allmenden gibt es?</li></ol></div>
  <div class="row"><button class="btn" id="again">🔁 Nochmal spielen</button><button class="btn blue" id="copyRes">📋 Ergebnis kopieren</button></div>`;
  drawCompare($('#chart2'),R1.hist,R2.hist);
- [0,1,2].forEach(k=>attachQuiz('ft'+(k+1),QUIZ[QUIZ_SEQ[3][k]],0));attachLbToggle(()=>sorted);
+ QUIZ_SEQ[3].forEach((qi,k)=>attachQuiz('ft'+(k+1),QUIZ[qi],0));attachLbToggle(()=>sorted);
  if(MP.role)$('#again').style.display='none';
  $('#again').onclick=()=>{renderRoles();show('s-start')};
  $('#copyRes').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Ergebnis kopieren:',txt)})};
