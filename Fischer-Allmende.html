@@ -356,14 +356,14 @@ function randBoat(){
 function rankPlayers(init){
  const arr=byCoins();arr.forEach((p,i)=>{p.prevRank=init?i+1:p.rank;p.rank=i+1});return arr;
 }
-function newGame(roleId,name,rounds){
+function newGame(roleId,name,rounds){ 
  const mix=[];Object.entries(BOT_MIX).forEach(([id,n])=>{for(let i=0;i<n;i++)mix.push(id)});
  while(mix.length<CFG.BOATS-1)mix.push('kalle');mix.length=CFG.BOATS-1;
  const names=shuffle(BOT_NAMES);
  const mk=(id,isP,nm,i)=>({id:i,role:ROLES[id],isP,name:nm,coins:0,contrib:0,fishTotal:0,lastFish:0,lastNet:0,tag:'',fines:0,viol:0,rank:0,prevRank:0,skill:isP?1:rnd(.75,1.3),upg:{hook:0,winch:0,cargo:0,motor:0,cool:0},boat:isP?null:randBoat()});
  const P=[mk(roleId,true,name||ROLES[roleId].name,0)];
  shuffle(mix).forEach((id,i)=>P.push(mk(id,false,names[i%names.length]+(i>=names.length?' II':''),i+1)));
- G={rounds,phase:1,round:1,S:CFG.S0,hist:[],lastPlayer:0,collapse:false,last:null,res:{},totalCatch:0,totalFines:0,comm:{fund:0,laich:0,farm:0,wache:0,sonar:0},quiz:shuffle(QUIZ.map((_,i)=>i)),P};
+ G={evSeed:Math.floor(Math.random()*1e9)+1,rounds,phase:1,round:1,S:CFG.S0,hist:[],lastPlayer:0,collapse:false,last:null,res:{},totalCatch:0,totalFines:0,comm:{fund:0,laich:0,farm:0,wache:0,sonar:0},quiz:shuffle(QUIZ.map((_,i)=>i)),P};
  startPhase(1);
 }
 function startPhase(ph){
@@ -445,6 +445,7 @@ function renderDecision(){
  <div class="card"><div class="row" style="justify-content:space-between"><div class="row"><canvas id="thumb" width="130" height="90" style="width:84px"></canvas><h3>${me.role.emoji} ${esc(me.name)} – ${me.role.title}<br><small>⛵ ${esc(msName(BOAT.name))} · 🏅 Platz ${me.rank}/${G.P.length}</small></h3></div><span class="pill">💰 ${me.coins} Münzen</span></div>
   ${revLvl()<2?'':`<div class="bar"><i style="width:${S/CFG.K*100}%;background:${col}"></i><span>🐟 Bestand ${S} / ${CFG.K}</span></div>`}
   <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum: <b>${capOf()}</b>${G.phase===2?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
+ ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
   <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Mit ⚓ Hafen kannst du früher Feierabend machen.</p>
@@ -507,6 +508,38 @@ function updateCam(dt,snap){
 }
 function onResize(){if(!A||!A.running)return;fitWorld();updateCam(0,true)}
 addEventListener('resize',onResize);addEventListener('orientationchange',()=>setTimeout(onResize,250));
+/* ---------- Saison-Ereignisse (jede Saison fühlt sich etwas anders an) ---------- */
+const EVENTS=[
+ {id:'calm',emoji:'☀️',name:'Ruhige See',txt:'Kaum Wind, gute Sicht.'},
+ {id:'wind',emoji:'💨',name:'Windböen',txt:'Immer wieder drücken Böen dein Boot zur Seite.'},
+ {id:'storm',emoji:'⛈️',name:'Sturm',txt:'Hoher Wellengang: Boote sind langsamer und schwerer zu lenken.'},
+ {id:'fog',emoji:'🌫️',name:'Nebel',txt:'Dichter Nebel – du siehst nur in deiner Nähe.'},
+ {id:'current',emoji:'🌊',name:'Starke Strömung',txt:'Eine Strömung treibt alle Boote langsam ab.'},
+ {id:'jelly',emoji:'🪼',name:'Quallenplage',txt:'Viel mehr Quallen als sonst – Netze verheddern leichter.'}
+];
+const hashStr=t=>{let h=7;for(const ch of String(t))h=(h*31+ch.charCodeAt(0))|0;return Math.abs(h)};
+const mulb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+function evFor(ph,rd){
+ const seed=MP.code?hashStr(MP.code):(G&&G.evSeed)||1,idx=(ph-1)*CFG.ROUNDS+(rd-1);
+ let cur=0;
+ for(let i=1;i<=idx;i++){const r=mulb(seed+i*977),opts=EVENTS.map((e,k)=>k).filter(k=>k!==cur);cur=opts[Math.floor(r()*opts.length)]}
+ return EVENTS[cur];
+}
+function eventCard(){
+ const e=evFor(G.phase,G.round);
+ if(e.id==='calm')return '';
+ return `<div class="card" style="border:4px solid #3a86ff"><h3>🌤 Wetterbericht: ${e.emoji} ${e.name}</h3><p>${e.txt}</p></div>`;
+}
+function drawEvent(c,W,H,t,B,vx,vy){
+ const e=A.ev.id;
+ if(e==='wind'){const ph=t%9;if(ph<3){const k=Math.sin(Math.PI*ph/3),a=A.windAng+Math.floor(t/9)*1.3;c.strokeStyle='rgba(255,255,255,'+(.5*k)+')';c.lineWidth=2;
+   for(let i=0;i<26;i++){const x=((i*131+t*260)%(W+200))-100,y=(i*67)%H,l=60+(i%5)*18;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);c.stroke()}}}
+ else if(e==='storm'){c.fillStyle='rgba(10,25,50,.28)';c.fillRect(0,0,W,H);c.strokeStyle='rgba(200,220,255,.55)';c.lineWidth=1.5;
+   for(let i=0;i<90;i++){const x=((i*53+t*90)%(W+40))-20,y=((i*97+t*520)%(H+60))-30;c.beginPath();c.moveTo(x,y);c.lineTo(x-6,y+16);c.stroke()}
+   if(Math.sin(t*.9)>.985||Math.sin(t*2.3+1)>.992){c.fillStyle='rgba(255,255,255,.55)';c.fillRect(0,0,W,H)}}
+ else if(e==='fog'){const x=B.x-vx,y=B.y-vy,g=c.createRadialGradient(x,y,90,x,y,330);g.addColorStop(0,'rgba(225,238,243,0)');g.addColorStop(1,'rgba(225,238,243,.93)');c.fillStyle=g;c.fillRect(0,0,W,H)}
+ else if(e==='current'){c.strokeStyle='rgba(255,255,255,.28)';c.lineWidth=2;for(let i=0;i<14;i++){const x=((i*173+t*40*Math.cos(A.curAng)*3)%(W+120)+W+120)%(W+120)-60,y=((i*89+t*40*Math.sin(A.curAng)*3)%(H+120)+H+120)%(H+120)-60;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(A.curAng)*40,y+Math.sin(A.curAng)*40);c.stroke()}}
+}
 function startRound(T){
  show('s-play');fitWorld();
  const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
@@ -514,7 +547,7 @@ function startRound(T){
  WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};
  A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
   boat:{x:WW/2,y:WH/2,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
-  bs:105*(1+.2*me.upg.motor)*me.role.speed,
+  bs:105*(1+.2*me.upg.motor)*me.role.speed,ev:evFor(G.phase,G.round),windAng:rnd(0,6.28),curAng:rnd(0,6.28),
   net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
   cap:capOf(),cargo:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
   bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:rnd(WB.x0+20,WB.x1-20),y:rnd(WB.y0+20,WB.y1-20),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
@@ -522,7 +555,7 @@ function startRound(T){
  for(let i=0;i<ns;i++){const sp=rnd(25,45),an=rnd(0,6.28);A.schools.push({x:rnd(150,WW-150),y:rnd(150,WH-150),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
  for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si))}
  for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<160||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
- const nj=8+G.round;for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
+ const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
  if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
  A.bots.forEach(b=>{const n=botTarget(b.p);for(let k=0;k<n;k++)b.evs.push({t:rnd(3,T-2),prep:false,done:false,f:null});b.evs.sort((a,c)=>a.t-c.t)});
  $('#h-price').textContent='💰 '+fmt(A.price)+'/Fisch';
@@ -633,7 +666,8 @@ function updatePatrols(dt){
 /* --- Update --- */
 function update(dt){
  A.t+=dt;const B=A.boat,K=A.keys,N=A.net,W=WB.W,H=WB.H;
- const turn=2.6*clamp(.4+Math.abs(B.v)/(A.bs*.6),.4,1.1);
+ const evId=A.ev.id,spdK=evId==='storm'?.8:1;
+ const turn=2.6*clamp(.4+Math.abs(B.v)/(A.bs*.6),.4,1.1)*(evId==='storm'?.85:1);
  const J=A.joy,jm=J?Math.hypot(J.x,J.y):0;
  if(jm>.18){
   const want=Math.atan2(J.y,J.x),df=angDiff(want,B.ang),mag=Math.min(1,jm);
@@ -644,7 +678,10 @@ function update(dt){
   B.ang+=(K.r-K.l)*turn*dt;
   if(K.u)B.v+=240*dt;else if(K.d)B.v-=260*dt;else B.v-=B.v*1.1*dt;
  }
- B.v=clamp(B.v,-A.bs*.4,A.bs*(N.out?.8:1));
+ B.v=clamp(B.v,-A.bs*.4*spdK,A.bs*spdK*(N.out?.8:1));
+ if(evId==='wind'){const ph=A.t%9;if(ph<3){const k=Math.sin(Math.PI*ph/3),a=A.windAng+Math.floor(A.t/9)*1.3;B.x+=Math.cos(a)*75*k*dt;B.y+=Math.sin(a)*75*k*dt}}
+ else if(evId==='current'){B.x+=Math.cos(A.curAng)*24*dt;B.y+=Math.sin(A.curAng)*24*dt}
+ else if(evId==='storm'){B.ang+=Math.sin(A.t*2.1)*.35*dt}
  B.x+=Math.cos(B.ang)*B.v*dt;B.y+=Math.sin(B.ang)*B.v*dt;
  if(B.x<WB.x0){B.x=WB.x0;B.v*=.5}if(B.x>WB.x1){B.x=WB.x1;B.v*=.5}if(B.y<WB.y0){B.y=WB.y0;B.v*=.5}if(B.y>WB.y1){B.y=WB.y1;B.v*=.5}
  for(const r of A.rocks){const dx=B.x-r.x,dy=B.y-r.y,d=Math.hypot(dx,dy)||1,m=r.r+18;if(d<m){B.x=r.x+dx/d*m;B.y=r.y+dy/d*m;B.v*=.6}}
@@ -852,11 +889,13 @@ function draw(){
  drawBoatTop(c,B.x,B.y,B.ang,BOAT,.75,BOAT.name,t);
  for(const e of A.fx){if(e.k==='txt'){c.globalAlpha=clamp(e.t,0,1);c.fillStyle=e.col;c.font='bold 18px sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.strokeStyle='#000';c.lineWidth=3;c.strokeText(e.txt,e.x,e.y);c.fillText(e.txt,e.x,e.y);c.globalAlpha=1}}
  c.setTransform(m,0,0,m,0,0);
+ drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
  if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick ziehen = Kurs & Tempo · 🎣 Netz-Knopf: aus-/einholen';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
  if(msg){c.strokeText(msg,W/2,AR.y0+26);c.fillText(msg,W/2,AR.y0+26)}
+ if(A.t<6&&A.ev.id!=='calm'){const em=A.ev.emoji+' '+A.ev.name+': '+A.ev.txt;c.globalAlpha=clamp(6-A.t,0,1);c.strokeText(em,W/2,AR.y0+52);c.fillText(em,W/2,AR.y0+52);c.globalAlpha=1}
  drawMini(c);
  const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
