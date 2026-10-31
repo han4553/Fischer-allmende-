@@ -548,9 +548,9 @@ function startRound(T){
  show('s-play');fitWorld();
  const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
  const WW=Math.round(CFG.W*CFG.WORLD),WH=Math.round(CFG.H*CFG.WORLD);
- WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};HB={x0:WW/2-130,x1:WW/2+130,y0:WH/2-80,y1:WH/2+80,W:WW,H:WH};
+ WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};HB={x0:WW/2-48,x1:WW/2+48,y0:WH/2-36,y1:WH/2+36,W:WW,H:WH};
  A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
-  boat:{x:WW/2,y:WH/2+80+62,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
+  boat:{x:WW/2,y:WH/2+36+60,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
   bs:105*(1+.2*me.upg.motor)*me.role.speed,ev:evFor(G.phase,G.round),windAng:rnd(0,6.28),curAng:rnd(0,6.28),
   net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
   cap:capOf(),cargo:0,hold:0,landed:0,trips:0,plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
@@ -558,7 +558,7 @@ function startRound(T){
  const ns=S<6?1:clamp(Math.round(S/11),10,40);
  for(let i=0;i<ns;i++){const sp=rnd(25,45),an=rnd(0,6.28);A.schools.push({x:rnd(150,WW-150),y:rnd(150,WH-150),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
  for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si))}
- for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<300||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
+ for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<230||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
  const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
  if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
  A.bots.forEach(b=>{const n=botTarget(b.p);for(let k=0;k<n;k++)b.evs.push({t:rnd(3,T-2),prep:false,done:false,f:null});b.evs.sort((a,c)=>a.t-c.t)});
@@ -694,7 +694,7 @@ function update(dt){
  if(B.x<WB.x0){B.x=WB.x0;B.v*=.5}if(B.x>WB.x1){B.x=WB.x1;B.v*=.5}if(B.y<WB.y0){B.y=WB.y0;B.v*=.5}if(B.y>WB.y1){B.y=WB.y1;B.v*=.5}
  for(const r of A.rocks){const dx=B.x-r.x,dy=B.y-r.y,d=Math.hypot(dx,dy)||1,m=r.r+18;if(d<m){B.x=r.x+dx/d*m;B.y=r.y+dy/d*m;B.v*=.6}}
  if(B.x>HB.x0-20&&B.x<HB.x1+20&&B.y>HB.y0-20&&B.y<HB.y1+20){const pl=B.x-(HB.x0-20),pr=(HB.x1+20)-B.x,pt=B.y-(HB.y0-20),pb=(HB.y1+20)-B.y,mn=Math.min(pl,pr,pt,pb);if(mn===pl)B.x=HB.x0-20;else if(mn===pr)B.x=HB.x1+20;else if(mn===pt)B.y=HB.y0-20;else B.y=HB.y1+20;B.v*=.6}
- A.atHarbor=B.x>HB.x0-75&&B.x<HB.x1+75&&B.y>HB.y0-75&&B.y<HB.y1+75;
+ A.atHarbor=B.x>HB.x0-62&&B.x<HB.x1+62&&B.y>HB.y0-62&&B.y<HB.y1+62;
  if(A.atHarbor&&A.hold>0)unloadHold();
  A.foamT-=dt;if(Math.abs(B.v)>20&&A.foamT<=0){A.foamT=.05;A.fx.push({k:'foam',x:B.x-Math.cos(B.ang)*28+rnd(-4,4),y:B.y-Math.sin(B.ang)*28+rnd(-4,4),t:.9,t0:.9})}
  if(N.pulse>0)N.pulse-=dt;
@@ -873,38 +873,36 @@ function drawWater(c,t,vx,vy,W,H){
  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=4;c.setLineDash([14,10]);c.strokeRect(WB.x0-14,WB.y0-14,WB.x1-WB.x0+28,WB.y1-WB.y0+28);c.setLineDash([]);
 }
 function drawHarbor(c,t){
- const x0=HB.x0,x1=HB.x1,y0=HB.y0,y1=HB.y1,w=x1-x0,h=y1-y0,cx0=(x0+x1)/2,cy0=(y0+y1)/2;
- const hot=A.hold>0,pl=.5+.5*Math.sin(t*5);
- /* Anlegezone rund um das Gebäude */
- c.save();c.setLineDash([16,10]);c.lineWidth=4;c.strokeStyle=hot?'rgba(255,224,102,'+(.6+.4*pl)+')':'rgba(255,255,255,.45)';
+ const x0=HB.x0,x1=HB.x1,y0=HB.y0,y1=HB.y1,cx0=(x0+x1)/2,cy0=(y0+y1)/2,w=x1-x0,h=y1-y0;
+ const hot=A.hold>0,pl=.5+.5*Math.sin(t*5),Z=62;
+ /* Anlegezone rund um die Insel */
+ c.save();c.setLineDash([12,9]);c.lineWidth=3.5;c.strokeStyle=hot?'rgba(255,224,102,'+(.6+.4*pl)+')':'rgba(255,255,255,.45)';
  c.fillStyle=hot?'rgba(255,224,102,'+(.10+.10*pl)+')':'rgba(255,255,255,.07)';
- c.beginPath();c.rect(x0-75,y0-75,w+150,h+150);c.fill();c.stroke();c.setLineDash([]);
- c.font='bold 16px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.fillStyle=hot?'#fff3b0':'rgba(255,255,255,.8)';c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=3;
- const lab=hot?'⬇ HIER ENTLADEN ⬇':'⚓ Anlegestelle';
- c.strokeText(lab,cx0,y1+62);c.fillText(lab,cx0,y1+62);c.strokeText(lab,cx0,y0-52);c.fillText(lab,cx0,y0-52);c.restore();
- /* Kai-Plattform */
- c.fillStyle='rgba(0,0,0,.22)';c.fillRect(x0-24,y0-18,w+56,h+56);
- c.fillStyle='#9a8f7e';c.fillRect(x0-28,y0-28,w+56,h+56);
- c.fillStyle='#b9ae9b';c.fillRect(x0-28,y0-28,w+56,8);c.fillRect(x0-28,y1+20,w+56,8);c.fillRect(x0-28,y0-28,8,h+56);c.fillRect(x1+20,y0-28,8,h+56);
- c.fillStyle='#4a3b2c';for(let x=x0-24;x<=x1+24;x+=40){c.beginPath();c.arc(x,y0-24,5,0,7);c.arc(x,y1+24,5,0,7);c.fill()}
- for(let y=y0-4;y<=y1+4;y+=40){c.beginPath();c.arc(x0-24,y,5,0,7);c.arc(x1+24,y,5,0,7);c.fill()}
- /* Lagerhalle von oben: Dach mit First */
- c.fillStyle='#8a3a2c';c.fillRect(x0,y0,w,h/2);c.fillStyle='#b5412f';c.fillRect(x0,cy0,w,h/2);
- c.strokeStyle='rgba(0,0,0,.18)';c.lineWidth=2;for(let x=x0+16;x<x1;x+=18){c.beginPath();c.moveTo(x,y0);c.lineTo(x,y1);c.stroke()}
- c.fillStyle='#5a221a';c.fillRect(x0,cy0-3,w,6);c.strokeStyle='#3b1712';c.lineWidth=4;c.strokeRect(x0,y0,w,h);
- c.fillStyle='#fff3d6';c.fillRect(cx0-84,cy0-22,168,44);c.strokeStyle='#4a1d17';c.lineWidth=3;c.strokeRect(cx0-84,cy0-22,168,44);
- c.fillStyle='#1d3557';c.font='bold 28px "Trebuchet MS",sans-serif';c.textBaseline='middle';c.textAlign='center';c.fillText('⚓ HAFEN',cx0,cy0+1);
- /* Kisten */
- c.font='15px sans-serif';
- for(const [kx,ky] of [[x0-12,y0+30],[x0-12,y0+56],[x1+12,y1-30],[x1+12,y1-56]]){c.fillStyle='#c8963e';c.fillRect(kx-12,ky-10,24,20);c.strokeStyle='#7a5a1f';c.lineWidth=2;c.strokeRect(kx-12,ky-10,24,20);c.fillStyle='#000';c.fillText('🐟',kx,ky+1)}
- /* Kran */
- const kx=x1+10,ky=y0-6;c.strokeStyle='#e9c46a';c.lineWidth=8;c.beginPath();c.moveTo(kx,ky);c.lineTo(kx+54,ky-54);c.stroke();
- c.fillStyle='#e9c46a';c.beginPath();c.arc(kx,ky,10,0,7);c.fill();
- c.strokeStyle='#333';c.lineWidth=2;c.beginPath();c.moveTo(kx+54,ky-54);c.lineTo(kx+54,ky-38+Math.sin(t*2)*6);c.stroke();
- c.fillStyle='#e63946';c.fillRect(kx+48,ky-38+Math.sin(t*2)*6,12,10);
- /* Fahne */
- c.strokeStyle='#ddd';c.lineWidth=3;c.beginPath();c.moveTo(x0+16,y0+16);c.lineTo(x0+16,y0-34);c.stroke();
- c.fillStyle='#2a9d8f';c.beginPath();c.moveTo(x0+16,y0-34);c.lineTo(x0+50,y0-26+Math.sin(t*4)*3);c.lineTo(x0+16,y0-16);c.closePath();c.fill();
+ c.beginPath();c.ellipse(cx0,cy0,w/2+Z,h/2+Z,0,0,7);c.fill();c.stroke();c.setLineDash([]);
+ if(hot){c.font='bold 15px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='alphabetic';c.fillStyle='#fff3b0';c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=3;const lab='⬇ ENTLADEN ⬇';c.strokeText(lab,cx0,y1+Z+22);c.fillText(lab,cx0,y1+Z+22)}
+ c.restore();
+ /* Insel: Brandung, Sand, Gras */
+ c.fillStyle='rgba(255,255,255,'+(.25+.1*Math.sin(t*2))+')';c.beginPath();c.ellipse(cx0,cy0,w/2+34,h/2+34,0,0,7);c.fill();
+ c.fillStyle='#e8d9a0';c.beginPath();c.ellipse(cx0,cy0,w/2+26,h/2+26,0,0,7);c.fill();
+ c.fillStyle='#6bb35a';c.beginPath();c.ellipse(cx0,cy0-4,w/2+8,h/2+6,0,0,7);c.fill();
+ /* Anlegesteg */
+ c.fillStyle='#8a6a43';c.fillRect(cx0-12,y1+8,24,26);c.strokeStyle='#5c4326';c.lineWidth=2;for(let y=y1+12;y<y1+34;y+=7){c.beginPath();c.moveTo(cx0-12,y);c.lineTo(cx0+12,y);c.stroke()}
+ /* Hafenhäuschen (Dach von oben) */
+ const hx=cx0-34,hy=cy0-30,hw=68,hh=44;
+ c.fillStyle='rgba(0,0,0,.2)';c.fillRect(hx+4,hy+5,hw,hh);
+ c.fillStyle='#8a3a2c';c.fillRect(hx,hy,hw,hh/2);c.fillStyle='#b5412f';c.fillRect(hx,hy+hh/2,hw,hh/2);
+ c.fillStyle='#5a221a';c.fillRect(hx,hy+hh/2-2,hw,4);c.strokeStyle='#3b1712';c.lineWidth=3;c.strokeRect(hx,hy,hw,hh);
+ c.fillStyle='#fff3d6';c.fillRect(cx0-26,cy0-19,52,18);c.strokeStyle='#4a1d17';c.lineWidth=2;c.strokeRect(cx0-26,cy0-19,52,18);
+ c.fillStyle='#1d3557';c.font='bold 13px "Trebuchet MS",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('⚓ HAFEN',cx0,cy0-10);
+ /* Kisten, Kran, Fahne, Palme */
+ c.font='11px sans-serif';
+ for(const [kx,ky] of [[cx0+46,cy0+10],[cx0-46,cy0+14]]){c.fillStyle='#c8963e';c.fillRect(kx-9,ky-8,18,16);c.strokeStyle='#7a5a1f';c.lineWidth=2;c.strokeRect(kx-9,ky-8,18,16);c.fillStyle='#000';c.fillText('🐟',kx,ky+1)}
+ const kx=cx0+30,ky=cy0+16;c.strokeStyle='#e9c46a';c.lineWidth=5;c.beginPath();c.moveTo(kx,ky);c.lineTo(kx+26,ky+26);c.stroke();
+ c.fillStyle='#e9c46a';c.beginPath();c.arc(kx,ky,6,0,7);c.fill();
+ c.strokeStyle='#333';c.lineWidth=1.5;c.beginPath();c.moveTo(kx+26,ky+26);c.lineTo(kx+26,ky+38+Math.sin(t*2)*3);c.stroke();c.fillStyle='#e63946';c.fillRect(kx+22,ky+38+Math.sin(t*2)*3,8,7);
+ c.strokeStyle='#ddd';c.lineWidth=2.5;c.beginPath();c.moveTo(hx+6,hy+6);c.lineTo(hx+6,hy-26);c.stroke();
+ c.fillStyle='#2a9d8f';c.beginPath();c.moveTo(hx+6,hy-26);c.lineTo(hx+30,hy-20+Math.sin(t*4)*2);c.lineTo(hx+6,hy-13);c.closePath();c.fill();
+ c.font='22px sans-serif';c.fillStyle='#000';c.fillText('🌴',cx0-52,cy0-22);
  c.textBaseline='alphabetic';
 }
 function drawMini(c){
