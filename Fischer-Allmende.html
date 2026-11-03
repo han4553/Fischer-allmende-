@@ -447,7 +447,7 @@ function phaseCard(){
   <tr><td>1️⃣ <b>Fanggebiet</b></td><td>Jedes Boot hat ein eigenes, <b>farbig markiertes Gebiet</b>. Die Fische darin gehören dir allein. Wie viele es nächste Session sind, hängt davon ab, was in deinem Gebiet passiert.</td></tr>
   <tr><td>2️⃣ <b>Keine Quote</b></td><td>Es gibt keine Fangquote und keine Gesamtfangmenge mehr.</td></tr>
   <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen auf <b>Fischen in fremden Fanggebieten</b> (ca. ${Math.round(CFG.PATROL_P*100)} % je Fisch). Beschlagnahme plus <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td></tr></table>
-  </div>${G.round>=4?`<div class="card" style="border:4px solid #8338ec"><h3>💬 Klassengespräch (1 Minute)</h3><p>Sprecht kurz miteinander, bevor ihr rausfahrt: Wie fischt ihr in dieser Session? Haben die Fanggebiete etwas verändert – und wenn ja, was? Was würdet ihr als Klasse vereinbaren?</p></div>`:''}`;
+  </div>`;
 }
 const zoneOn=()=>G.phase===2&&G.round>=3; // Spielrunde 2: Session 1 Quote · Session 2 + Kontrolle · ab Session 3 Fanggebiete (Eigentumsrechte, keine Quote)
 const ecoOn=()=>polOn()&&!zoneOn();
