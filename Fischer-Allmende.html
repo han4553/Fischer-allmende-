@@ -434,12 +434,16 @@ function phaseCard(){
   <table class="small" style="width:100%"><tr><th>Regel</th><th>Inhalt</th></tr>
   <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Session insgesamt.</td></tr>
   <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr>
-  <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td></tr>
-  <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang wird beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td></tr>
+  <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen auf <b>Überfang</b> und auf <b>Fischen in fremden Fanggebieten</b>. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td></tr>
+  <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang und Fische aus fremden Fanggebieten werden beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td></tr>
   <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie für Boote ohne Überfang.</td></tr></table>
   </div>`;
 }
 const zoneOn=()=>G.phase===2; // Spielrunde 2, alle Sessions: eigenes Fanggebiet je Boot
+const illOf=(n,pz,Q)=>Math.min(n,Math.max(0,n-Q)+(pz||0)); // strafbar: Überfang + Fische aus fremden Fanggebieten
+const zKey=p=>p.rid!=null?'r'+p.rid:'i'+G.P.indexOf(p);
+const zFrac=k=>{const p=G.P[k];return p&&G.zs&&G.zs[zKey(p)]!=null?G.zs[zKey(p)]:1/G.P.length};
+// // Spielrunde 2, alle Sessions: eigenes Fanggebiet je Boot
 const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Session 2 der Spielrunde 2
 const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Session für Session aufgedeckt
 function stockCard(){
@@ -618,6 +622,7 @@ function startRound(T){
   cap:capOf(),cargo:0,hold:0,landed:0,trips:0,col:[0,0,0,0,0],sets:0,setKey:'',plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
   bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:WW/2+Math.cos(i*2.399)*rnd(88,150),y:WH/2+Math.sin(i*2.399)*rnd(80,130),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
  A.zoneOn=zoneOn();A.poach=0;A.outT=0;
+ if(A.zoneOn&&(G.round===1||!G.zs))G.zs={};
  if(A.zoneOn)buildZones();
  const ns=A.zoneOn?A.zones.length:(S<6?1:clamp(Math.round(S/8),12,50));
  if(A.zoneOn){for(const z of A.zones){const sp=rnd(18,30),an=rnd(0,6.28);A.schools.push({x:(z.x0+z.x1)/2,y:(z.y0+z.y1)/2,vx:Math.cos(an)*sp,vy:Math.sin(an)*sp,z})}}
@@ -628,7 +633,8 @@ function startRound(T){
   for(let i=0;i<ns;i++){const [cx,cy]=cells[i%cells.length],sp=rnd(25,45),an=rnd(0,6.28);
    A.schools.push({x:clamp((cx+rnd(.1,.9))*WW/cols,100,WW-100),y:clamp((cy+rnd(.1,.9))*WH/rows,WB.y0+60,WB.y1-60),vx:Math.cos(an)*sp,vy:Math.sin(an)*sp})}
  }
- for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si));if(A.zoneOn){const f=A.fish[A.fish.length-1],z=A.zones[si];f.rad=Math.min(f.rad,Math.min(z.x1-z.x0,z.y1-z.y0)*.34)}}
+ const zl=[];if(A.zoneOn){const w=A.zones.map(z=>zFrac(z.k)),sw=w.reduce((a,b)=>a+b,0)||1,c=w.map(x=>Math.floor(S*x/sw)),rm=w.map((x,i)=>S*x/sw-c[i]);let left=S-c.reduce((a,b)=>a+b,0);rm.map((r,i)=>[r,i]).sort((a,b)=>b[0]-a[0]).forEach(([r,i])=>{if(left>0){c[i]++;left--}});c.forEach((n,i)=>{for(let j=0;j<n;j++)zl.push(i)})}
+ for(let i=0;i<S;i++){const si=A.zoneOn?zl[i]:i%ns;A.fish.push(newFish(A.schools[si],si));if(A.zoneOn){const f=A.fish[A.fish.length-1],z=A.zones[si];f.rad=Math.min(f.rad,Math.min(z.x1-z.x0,z.y1-z.y0)*.34)}}
  if(A.zoneOn)A.bots.forEach(b=>{b.zi=b.i+1;b.poach=b.p.role.id==='tessa'?Math.random()<.55:b.p.role.id==='kalle'?Math.random()<.2:false;botWander(b)});
  /* Startpositionen: zufällig auf dem See verteilt (nicht am Hafen); im Fanggebiet-Modus im eigenen Gebiet */
  {const hx=WW/2,hy=WH/2,away=(x,y)=>Math.hypot(x-hx,y-hy)>230,spot=(z)=>{for(let t=0;t<40;t++){const x=z?rnd(z.x0+40,z.x1-40):rnd(WB.x0+60,WB.x1-60),y=z?rnd(z.y0+40,z.y1-40):rnd(WB.y0+60,WB.y1-60);if(away(x,y)||t>38)return{x,y}}};
@@ -687,7 +693,7 @@ function execBot(b,e,silent){
  if(!f)return;
  if(A.zoneOn&&f.s!==b.zi)b.poachN=(b.poachN||0)+1;
  A.fish.splice(A.fish.indexOf(f),1);f.dead=true;b.n++;b.gold+=f.ex||0;
- if(A.quota<Infinity&&polOn()&&b.n>A.quota&&Math.random()<CFG.PATROL_P)b.flag=true;
+ if(A.quota<Infinity&&polOn()&&(b.n>A.quota||b.poachN>0)&&Math.random()<CFG.PATROL_P)b.flag=true;
  if(!silent)A.fx.push({k:'ring',x:f.x,y:f.y,t:.7,t0:.7,R:40,col:b.p.role.color});
 }
 /* --- Netz: bleibt draußen und wird per Taste ein-/ausgeholt --- */
@@ -698,7 +704,7 @@ function haulIn(){
  if(N.n){A.cargo+=N.n;A.hold+=N.n;A.gold+=N.gold;A.plain+=N.n;applyCols();
   A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'+'+N.n+' 🧺',t:1.2,col:'#ffe066'});beep(660,.1,'square',.04);
   if(G.phase===2){
-   if(A.cargo>A.quota){if(!A.warned){A.warned=true;toast(polOn()?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
+   if(A.cargo>A.quota||(polOn()&&A.poach>0)){if(!A.warned){A.warned=true;toast(polOn()?(A.cargo>A.quota?'⚠️ Über der Quote! 🚔 Die Patrouille kommt!':'⚠️ Fremdes Fanggebiet! 🚔 Die Patrouille kommt!'):'📜 Du bist über der Quote.');beep(200,.3,'sawtooth',.06)}}
    else if(A.cargo===A.quota&&!A.okToast){A.okToast=true;toast('✅ Quote erfüllt: '+A.quota+'/'+A.quota)}
   }
   if(A.hold>=A.cap){toast('🧺 Boot voll – ab zum Hafen (Insel in der Kartenmitte)!')}}
@@ -745,7 +751,7 @@ function liveRank(){
 function patrolCatch(pt){
  const tg=pt.tg;pt.tg=null;pt.cool=3;
  if(tg==='me'){
-  const ill=Math.max(0,A.cargo-A.quota);if(ill<=0)return;
+  const ill=illOf(A.cargo,A.poach,A.quota);if(ill<=0)return;
   confiscate(ill);const f=Math.round(ill*CFG.FINE_MULT*priceBase(A.S0));A.fines+=f;A.viol=1;A.warned=false;
   A.fx.push({k:'txt',x:A.boat.x,y:A.boat.y-34,txt:'🚔 Kontrolle! −'+ill+' Fische, Strafe '+f+' 💰',t:2.6,col:'#ff6b6b'});
   toast('🚔 Erwischt! '+ill+' Fische beschlagnahmt, Strafe '+f+' 💰');beep(150,.4,'sawtooth',.07);
@@ -758,10 +764,10 @@ function updatePatrols(dt){
  const B=A.boat;
  for(const pt of A.patrols){
   if(pt.cool>0)pt.cool-=dt;
-  if(pt.tg&&(pt.tg==='me'?A.cargo<=A.quota:(!pt.tg.flag||pt.tg.caught)))pt.tg=null;
+  if(pt.tg&&(pt.tg==='me'?illOf(A.cargo,A.poach,A.quota)<=0:(!pt.tg.flag||pt.tg.caught)))pt.tg=null;
   if(!pt.tg&&pt.cool<=0){
    let best=null,bd=1e9;
-   if(A.cargo>A.quota&&A.patrols.filter(o=>o.tg==='me').length<2){const d=Math.hypot(B.x-pt.x,B.y-pt.y);if(d<bd){bd=d;best='me'}}
+   if(illOf(A.cargo,A.poach,A.quota)>0&&A.patrols.filter(o=>o.tg==='me').length<2){const d=Math.hypot(B.x-pt.x,B.y-pt.y);if(d<bd){bd=d;best='me'}}
    for(const b of A.bots)if(b.flag&&!b.caught&&!A.patrols.some(o=>o.tg===b)){const d=Math.hypot(b.x-pt.x,b.y-pt.y);if(d<bd){bd=d;best=b}}
    pt.tg=best;
   }
@@ -1136,16 +1142,16 @@ function finishRound(){
  const Sstart=A.S0,Safter=A.fish.length,base=priceBase(Sstart),pr=A.price,Q=A.quota,tac=A.tac;
  G.poachN=A.zoneOn?A.bots.filter(b=>b.poachN>0).length+(A.poach>0?1:0):0;
  /* Spieler: Kontrolle im Hafen */
- const pIll=polOn()?Math.max(0,A.cargo-Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
+ const pIll=polOn()?illOf(A.cargo,A.poach,Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
  if(pIll>0){pViol=1;if(Math.random()<1-Math.pow(1-CFG.PATROL_P,pIll)){pCaught=true;confiscate(pIll);pFine+=Math.round(pIll*CFG.FINE_MULT*base)}}
  const rows=[];
  const eco=polOn()&&!pViol;
- rows.push({p:me,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:pViol&&!(pFine>0)});
+ rows.push({p:me,poach:A.poach||0,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:pViol&&!(pFine>0)});
  A.bots.forEach(b=>{
-  const ill=polOn()?Math.max(0,b.n-Q):0,viol=ill>0,caught=viol&&b.flag;
+  const ill=polOn()?illOf(b.n,b.poachN,Q):0,viol=ill>0,caught=viol&&b.flag;
   let keep=b.n,fine=0;if(caught){keep=b.n-ill;fine=Math.round(ill*CFG.FINE_MULT*base)}
   const gold=Math.min(b.gold,keep*4),e=polOn()&&!viol;
-  rows.push({p:b.p,fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught});
+  rows.push({p:b.p,poach:b.poachN||0,fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught});
  });
   settle(rows,Sstart,Safter,pr,Q,tac,A.cargo);
 }
@@ -1179,6 +1185,20 @@ function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
  });
  G.comm.fund+=Math.round(finesTotal*.5);
  G.lastPlayer=lastPl;G.totalCatch+=total;G.totalFines+=finesTotal;
+ let zmsg='';
+ if(ph===2&&G.P.length){ /* Bestand je Fanggebiet: wächst bei Regeltreue, schrumpft bei Verstößen */
+  const n=G.P.length,R=new Map(rows.map(r=>[r.p,r]));
+  const f0=G.P.map((p,k)=>zFrac(k)),st=f0.map(f=>Sstart*f);
+  const ct=G.P.map(p=>{const r=R.get(p);return r?r.fish:0});
+  let rem=st.map((x,k)=>Math.max(0,x-ct[k]));const sr=rem.reduce((a,b)=>a+b,0);
+  if(sr>0)rem=rem.map(x=>x*Safter/sr);
+  const wt=G.P.map(p=>{const r=R.get(p);return !r?1:(r.fish<=Q&&!(r.poach>0))?1.3:.7});
+  const w=rem.map((x,k)=>Math.max(x,Sstart/n*.5)*wt[k]),sw=w.reduce((a,b)=>a+b,0),grT=Math.max(0,Snew-Safter);
+  const nz=rem.map((x,k)=>x+grT*w[k]/sw),sn=nz.reduce((a,b)=>a+b,0)||1;
+  G.zs={};G.P.forEach((p,k)=>{G.zs[zKey(p)]=nz[k]/sn});
+  const a=Math.round(st[0]),b=Math.round(Snew*nz[0]/sn),r0=R.get(G.P[0]);
+  if(r0)zmsg=` 🌱 Dein Fanggebiet: ${a} → ${b} Fische${wt[0]>1?' (Regeln eingehalten: mehr Nachwuchs)':' (Regelverstoß: kaum Nachwuchs)'}.`;
+ }
  const empty=Snew<CFG.COLLAPSE;
  const caughtN=rows.filter(r=>r.caught).length,ecoN=rows.filter(r=>r.eco).length,sneakyN=rows.filter(r=>r.sneaky).length;
  let headline;
@@ -1189,6 +1209,7 @@ function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
  else if(!caughtN&&!sneakyN)headline=`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`;
  else headline=`🚔 Die Patrouille erwischt ${caughtN} Boote – Strafen: ${finesTotal} 💰. Bestand: ${Snew}.`;
  if(ph===2&&polOn()&&G.poachN)headline+=` 🚫 ${G.poachN} Boote fischten in fremden Fanggebieten.`;
+ if(!empty)headline+=zmsg;
  G.hist.push({r:G.round,start:Sstart,after:Safter,end:Snew});
  const sorted=rankPlayers(false);
  G.last={rows,Sstart,Safter,gr,farm,Snew,pr,headline,empty,total,sorted,king,tac,Q,finesTotal,caughtN,ecoN,sneakyN,
@@ -1762,7 +1783,7 @@ async function mpPlayerFinish(){
  const me=G.P[0],ph=G.phase;
  if(A.net.out&&A.net.n){A.cargo+=A.net.n;A.gold+=A.net.gold;A.plain+=A.net.n;A.net.n=0;applyCols()}
  const base=priceBase(A.S0),Q=A.quota,pr=A.price;
- const pIll=polOn()?Math.max(0,A.cargo-Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
+ const pIll=polOn()?illOf(A.cargo,A.poach,Q):0;let pFine=A.fines,pViol=A.viol,pCaught=false;
  if(pIll>0){pViol=1;if(Math.random()<1-Math.pow(1-CFG.PATROL_P,pIll)){pCaught=true;confiscate(pIll);pFine+=Math.round(pIll*CFG.FINE_MULT*base)}}
  const eco=polOn()&&!pViol;
  const rep={poach:A.poach||0,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:!!pViol&&!(pFine>0)};
@@ -1869,9 +1890,9 @@ async function mpHostCalc(){
   const Sstart=A.S0,base=priceBase(Sstart),Q=A.quota,tac=A.tac,rows={};let ghost=0,taken=0;
   A.bots.forEach(b=>{
    if(b.p.human){ghost+=b.n;const r=reps[b.p.rid];if(r){rows[b.p.rid]=r;taken+=r.fish}else rows[b.p.rid]={fish:0,gold:0,income:0,fine:0,viol:false,eco:false,caught:false,sneaky:false};return}
-   const ill=polOn()?Math.max(0,b.n-Q):0,viol=ill>0,caught=viol&&b.flag;let keep=b.n,fine=0;if(caught){keep=b.n-ill;fine=Math.round(ill*CFG.FINE_MULT*base)}
+   const ill=polOn()?illOf(b.n,b.poachN,Q):0,viol=ill>0,caught=viol&&b.flag;let keep=b.n,fine=0;if(caught){keep=b.n-ill;fine=Math.round(ill*CFG.FINE_MULT*base)}
    const gold=Math.min(b.gold,keep*4),e=polOn()&&!viol;
-   rows[b.p.rid]={fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught};
+   rows[b.p.rid]={poach:b.poachN||0,fish:keep,gold,income:Math.round((keep+gold)*base*(e?CFG.ECO_MULT:1)),fine,viol,eco:e,caught,sneaky:viol&&!caught};
   });
   const Safter=Math.max(0,A.fish.length+ghost-taken);
   const poachN=A.zoneOn?A.bots.filter(b=>b.p.human?(reps[b.p.rid]&&reps[b.p.rid].poach>0):b.poachN>0).length:0;
