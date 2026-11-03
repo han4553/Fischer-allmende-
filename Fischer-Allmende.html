@@ -427,7 +427,7 @@ function phaseCard(){
   <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr>
   <tr><td>3️⃣ <b>Fanggebiet</b></td><td>Jedes Boot bekommt ein eigenes, <b>farbig markiertes Gebiet</b> auf der Karte. Dort sollst du fischen – nur dort.</td></tr></table></div>`;
  const overN=G.last?G.last.rows.filter(r=>r.fish>G.last.Q).length:0;
- const lead=G.round===2?`<p>📣 <b>Neu ab dieser Session!</b> ${overN?`Letzte Session haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'}${G.poachN?` <b>${G.poachN} Boote</b> haben in fremden Fanggebieten gefischt.`:''} Die getrennten Fanggebiete entfallen: Die ganze Bucht ist wieder gemeinsam. Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
+ const lead=G.round===2?`<p>📣 <b>Neu ab dieser Session!</b> ${overN?`Letzte Session haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'}${G.poachN?` <b>${G.poachN} Boote</b> haben in fremden Fanggebieten gefischt.`:''} Die Fanggebiete bleiben bestehen. Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
  const p=Math.round(price(G.S)*10)/10,gain=p,loss=Math.round(CFG.PATROL_P*CFG.FINE_MULT*p*10)/10,ev=Math.round((gain*(1-CFG.PATROL_P)-CFG.FINE_MULT*p*CFG.PATROL_P-p*CFG.PATROL_P)*10)/10;
  return `<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2 – Quote mit Kontrolle</h3>
   ${lead}
@@ -439,7 +439,7 @@ function phaseCard(){
   <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie für Boote ohne Überfang.</td></tr></table>
   </div>`;
 }
-const zoneOn=()=>G.phase===2&&G.round===1; // Spielrunde 2, Session 1: eigenes Fanggebiet je Boot
+const zoneOn=()=>G.phase===2; // Spielrunde 2, alle Sessions: eigenes Fanggebiet je Boot
 const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Session 2 der Spielrunde 2
 const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Session für Session aufgedeckt
 function stockCard(){
@@ -644,7 +644,7 @@ function startRound(T){
  CAM.x=A.boat.x-CFG.W/2;CAM.y=A.boat.y-(AR.y0+AR.y1)/2;camClamp();
  A.last=performance.now();requestAnimationFrame(loop);
 }
-/* --- Fanggebiete (Spielrunde 2, Session 1) --- */
+/* --- Fanggebiete (Spielrunde 2, alle Sessions) --- */
 const zoneHue=k=>Math.round((k*137.508)%360);
 function buildZones(){
  const n=A.bots.length+1,WW=WB.W,WH=WB.H;
@@ -1188,6 +1188,7 @@ function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
  else if(ph===2&&!polOn()){const ov=rows.filter(r=>r.fish>Q).length;headline=(ov?`📜 ${ov} von ${rows.length} Booten haben mehr als die Quote gefangen – Bestand: ${Snew}.`:`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`)+(G.poachN?` 🚫 ${G.poachN} Boote fischten in fremden Fanggebieten.`:'')}
  else if(!caughtN&&!sneakyN)headline=`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`;
  else headline=`🚔 Die Patrouille erwischt ${caughtN} Boote – Strafen: ${finesTotal} 💰. Bestand: ${Snew}.`;
+ if(ph===2&&polOn()&&G.poachN)headline+=` 🚫 ${G.poachN} Boote fischten in fremden Fanggebieten.`;
  G.hist.push({r:G.round,start:Sstart,after:Safter,end:Snew});
  const sorted=rankPlayers(false);
  G.last={rows,Sstart,Safter,gr,farm,Snew,pr,headline,empty,total,sorted,king,tac,Q,finesTotal,caughtN,ecoN,sneakyN,
