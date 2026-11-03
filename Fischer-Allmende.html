@@ -630,6 +630,10 @@ function startRound(T){
  }
  for(let i=0;i<S;i++){const si=i%ns;A.fish.push(newFish(A.schools[si],si));if(A.zoneOn){const f=A.fish[A.fish.length-1],z=A.zones[si];f.rad=Math.min(f.rad,Math.min(z.x1-z.x0,z.y1-z.y0)*.34)}}
  if(A.zoneOn)A.bots.forEach(b=>{b.zi=b.i+1;b.poach=b.p.role.id==='tessa'?Math.random()<.55:b.p.role.id==='kalle'?Math.random()<.2:false;botWander(b)});
+ /* Startpositionen: zufällig auf dem See verteilt (nicht am Hafen); im Fanggebiet-Modus im eigenen Gebiet */
+ {const hx=WW/2,hy=WH/2,away=(x,y)=>Math.hypot(x-hx,y-hy)>230,spot=(z)=>{for(let t=0;t<40;t++){const x=z?rnd(z.x0+40,z.x1-40):rnd(WB.x0+60,WB.x1-60),y=z?rnd(z.y0+40,z.y1-40):rnd(WB.y0+60,WB.y1-60);if(away(x,y)||t>38)return{x,y}}};
+  const sp=spot(A.zoneOn?A.zones[0]:null);A.boat.x=sp.x;A.boat.y=sp.y;A.boat.ang=rnd(0,6.28);
+  A.bots.forEach(b=>{const q=spot(A.zoneOn?A.zones[b.zi]:null);b.x=q.x;b.y=q.y;b.ang=rnd(0,6.28)})}
  for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<230||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
  const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
  if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
