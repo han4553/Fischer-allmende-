@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
       const id = clean(b.id, 6);
       if (!h['p:' + id]) return res.status(403).json({ error: 'unbekannt' });
       const r = b.rep || {};
-      const rep = { fish: Math.max(0, Math.min(200, Math.round(+r.fish || 0))), gold: Math.max(0, Math.min(200, Math.round(+r.gold || 0))), income: Math.max(0, Math.min(5000, Math.round(+r.income || 0))), fine: Math.max(0, Math.min(5000, Math.round(+r.fine || 0))), viol: !!r.viol, eco: !!r.eco, caught: !!r.caught, sneaky: !!r.sneaky };
+      const rep = { fish: Math.max(0, Math.min(200, Math.round(+r.fish || 0))), gold: Math.max(0, Math.min(200, Math.round(+r.gold || 0))), income: Math.max(0, Math.min(5000, Math.round(+r.income || 0))), fine: Math.max(0, Math.min(5000, Math.round(+r.fine || 0))), viol: !!r.viol, eco: !!r.eco, caught: !!r.caught, sneaky: !!r.sneaky, poach: Math.max(0, Math.min(200, Math.round(+r.poach || 0))) };
       await R('HSET', key, 'r:' + (+b.ph || 0) + ':' + (+b.rd || 0) + ':' + id, JSON.stringify(rep));
       return res.json({ ok: 1 });
     }
