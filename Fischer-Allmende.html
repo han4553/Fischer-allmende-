@@ -150,7 +150,7 @@ body.playing{overflow:hidden}
   <div class="card">
     <h2>🎯 Dein Auftrag</h2>
     <p>Du bist <b>eines von 30 Fischerbooten</b> in <b>derselben Bucht</b>. Alle fischen <b>gleichzeitig</b> auf einer großen Karte, die mitscrollt, wenn du an den Rand fährst. Du steuerst dein Boot mit dem Joystick (am PC: Pfeiltasten/WASD) und wirfst ein <b>Netz</b> aus, das hinter dem Boot herläuft – per Knopf holst du es ein und aus.</p>
-    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, bevor du weiterfischen kannst – danach ist dein Boot wieder leer. Was am Ende der Saison noch im Boot liegt, wird automatisch angelandet.</p>
+    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, bevor du weiterfischen kannst – danach ist dein Boot wieder leer. Was am Ende der Session noch im Boot liegt, wird automatisch angelandet.</p>
     <p>🌈 <b>Farbset:</b> Die Fische gibt es in 5 Farben und Formen (schlank, rund, Raute …) mit unterschiedlichem Wert – <span style="color:#1f9d2c"><b>Grün</b> 1</span> · <span style="color:#6b7b8c"><b>Silber</b> 1</span> · <span style="color:#e07800"><b>Orange</b> 2</span> · <span style="color:#8a1fe0"><b>Violett</b> 3</span> · <span style="color:#e0155f"><b>Pink</b> 4</span>. Für <b>jedes komplette Set aus allen 5 Farben</b> gibt es <b>+4 Extrapunkte</b>. Dazu kommen Großfische (2×) und Goldfische (3×).</p>
     <p><b>Dein Ziel:</b> Fang möglichst viele Fische und mach den größten Gewinn. Mehr musst du erstmal nicht wissen – viel Erfolg!</p>
   </div>
@@ -213,17 +213,17 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 /* 1) SPIELBALANCE */
 const CFG={
   BOATS:30,         // Anzahl Boote (1 Spieler:in + KI)
-  ROUND_TIME:60,    // Sekunden pro Saison – für alle gleich
+  ROUND_TIME:60,    // Sekunden pro Session – für alle gleich
   WORLD:3.0,        // Kartengröße = Bildschirmgröße x WORLD (Karte scrollt mit)
   K:450,            // Kapazität der Bucht (max. Fische)
   SEASON_EVENTS:false, // Wetter-Ereignisse (Wind, Sturm, Nebel …) – aktuell AUS; true = wieder an
   API_URL:'',       // Adresse des Mehrspieler-Servers (leer = gleiche Seite /api/room)
-  ROUNDS:5,         // Saisons je Spielrunde
+  ROUNDS:5,         // Sessions je Spielrunde
   S0:390,           // Start-Bestand
   R:1.2,            // Wachstumsrate (höher = Bucht erholt sich schneller)
   COLLAPSE:15,      // Bestand darunter = See leer -> Spielrunde endet
   BASECARGO:8,      // Laderaum pro Fahrt (Fische im Boot, bis zum Entladen im Hafen)
-  BOTCAP:14,        // max. Fang eines KI-Boots pro Saison
+  BOTCAP:14,        // max. Fang eines KI-Boots pro Session
   NET_BAG:6, NET_R:26, NET_CAP:3, NET_CD:1.5, // Netzradius, Fische pro Zug (NET_BAG = Fassungsvermögen des Netzes; voll = einholen!), Sekunden zwischen zwei Zügen
   PRICE_BASE:2,     // Mindestpreis pro Fisch (Münzen)
   PRICE_SLOPE:3,    // Knappheitsaufschlag (Preis = BASE + SLOPE*(1-Bestand/K))
@@ -231,7 +231,7 @@ const CFG={
   SET_BONUS:4,      // Extrapunkte für jedes komplette Farbset (5 Farben)
   GOLD_MULT:3,      // (Großfisch = Wert 3, Goldfisch = Wert 5)
   BIG_CHANCE:0.14,  // Anteil Großfische (Wert 2)
-  QUIZ_REWARD:4,    // Münzen für richtige Quizantwort (2 Fragen je Saison)
+  QUIZ_REWARD:4,    // Münzen für richtige Quizantwort (2 Fragen je Session)
   FARM:4, STIPEND:4, TIM_DIV:0.0125, // Fischzucht, Elifs Stipendium, Tims Dividende (x Bestand)
   KING_PRIZE:[25,15,8],  // Spielrunde 1: Fangprämie für Platz 1/2/3 der Fänger
   PATROLS:4,        // Spielrunde 2: Zahl der Patrouillenboote
@@ -263,7 +263,7 @@ const PRIV={
 };
 const COMM={
  laich:{name:'Laichschutzgebiet',emoji:'🥚',max:3,cost:[60,90,120],desc:'Fische vermehren sich schneller (Wachstumsrate +0,1)'},
- farm:{name:'Fischzucht',emoji:'🐟',max:3,cost:[80,120,160],desc:'+4 Jungfische pro Saison, garantiert'},
+ farm:{name:'Fischzucht',emoji:'🐟',max:3,cost:[80,120,160],desc:'+4 Jungfische pro Session, garantiert'},
  wache:{name:'Küstenwache',emoji:'🚔',max:1,cost:[60],desc:'(in Spielrunde 2 automatisch durch die Behörde)'},
  sonar:{name:'Sonar-Boje',emoji:'📡',max:1,cost:[60],desc:'Alle sehen die Wachstumsprognose'}
 };
@@ -305,7 +305,7 @@ const QUIZ=[
  {q:'Du willst mit einem festen Einsatz (60 Sekunden, ein Boot) möglichst viel Ertrag erzielen. Welches Prinzip ist das?',o:['Minimalprinzip','Maximalprinzip','Nachhaltigkeitsprinzip','Subsidiaritätsprinzip'],a:1,e:'Maximalprinzip: gegebener Einsatz, maximaler Ertrag. Minimalprinzip: gegebenes Ziel mit minimalem Einsatz.'},
  {q:'Was unterscheidet ein öffentliches Gut von einem Allmendegut?',o:['Beim öffentlichen Gut gibt es keine Rivalität im Konsum','Öffentliche Güter sind immer teurer','Allmendegüter gehören dem Staat','Es gibt keinen Unterschied'],a:0,e:'Beide sind schwer ausschließbar. Aber beim öffentlichen Gut (z. B. Leuchtturm) mindert meine Nutzung nicht die der anderen – beim Allmendegut schon.'},
  {q:'Welches Prinzip gehört zu Ostroms Erfolgsfaktoren für Gemeingüter?',o:['Keine Regeln, damit alle frei sind','Nutzer überwachen sich gegenseitig, Verstöße werden abgestuft bestraft','Alle Rechte liegen bei einer Person','Strafen sollen möglichst hoch und sofort sein'],a:1,e:'Ostrom: klare Grenzen, Regeln passend zur Situation, Mitbestimmung, Überwachung und abgestufte Sanktionen.'},
- {q:'Die Betriebskosten deines Bootes fallen jede Saison an – egal, wie viel du fängst. Wie nennt man solche Kosten?',o:['Variable Kosten','Fixkosten','Grenzkosten','Opportunitätskosten'],a:1,e:'Fixkosten sind unabhängig von der Menge. Variable Kosten wachsen mit dem Fang.'},
+ {q:'Die Betriebskosten deines Bootes fallen jede Session an – egal, wie viel du fängst. Wie nennt man solche Kosten?',o:['Variable Kosten','Fixkosten','Grenzkosten','Opportunitätskosten'],a:1,e:'Fixkosten sind unabhängig von der Menge. Variable Kosten wachsen mit dem Fang.'},
  {q:'Warum zahlen freiwillig oft nur wenige in gemeinsame Kassen ein?',o:['Weil alle den Nutzen haben, auch wer nichts zahlt (Trittbrettfahren)','Weil Geld nichts nützt','Weil Beiträge verboten sind','Weil niemand die Projekte will'],a:0,e:'Wenn der Nutzen allen zufällt, lohnt sich Abwarten für den Einzelnen – deshalb braucht es oft verbindliche Regeln.'},
  {q:'Warum ist die Atmosphäre (Klima) ein besonders schwieriges Allmendeproblem?',o:['Weil es zu viele Fische gibt','Weil sehr viele Staaten beteiligt sind und es keine Weltpolizei gibt, die Regeln durchsetzt','Weil Luft teuer ist','Weil niemand sie nutzt'],a:1,e:'Je mehr Beteiligte und je schwächer die Durchsetzung, desto schwerer ist Kooperation – siehe internationale Klimaabkommen.'},
  {q:'Eine Fangquote begrenzt die Menge. Was macht dagegen eine Fangabgabe (Steuer pro Fisch)?',o:['Sie verbietet das Fischen','Sie verteuert jeden Fisch und beeinflusst so den Preis','Sie erhöht die Fischzahl','Sie ersetzt den Bestand'],a:1,e:'Mengensteuerung (Quote) vs. Preissteuerung (Abgabe): Beide sollen die Nutzung auf ein nachhaltiges Maß bringen.'}
@@ -402,7 +402,7 @@ function startPhase(ph){
 
 /* ---------- Lernmodule: Infos & Abfragen ---------- */
 const FACT_SEQ={1:[8,0,1,7,9],2:[4,5,6,3,2]};
-const QUIZ_SEQ={1:[[],[13,14],[8,25],[15,21],[16,7]],2:[[9,28],[10,19],[11,23],[2,24],[3,27]],3:[5,6,12,17,20]}; // je Saison 2 Fragen (Spielrunde 1, Saison 1: keine), am Ende 5 Abschlussfragen
+const QUIZ_SEQ={1:[[],[13,14],[8,25],[15,21],[16,7]],2:[[9,28],[10,19],[11,23],[2,24],[3,27]],3:[5,6,12,17,20]}; // je Session 2 Fragen (Spielrunde 1, Session 1: keine), am Ende 5 Abschlussfragen
 function quizCard(Q,id,title,reward){
  return `<div class="card quiz" id="${id}"><h3>${title||'🧠 Bonusfrage'}${reward?` (+${reward} Münzen)`:''}</h3><p><b>${Q.q}</b></p><div class="qo">${Q.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><p class="small qe"></p></div>`;
 }
@@ -418,30 +418,30 @@ function attachQuiz(id,Q,reward,onDone){
 }
 function phaseCard(){
  if(G.phase===1)return `<div class="card" style="border:4px solid #fb8500"><h3>🌊 Spielrunde 1</h3>
-  <p>Wer am meisten fängt, steht ganz oben: Jede Saison bekommen die drei fangstärksten Boote eine <b>🏆 Fangprämie</b> (${CFG.KING_PRIZE.join(' / ')} 💰).</p></div>`;
+  <p>Wer am meisten fängt, steht ganz oben: Jede Session bekommen die drei fangstärksten Boote eine <b>🏆 Fangprämie</b> (${CFG.KING_PRIZE.join(' / ')} 💰).</p></div>`;
  const tac=tacNow(),Q=quotaNow();
  if(G.round<2)return `<div class="card" style="border:4px solid #2a9d8f"><h3>📜 Spielrunde 2 – Neue Vorgaben</h3>
   <p>Gleicher See, gleiche Boote. Die Fischereibehörde hat für diese Runde Vorgaben festgelegt:</p>
   <table class="small" style="width:100%"><tr><th>Vorgabe</th><th>Inhalt</th></tr>
-  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Saison dürfen insgesamt gefangen werden.</td></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Session dürfen insgesamt gefangen werden.</td></tr>
   <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr>
   <tr><td>3️⃣ <b>Fanggebiet</b></td><td>Jedes Boot bekommt ein eigenes, <b>farbig markiertes Gebiet</b> auf der Karte. Dort sollst du fischen – nur dort.</td></tr></table></div>`;
  const overN=G.last?G.last.rows.filter(r=>r.fish>G.last.Q).length:0;
- const lead=G.round===2?`<p>📣 <b>Neu ab dieser Saison!</b> ${overN?`Letzte Saison haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'}${G.poachN?` <b>${G.poachN} Boote</b> haben in fremden Fanggebieten gefischt.`:''} Die getrennten Fanggebiete entfallen: Die ganze Bucht ist wieder gemeinsam. Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
+ const lead=G.round===2?`<p>📣 <b>Neu ab dieser Session!</b> ${overN?`Letzte Session haben <b>${overN} von ${G.P.length} Booten</b> mehr als die Quote gefangen.`:'Die Behörde traut dem Frieden nicht.'}${G.poachN?` <b>${G.poachN} Boote</b> haben in fremden Fanggebieten gefischt.`:''} Die getrennten Fanggebiete entfallen: Die ganze Bucht ist wieder gemeinsam. Weil Regeln ohne Kontrolle nicht eingehalten werden, kommen jetzt <b>Polizeiboote</b>:</p>`:'';
  const p=Math.round(price(G.S)*10)/10,gain=p,loss=Math.round(CFG.PATROL_P*CFG.FINE_MULT*p*10)/10,ev=Math.round((gain*(1-CFG.PATROL_P)-CFG.FINE_MULT*p*CFG.PATROL_P-p*CFG.PATROL_P)*10)/10;
  return `<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2 – Quote mit Kontrolle</h3>
   ${lead}
   <table class="small" style="width:100%"><tr><th>Regel</th><th>Inhalt</th></tr>
-  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Saison insgesamt.</td></tr>
+  <tr><td>1️⃣ <b>Gesamtfangmenge (TAC)</b></td><td><b>${tac} Fische</b> pro Session insgesamt.</td></tr>
   <tr><td>2️⃣ <b>Fangquote</b></td><td>Jedes der ${G.P.length} Boote darf <b>${Q} Fische</b> fangen.</td></tr>
   <tr><td>3️⃣ <b>Kontrolle</b></td><td>${CFG.PATROLS} Patrouillenboote prüfen. Kontrolle je Fisch ca. <b>${Math.round(CFG.PATROL_P*100)} %</b>.</td></tr>
   <tr><td>4️⃣ <b>Strafe</b></td><td>Überfang wird beschlagnahmt, dazu <b>${CFG.FINE_MULT}× Marktpreis</b> je Fisch.</td></tr>
   <tr><td>5️⃣ <b>Anreiz</b></td><td>🌿 Öko-Siegel: <b>+${Math.round((CFG.ECO_MULT-1)*100)} % Preis</b> und <b>${CFG.ECO_BONUS} 💰</b> Prämie für Boote ohne Überfang.</td></tr></table>
   </div>`;
 }
-const zoneOn=()=>G.phase===2&&G.round===1; // Spielrunde 2, Saison 1: eigenes Fanggebiet je Boot
-const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Saison 2 der Spielrunde 2
-const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Saison für Saison aufgedeckt
+const zoneOn=()=>G.phase===2&&G.round===1; // Spielrunde 2, Session 1: eigenes Fanggebiet je Boot
+const polOn=()=>G.phase===2&&G.round>=2; // Patrouillen, Strafen, Öko-Siegel erst ab Session 2 der Spielrunde 2
+const revLvl=()=>G.phase===1?G.round:9; // Einführungsstufe: Spielrunde 1 wird Session für Session aufgedeckt
 function stockCard(){
  if(revLvl()<2)return '';
  const S=G.S,K=CFG.K,gr=growth(S),pct=Math.round(S/K*100);
@@ -453,7 +453,7 @@ function stockCard(){
  const exp=G.phase===1?'':'';
  return `<div class="card" style="border:4px solid ${col}"><h3 style="color:${col}">${lvl}</h3>
   <div class="bar" style="height:30px"><i style="width:${pct}%;background:${col}"></i><span style="font-size:15px">🐟 ${S} von ${K} Fischen (${pct} %)</span></div>
-  ${revLvl()<3?'':`<p style="margin:8px 0 2px">🌱 <b>Nachwuchs:</b> Wenn der Bestand jetzt so bleibt, wachsen bis zur nächsten Saison etwa <b>+${gr} Fische</b> nach.</p>
+  ${revLvl()<3?'':`<p style="margin:8px 0 2px">🌱 <b>Nachwuchs:</b> Wenn der Bestand jetzt so bleibt, wachsen bis zur nächsten Session etwa <b>+${gr} Fische</b> nach.</p>
   <p style="margin:2px 0">${G.phase===2?(S>=CFG.K/2?`⚖️ Weil der See noch übervoll ist, erlaubt die Behörde dieses Mal <b>${tacNow()} Fische</b> insgesamt (≈ ${quotaNow()} pro Boot): So sinkt der Bestand auf die <b>Idealgröße von ≈ ${Math.round(CFG.K/2)}</b>, bei der er am schnellsten nachwächst. Danach darf nur noch das gefangen werden, was nachwächst.`:`⚖️ Die Behörde erlaubt insgesamt nur <b>${tacNow()} Fische</b> (≈ ${quotaNow()} pro Boot) – weniger, als nachwächst, damit sich der See erholt.`):`⚖️ Das heißt: Alle ${G.P.length} Boote zusammen dürften etwa <b>${gr} Fische</b> fangen, ohne dass der See kleiner wird (≈ ${Math.round(gr/G.P.length*10)/10} pro Boot).`}</p>`}
   <p style="margin:6px 0 0"><b>${msg}</b></p></div>`;
 }
@@ -461,11 +461,11 @@ function renderDecision(){
  const me=G.P[0],S=G.S,p=price(S),msy=Math.round(rEff()*CFG.K/4);
  const col=S>CFG.K*.6?'#2a9d8f':S>CFG.K*.33?'#f4a261':'#e63946';
  const avgBot=G.last?Math.round(G.last.total/G.P.length*10)/10:0;
- const prev=G.last?`<div class="small">Letzte Saison: du ${me.lastFish} Fische · Ø aller Boote ${avgBot} · Platz ${me.rank}/${G.P.length}</div>`:'';
- const planner=hasSonar()?`<div class="card"><h3>📡 Sonar-Prognose</h3><p>Bei idealem Bestand (≈ ${Math.round(CFG.K/2)} Fische) wächst der See um höchstens <b>≈ ${msy} Fische pro Saison</b> nach – das ist die größte dauerhaft mögliche Fangmenge (MSY) für alle ${G.P.length} Boote zusammen. Probiere aus, was ein Gesamtfang für den Bestand bedeutet:</p><label>Angenommener Gesamtfang aller: <b id="plV">0</b></label><input type="range" id="plR" min="0" max="${Math.min(S,Math.round(CFG.K*.7))}" value="${Math.min(msy,S)}"><div id="plO" class="small"></div></div>`:'';
+ const prev=G.last?`<div class="small">Letzte Session: du ${me.lastFish} Fische · Ø aller Boote ${avgBot} · Platz ${me.rank}/${G.P.length}</div>`:'';
+ const planner=hasSonar()?`<div class="card"><h3>📡 Sonar-Prognose</h3><p>Bei idealem Bestand (≈ ${Math.round(CFG.K/2)} Fische) wächst der See um höchstens <b>≈ ${msy} Fische pro Session</b> nach – das ist die größte dauerhaft mögliche Fangmenge (MSY) für alle ${G.P.length} Boote zusammen. Probiere aus, was ein Gesamtfang für den Bestand bedeutet:</p><label>Angenommener Gesamtfang aller: <b id="plV">0</b></label><input type="range" id="plR" min="0" max="${Math.min(S,Math.round(CFG.K*.7))}" value="${Math.min(msy,S)}"><div id="plO" class="small"></div></div>`:'';
  const news=G.last?G.last.headline:(G.phase===1?`Alle ${G.P.length} Boote laufen aus. Fang so viel du kannst und mach Gewinn!`:(zoneOn()?`Neuer See, neue Regeln: Die Fischereibehörde hat eine Quote und eigene Fanggebiete beschlossen.`:`Neuer See, neue Regeln: Die Fischereibehörde hat eine Quote beschlossen.`));
  $('#s-decide').innerHTML=`
- <h1 class="hero" style="font-size:34px">Spielrunde ${G.phase}/2 · Saison ${G.round}/${G.rounds}</h1>
+ <h1 class="hero" style="font-size:34px">Spielrunde ${G.phase}/2 · Session ${G.round}/${G.rounds}</h1>
  <div class="news">📰 ${news}</div>
  ${stockCard()}
  ${phaseCard()}
@@ -474,12 +474,12 @@ function renderDecision(){
   <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum pro Fahrt: <b>${capOf()}</b>${G.phase===2?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
  ${eventCard()}
  ${planner}
- <div class="card"><h3>⏱ Saisondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel in der Kartenmitte) entladen – danach ist es wieder leer und du fischst weiter. Was am Saisonende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
+ <div class="card"><h3>⏱ Sessiondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel in der Kartenmitte) entladen – danach ist es wieder leer und du fischst weiter. Was am Sessionende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
- if(hasSonar()){const upd=()=>{const c=+$('#plR').value;$('#plV').textContent=c;const sa=Math.max(0,S-c),g=growth(sa)+CFG.FARM*G.comm.farm,sn=Math.min(CFG.K,sa+g);$('#plO').innerHTML=`Nach dem Fang: <b>${sa}</b> → Nachwuchs <b>+${g}</b> → nächste Saison: <b style="color:${sn>=S?'#2a9d8f':'#e63946'}">${sn}</b>`};$('#plR').oninput=upd;upd()}
+ if(hasSonar()){const upd=()=>{const c=+$('#plR').value;$('#plV').textContent=c;const sa=Math.max(0,S-c),g=growth(sa)+CFG.FARM*G.comm.farm,sn=Math.min(CFG.K,sa+g);$('#plO').innerHTML=`Nach dem Fang: <b>${sa}</b> → Nachwuchs <b>+${g}</b> → nächste Session: <b style="color:${sn>=S?'#2a9d8f':'#e63946'}">${sn}</b>`};$('#plR').oninput=upd;upd()}
  show('s-decide');
  {const th=$('#thumb');if(th)drawBoatCustom(th.getContext('2d'),65,55,BOAT,1.2,null)}
 }
@@ -573,7 +573,7 @@ function onResize(){if(!A||!A.running)return;fitWorld();updateCam(0,true)}
 /* Ausrichtung: nicht gesperrt – das Spiel passt sich automatisch an Hoch-/Querformat an */
 try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(e){}
 addEventListener('resize',onResize);addEventListener('orientationchange',()=>setTimeout(onResize,250));
-/* ---------- Saison-Ereignisse (jede Saison fühlt sich etwas anders an) ---------- */
+/* ---------- Session-Ereignisse (jede Session fühlt sich etwas anders an) ---------- */
 const EVENTS=[
  {id:'calm',emoji:'☀️',name:'Ruhige See',txt:'Kaum Wind, gute Sicht.'},
  {id:'wind',emoji:'💨',name:'Windböen',txt:'Immer wieder drücken Böen dein Boot zur Seite.'},
@@ -640,7 +640,7 @@ function startRound(T){
  CAM.x=A.boat.x-CFG.W/2;CAM.y=A.boat.y-(AR.y0+AR.y1)/2;camClamp();
  A.last=performance.now();requestAnimationFrame(loop);
 }
-/* --- Fanggebiete (Spielrunde 2, Saison 1) --- */
+/* --- Fanggebiete (Spielrunde 2, Session 1) --- */
 const zoneHue=k=>Math.round((k*137.508)%360);
 function buildZones(){
  const n=A.bots.length+1,WW=WB.W,WH=WB.H;
@@ -1123,7 +1123,7 @@ const hold=(id,key)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.preve
  ['pointerup','pointercancel'].forEach(ev=>nb.addEventListener(ev,()=>netRelease()));nb.addEventListener('contextmenu',e=>e.preventDefault())}
 cv.addEventListener('pointerdown',e=>{e.preventDefault();netPress()});
 
-/* ---------- Saisonende ---------- */
+/* ---------- Sessionende ---------- */
 function finishRound(){
  if(MP.role==='player'){mpPlayerFinish();return}
  const me=G.P[0],ph=G.phase;
@@ -1232,7 +1232,7 @@ function leaderboardHTML(sorted,expanded){
   const arr=[...idx].sort((a,b)=>a-b);rows=[];let prev=-1;
   arr.forEach(i=>{if(prev>=0&&i>prev+1)rows.push('<tr><td colspan="6" class="small" style="text-align:center">⋮</td></tr>');rows.push(lbRow(sorted[i]));prev=i});
  }
- return `<table><tr><th>#</th><th></th><th>Boot</th><th>Fang</th><th>Saison</th><th>Münzen</th></tr>${rows.join('')}</table>`;
+ return `<table><tr><th>#</th><th></th><th>Boot</th><th>Fang</th><th>Session</th><th>Münzen</th></tr>${rows.join('')}</table>`;
 }
 function attachLbToggle(getSorted){
  let all=false;
@@ -1242,12 +1242,12 @@ function renderResult(){
  const L=G.last,me=G.P[0],ph=G.phase,fact=FACTS[FACT_SEQ[ph][(G.round-1)%5]],m=fact.m,lv=revLvl();
  const Qs=(QUIZ_SEQ[ph][(G.round-1)%5]||[]).map(i=>QUIZ[i]);
  const R1h=ph===2&&G.res[1]?G.res[1].hist:null,r1=R1h&&R1h[G.round-1];
- const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Vergleich mit Spielrunde 1</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Saisonstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Saison</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See als in der freien Fischerei.':'Der Bestand entwickelt sich anders als in Spielrunde 1.'}</p></div>`:'';
+ const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Vergleich mit Spielrunde 1</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (mit Quote)</th></tr><tr><td>Bestand am Sessionstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Session</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See als in der freien Fischerei.':'Der Bestand entwickelt sich anders als in Spielrunde 1.'}</p></div>`:'';
  const myRow=L.rows[0];
  let special='';
  if(ph===1){
   const k=L.king;
-  special=`<div class="card" style="border:4px solid #fb8500"><h3>🏆 Fangkönig der Saison: ${k.p.role.emoji} ${esc(k.p.name)}${k.p.isP?' (du!)':''}</h3>
+  special=`<div class="card" style="border:4px solid #fb8500"><h3>🏆 Fangkönig der Session: ${k.p.role.emoji} ${esc(k.p.name)}${k.p.isP?' (du!)':''}</h3>
   <p><b>${k.fish} Fische</b> gefangen – dafür gibt es <b>${k.prize} 💰 Fangprämie</b>. Platz 2 und 3 bekommen ${CFG.KING_PRIZE[1]} und ${CFG.KING_PRIZE[2]} 💰.</p>
   <p class="small">In der freien Fischerei wird belohnt, wer am meisten rausholt – und wer am meisten rausholt, steht in der Bestenliste oben.</p>
   ${myRow.prize?`<p>🎉 <b>Du bekommst ${myRow.prize} 💰 Fangprämie</b> (Platz ${myRow.place} der Fänger)!</p>`:''}</div>`;
@@ -1259,19 +1259,19 @@ function renderResult(){
   <p class="small">${myRow.fish>L.Q?'Dein Fang lag über der Quote ('+myRow.fish+' statt '+L.Q+').':'Dein Fang lag innerhalb der Quote ('+myRow.fish+' von '+L.Q+').'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`:`<div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Bilanz der Fischereibehörde</h3>
   <p>Erlaubt (TAC): <b>${L.tac}</b> · Tatsächlich gefangen: <b>${L.total}</b> · Quote pro Boot: <b>${L.Q}</b></p>
   <p>🌿 <b>${L.ecoN}</b> Boote hielten sich an die Quote (Öko-Siegel +${Math.round((CFG.ECO_MULT-1)*100)} % und ${CFG.ECO_BONUS} 💰) · 🚔 <b>${L.caughtN}</b> erwischt (Strafen ${L.finesTotal} 💰) · 😏 <b>${L.sneakyN}</b> unentdeckt</p>
-  <p class="small">${myRow.caught?'🚔 Du wurdest erwischt: Überfang beschlagnahmt, dazu '+myRow.fine+' 💰 Strafe. Saisonergebnis: '+(myRow.net>=0?'+':'')+myRow.net+' 💰.':myRow.sneaky?'😏 Du warst über der Quote und wurdest nicht erwischt – ein Öko-Siegel gibt es dafür nicht.':'🌿 Du warst innerhalb der Quote: Öko-Siegel und Prämie.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`;
+  <p class="small">${myRow.caught?'🚔 Du wurdest erwischt: Überfang beschlagnahmt, dazu '+myRow.fine+' 💰 Strafe. Sessionergebnis: '+(myRow.net>=0?'+':'')+myRow.net+' 💰.':myRow.sneaky?'😏 Du warst über der Quote und wurdest nicht erwischt – ein Öko-Siegel gibt es dafür nicht.':'🌿 Du warst innerhalb der Quote: Öko-Siegel und Prämie.'} Der See wächst nun auf <b>${L.Snew}</b> Fische.</p></div>`;
  }
  const end=G.collapse||G.round>=G.rounds;
  $('#s-result').innerHTML=`
- <h1 class="hero" style="font-size:34px">Spielrunde ${ph} · Saison ${G.round} – Bestenliste</h1>
+ <h1 class="hero" style="font-size:34px">Spielrunde ${ph} · Session ${G.round} – Bestenliste</h1>
  <div class="news">📰 ${L.headline}</div>
  ${special}
- <div class="card"><h3>🏅 Bestenliste nach Saison ${G.round}</h3>
-  <p class="small">Du: Platz <b>${me.rank}</b> von ${G.P.length} · Fang ${myRow.fish} (Ø der anderen: ${L.avgBot}) · Saison ${myRow.net>=0?'+':''}${myRow.net} 💰</p>
+ <div class="card"><h3>🏅 Bestenliste nach Session ${G.round}</h3>
+  <p class="small">Du: Platz <b>${me.rank}</b> von ${G.P.length} · Fang ${myRow.fish} (Ø der anderen: ${L.avgBot}) · Session ${myRow.net>=0?'+':''}${myRow.net} 💰</p>
   <p class="small">🧾 Deine Abrechnung: ${myRow.fish} Fische${myRow.gold?' + <b>'+myRow.gold+' Extrapunkte</b> (Farbwert, Groß-/Goldfische, Farbset)':''} × ${fmt(L.pr)} 💰${myRow.eco?' × 1,25 (Öko-Siegel)':''} ≈ ${myRow.income} 💰${myRow.fine?' · Strafe −'+myRow.fine:''} · Betriebskosten −${myRow.fix}${myRow.prize?' · Prämie +'+myRow.prize:''}</p>
   <div id="lbBox">${leaderboardHTML(L.sorted,false)}</div>
   <button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
- ${lv<2?`<div class="card" style="border:4px solid #f4a261"><h3>⚠️ Achtung: Der Fischbestand sinkt!</h3><p>Vor der Saison schwammen <b>${L.Sstart}</b> Fische in der Bucht. Ihr habt zusammen <b class="neg">${L.total}</b> gefangen – jetzt sind es nur noch <b>${L.Safter}</b>. Ein Teil wächst zwar nach (+${L.gr}), aber was gefangen wurde, fehlt im See. Beobachte ab jetzt den Bestand!</p></div>`:` <div class="card"><h3>🌊 Was passierte mit der Bucht?</h3>
+ ${lv<2?`<div class="card" style="border:4px solid #f4a261"><h3>⚠️ Achtung: Der Fischbestand sinkt!</h3><p>Vor der Session schwammen <b>${L.Sstart}</b> Fische in der Bucht. Ihr habt zusammen <b class="neg">${L.total}</b> gefangen – jetzt sind es nur noch <b>${L.Safter}</b>. Ein Teil wächst zwar nach (+${L.gr}), aber was gefangen wurde, fehlt im See. Beobachte ab jetzt den Bestand!</p></div>`:` <div class="card"><h3>🌊 Was passierte mit der Bucht?</h3>
  <p>Bestand <b>${L.Sstart}</b> → Gesamtfang <b class="neg">−${L.total}</b> ${lv>=3?` (nachhaltig wären ≈${L.msy})`:''} → <b>${L.Safter}</b> → Nachwuchs <b class="pos">+${L.gr}${L.farm?' +'+L.farm+' (Zucht)':''}</b> → <b style="font-size:20px">${L.Snew}</b></p>
  <canvas id="chart1" width="700" height="230"></canvas></div>`}
  ${nutzen}
@@ -1305,7 +1305,7 @@ function renderUpgrades(){
  <p>Hier zahlen alle freiwillig ein${G.phase===2?' – dazu fließt die Hälfte der Strafgelder in die Kasse':''}. Die Projekte nützen <b>allen ${G.P.length} Booten</b> – auch denen, die nichts beitragen (Trittbrettfahrer!). Diese Runde zahlten <b>${G.botContrib.cnt}</b> Boote zusammen <b>${G.botContrib.sum} 💰</b> ein.</p>
  <div class="row"><span>Dein Beitrag:</span>${[10,20,40].map(n=>`<button class="btn ghost" data-c="${n}" ${me.coins<n?'disabled':''}>+${n}</button>`).join('')}<span class="small">(du hast bisher ${me.contrib} eingezahlt)</span></div>
  <div class="grid g2" style="margin-top:12px">${commKeys.map(k=>{const u=COMM[k],l=G.comm[k],mx=l>=u.max,cost=mx?0:commCost(k,l),ok=!mx&&G.comm.fund>=cost;return `<div class="upg"><h4>${u.emoji} ${u.name} <span class="pips">${pips(l,u.max)}</span></h4><p>${u.desc}</p>${mx?'':`<div class="bar" style="height:16px;margin-bottom:6px"><i style="width:${Math.min(100,G.comm.fund/cost*100)}%;background:#3a86ff"></i><span>${G.comm.fund}/${cost}</span></div>`}<button class="btn blue" data-m="${k}" ${ok?'':'disabled'}>${mx?'MAX':ok?'Beschließen!':'Zu wenig im Topf'}</button></div>`}).join('')}</div></div>`}
- ${MP.role?'<div class="pill" style="font-size:18px">⏳ Warte, bis der Lehrer die nächste Saison startet …</div>':'<button class="btn green" id="nextS">'+('🌅 Saison '+(G.round+1)+' starten')+'</button>'}`;
+ ${MP.role?'<div class="pill" style="font-size:18px">⏳ Warte, bis der Lehrer die nächste Session startet …</div>':'<button class="btn green" id="nextS">'+('🌅 Session '+(G.round+1)+' starten')+'</button>'}`;
  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{const k=b.dataset.p,l=me.upg[k],c=PRIV[k].cost[l];if(me.coins>=c&&l<PRIV[k].max){me.coins-=c;me.upg[k]++;beep(700,.12);renderUpgrades()}});
  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const n=+b.dataset.c;if(me.coins>=n){me.coins-=n;me.contrib+=n;G.comm.fund+=n;beep(600,.08);renderUpgrades()}});
  document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const k=b.dataset.m,l=G.comm[k],c=commCost(k,l);if(G.comm.fund>=c&&l<COMM[k].max){G.comm.fund-=c;G.comm[k]++;beep(880,.2);toast('🏛 Beschlossen: '+COMM[k].name);renderUpgrades()}});
@@ -1328,7 +1328,7 @@ function renderPhase1End(sorted,myRank){
  sorted.forEach((p,i)=>{p.prevRank=p.rank;p.rank=i+1;});
  $('#s-final').innerHTML=`
  <h1 class="hero" style="font-size:36px">${R.empty?'💀 Der See ist leer!':'🏁 Ende der Spielrunde 1'}</h1>
- <div class="news">${R.empty?`Nach Saison ${R.seasons} gibt es keine Fische mehr – die Fischerei ist am Ende.`:`Nach ${R.seasons} Saisons sind nur noch ${R.endS} von ${CFG.K} Fischen übrig.`}</div>
+ <div class="news">${R.empty?`Nach Session ${R.seasons} gibt es keine Fische mehr – die Fischerei ist am Ende.`:`Nach ${R.seasons} Sessions sind nur noch ${R.endS} von ${CFG.K} Fischen übrig.`}</div>
  <div class="card" style="border:4px solid #fb8500"><h3>🏆 Der beste Fischer erreicht Platz 1</h3>
   <p><b>${w.role.emoji} ${esc(w.name)}${w.isP?' – das bist DU!':''}</b> hat mit <b>${w.fishTotal} gefangenen Fischen</b> und <b>${w.coins} 💰</b> gewonnen. ${w.isP?'Du hast konsequent am meisten rausgeholt – und wurdest dafür belohnt.':`Du landest auf Platz <b>${myRank}</b> mit ${me.coins} 💰 und ${me.fishTotal} Fischen.`}</p>
   ${podiumHTML(sorted)}</div>
@@ -1366,7 +1366,7 @@ function renderFinal(sorted,myRank){
   <div>${badges.map(b=>`<span class="badge">${b}</span>`).join('')}</div></div>
  <div class="card"><h3>⚖️ Vergleich: freie Fischerei vs. Quote & Kontrolle</h3>
   <table><tr><th></th><th>🌊 Spielrunde 1<br>frei</th><th>🚔 Spielrunde 2<br>geregelt</th></tr>
-  <tr><td>Saisons gefischt</td><td>${R1.seasons}${R1.empty?' (dann leer)':''}</td><td>${R2.seasons}</td></tr>
+  <tr><td>Sessions gefischt</td><td>${R1.seasons}${R1.empty?' (dann leer)':''}</td><td>${R2.seasons}</td></tr>
   <tr><td>Gesamtfang aller Boote</td><td class="${more?'neg':'pos'}">${R1.total}</td><td class="${more?'pos':'neg'}">${R2.total}</td></tr>
   <tr><td>Bestand am Ende</td><td class="neg">${R1.endS} / ${CFG.K}</td><td class="pos">${R2.endS} / ${CFG.K}</td></tr>
   <tr><td>Strafen insgesamt</td><td>–</td><td>${R2.fines} 💰</td></tr>
@@ -1377,7 +1377,7 @@ function renderFinal(sorted,myRank){
  <ul>
  <li><b>Ohne Regeln</b> belohnt der Markt kurzfristig den Rücksichtslosesten – am Ende ist der See leer und alle verlieren (Tragödie der Allmende, Hardin 1968).</li>
  <li><b>Gesamtfangmenge und Quote:</b> Erst wenn die Menge begrenzt und fair verteilt ist, muss keiner mehr „mitgieren“. ${more?'Zusammen wurde sogar mehr gefangen.':'Der See bleibt dafür dauerhaft lebendig.'}</li>
- <li><b>Quote ohne Kontrolle</b> reicht nicht: In Saison 1 der Spielrunde 2 haben sich oft viele nicht daran gehalten – wer sich daran hielt, war der Dumme. Erst Kontrolle und Strafen machen Schwarzfischen unattraktiv: Überfang wird beschlagnahmt, die Strafe übersteigt den Gewinn.</li>
+ <li><b>Quote ohne Kontrolle</b> reicht nicht: In Session 1 der Spielrunde 2 haben sich oft viele nicht daran gehalten – wer sich daran hielt, war der Dumme. Erst Kontrolle und Strafen machen Schwarzfischen unattraktiv: Überfang wird beschlagnahmt, die Strafe übersteigt den Gewinn.</li>
  <li><b>Anreize</b> (Öko-Siegel, Prämie) belohnen Regeltreue. Ostrom: klare Grenzen, gemeinsam beschlossene Regeln, Kontrolle, abgestufte Sanktionen.</li>
  ${MP.role?'':'<li><b>Gemeindekasse:</b> Gemeinsame Projekte nützen allen – auch denen, die nichts einzahlen (Trittbrettfahrer). Freiwillig zahlen nur wenige ein; deshalb sind verbindliche Regeln oft nötig.</li>'}
  <li><b>Qualität statt Masse:</b> Bei begrenzter Menge lohnt es sich, wertvolle Fische (seltene Farben, Großfische, ein komplettes Farbset) zu fangen – so entsteht aus derselben Naturnutzung mehr Wert.</li>
@@ -1554,7 +1554,7 @@ function skipPhase(){
 }
 function tpRefresh(){
  if(!G)return;
- if(A&&A.running){ // live in der laufenden Saison
+ if(A&&A.running){ // live in der laufenden Session
   A.T=Math.max(A.t+5,CFG.ROUND_TIME);
   if(G.phase===2){while(A.patrols.length>CFG.PATROLS)A.patrols.pop();while(A.patrols.length<CFG.PATROLS)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0})}
   return;
@@ -1604,20 +1604,20 @@ function applyURLParams(){
 let TP_LOCK=false;
 function tpRender(){
  const playing=!!(A&&A.running),inG=!!G;
- const st=inG?`Spielrunde ${G.phase}/2 · Saison ${G.round}/${G.rounds} · Bestand <b>${curStock()}</b>/${CFG.K}${playing?' · ⏱ '+Math.max(0,Math.round(A.T-A.t))+' s übrig':''}${G.collapse?' · See leer':''}`:'Kein Spiel läuft';
+ const st=inG?`Spielrunde ${G.phase}/2 · Session ${G.round}/${G.rounds} · Bestand <b>${curStock()}</b>/${CFG.K}${playing?' · ⏱ '+Math.max(0,Math.round(A.T-A.t))+' s übrig':''}${G.collapse?' · See leer':''}`:'Kein Spiel läuft';
  TP.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">⚙️ Lehrer-Verwaltung</h2><button class="btn ghost" id="tpX">✖ Schließen${tpPaused?' & weiter':''}</button></div>
  <div class="st" style="margin-top:8px">${st}${tpPaused?' · ⏸ pausiert':''}</div>
  ${inG?`<h3>🐟 Fischbestand</h3><div class="row"><button class="btn blue" data-s="-50">−50</button><button class="btn blue" data-s="50">+50</button><button class="btn blue" data-s="100">+100</button><button class="btn blue" data-s="max">Voll (${CFG.K})</button><button class="btn blue" data-s="half">Hälfte</button><button class="btn blue" data-s="low">Fast leer (20)</button>
   <label>Genau<input type="number" id="tpS" min="0" max="${CFG.K}" value="${curStock()}"></label><button class="btn" id="tpSet">Setzen</button></div>
- <h3>⏯ Saison & Runden</h3><div class="row">
-  ${playing?`<button class="btn ghost" id="tpPause">${A.paused?'▶ Weiter':'⏸ Pause'}</button><button class="btn" id="tpEnd">⏹ Saison jetzt beenden</button><button class="btn ghost" id="tpPlus">+15 s</button>`:''}
-  <button class="btn green" id="tpSkip">⏭ Saison überspringen</button><button class="btn green" id="tpSkipPh">⏭⏭ Spielrunde überspringen</button></div>
- <p class="small" style="margin:6px 0 0">Überspringen: Die KI-Boote fischen die Saison automatisch, du selbst fängst nichts.</p>
+ <h3>⏯ Session & Runden</h3><div class="row">
+  ${playing?`<button class="btn ghost" id="tpPause">${A.paused?'▶ Weiter':'⏸ Pause'}</button><button class="btn" id="tpEnd">⏹ Session jetzt beenden</button><button class="btn ghost" id="tpPlus">+15 s</button>`:''}
+  <button class="btn green" id="tpSkip">⏭ Session überspringen</button><button class="btn green" id="tpSkipPh">⏭⏭ Spielrunde überspringen</button></div>
+ <p class="small" style="margin:6px 0 0">Überspringen: Die KI-Boote fischen die Session automatisch, du selbst fängst nichts.</p>
  <div class="row" style="margin-top:8px"><button class="btn ghost" id="tpP1">↺ Spielrunde 1 neu starten</button><button class="btn ghost" id="tpP2">▶ Spielrunde 2 starten</button><button class="btn ghost" id="tpNew">🏠 Zurück zum Start</button></div>
  `:`<p>Kein Spiel läuft – die Einstellungen unten gelten für die nächsten Spiele.</p>`}
  <h3>🔧 Einstellungen (sofort wirksam)</h3><div class="row">
-  <label>Saisondauer (s)<input type="number" id="tpT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
-  <label>Saisons je Runde<input type="number" id="tpR" min="1" max="12" value="${G?G.rounds:CFG.ROUNDS}"></label>
+  <label>Sessiondauer (s)<input type="number" id="tpT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
+  <label>Sessions je Runde<input type="number" id="tpR" min="1" max="12" value="${G?G.rounds:CFG.ROUNDS}"></label>
   <label>Start-Bestand<input type="number" id="tpS0" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
   <label>Patrouillen<input type="number" id="tpPa" min="0" max="12" value="${CFG.PATROLS}"></label>
   <label>Strafe (× Preis)<input type="number" id="tpF" min="0" max="20" step="0.5" value="${CFG.FINE_MULT}"></label>
@@ -1750,7 +1750,7 @@ function mpPlayTick(){
  if(left>0){if(c)c.textContent='🚦 Start in '+Math.ceil(left/1000)+' …';return}
  if(MP.started[k])return;
  MP.started[k]=1;MP.startAt=0;MP.reported=undefined;
- if(left<-8000){mpWait('<h2>Saison läuft schon</h2><p>Du bist zu spät. Beim nächsten Mal bist du dabei.</p>');return}
+ if(left<-8000){mpWait('<h2>Session läuft schon</h2><p>Du bist zu spät. Beim nächsten Mal bist du dabei.</p>');return}
  startRound(Math.max(15,CFG.ROUND_TIME+left/1000));
 }
 async function mpPlayerFinish(){
@@ -1762,7 +1762,7 @@ async function mpPlayerFinish(){
  const eco=polOn()&&!pViol;
  const rep={poach:A.poach||0,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:!!pViol&&!(pFine>0)};
  MP.reported=rep;
- mpWait(`<h2>🎣 Saison geschafft!</h2><p>Dein Fang: <b>${rep.fish} Fische</b>.</p><p>Warte auf die anderen Fischer und die Auswertung …</p>`);
+ mpWait(`<h2>🎣 Session geschafft!</h2><p>Dein Fang: <b>${rep.fish} Fische</b>.</p><p>Warte auf die anderen Fischer und die Auswertung …</p>`);
  for(let i=0;i<4;i++){try{await mpCall('report',{id:MP.id,ph:G.phase,rd:G.round,rep});break}catch(e){await new Promise(r=>setTimeout(r,800))}}
 }
 function mpApplyResult(res,silent){
@@ -1781,8 +1781,8 @@ function mpHostInit(){
  mpHostRender();
 }
 const hostFields=()=>`<div class="row">
- <label>Saisondauer (s)<input type="number" id="hsT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
- <label>Saisons je Runde<input type="number" id="hsR" min="1" max="12" value="${CFG.ROUNDS}"></label>
+ <label>Sessiondauer (s)<input type="number" id="hsT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
+ <label>Sessions je Runde<input type="number" id="hsR" min="1" max="12" value="${CFG.ROUNDS}"></label>
  <label>Start-Bestand<input type="number" id="hsS" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
  <label>Patrouillen (Runde 2)<input type="number" id="hsP" min="0" max="12" value="${CFG.PATROLS}"></label>
  <label>Strafe (× Preis)<input type="number" id="hsF" min="0" max="20" step=".5" value="${CFG.FINE_MULT}"></label>
@@ -1894,12 +1894,12 @@ function mpHostPaint(){
  const mid=$('#hsMid'),ps=MP.players||[];
  {const st=document.getElementById('hsSet');if(st)st.style.display=m.state==='lobby'?'':'none'}
  const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
- const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Saison ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Saison läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Saison ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
+ const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Session ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Session läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Session ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
  let btn='';
  if(m.state==='lobby')btn=`<button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
- else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Saison ${m.rd} starten (Countdown 8 s)</button>`;
- else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Saison jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
- else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Saison ${m.rd+1} vorbereiten</button>`;
+ else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Session ${m.rd} starten (Countdown 8 s)</button>`;
+ else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Session jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
+ else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Session ${m.rd+1} vorbereiten</button>`;
  else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
  if(m.state!=='done'&&m.state!=='ended')btn+=` <button class="btn ghost" id="hsStop" style="background:#ffe3e3;color:#a4161a">⛔ Spiel beenden</button>`;
  mid.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">${stateTxt}</h3><span class="pill">${ps.length} Spieler</span></div><div class="row" style="margin-top:8px">${btn}</div></div>
