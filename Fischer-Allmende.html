@@ -614,13 +614,14 @@ function startRound(T){
  show('s-play');fitWorld();
  const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
  const WW=Math.round(CFG.W*CFG.WORLD),WH=Math.round(CFG.H*CFG.WORLD);
- WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};HB={x0:WW/2-48,x1:WW/2+48,y0:WH/2-36,y1:WH/2+36,W:WW,H:WH};
+ const hcx=ph2?rnd(WW*.14,WW*.86):WW/2,hcy=ph2?rnd(WH*.16,WH*.84):WH/2; /* Spielrunde 2: Hafen in jeder Session an anderer Stelle */
+ WB={x0:40,y0:40,x1:WW-40,y1:WH-40,W:WW,H:WH};HB={x0:hcx-48,x1:hcx+48,y0:hcy-36,y1:hcy+36,W:WW,H:WH};
  A={T,t:0,running:true,last:performance.now(),price:price(S),S0:S,quota:ph2?quotaNow():Infinity,tac:ph2?tacNow():0,
-  boat:{x:WW/2,y:WH/2+36+60,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
+  boat:{x:hcx,y:hcy+36+60,ang:-Math.PI/2,v:0},keys:{l:0,r:0,u:0,d:0},foamT:0,rankT:0,rank:me.rank,fines:0,viol:0,warned:false,okToast:false,
   bs:105*(1+.2*me.upg.motor)*me.role.speed,ev:evFor(G.phase,G.round),windAng:rnd(0,6.28),curAng:rnd(0,6.28),
   net:{out:false,R:CFG.NET_R+5*hk,cap:CFG.NET_CAP+hk,bag:CFG.NET_BAG+2*hk,n:0,gold:0,col:[0,0,0,0,0],full:false,cd:0,cdMax:CFG.NET_CD/(1+.3*wn),x:0,y:0,tang:0,pulse:0},
   cap:capOf(),cargo:0,hold:0,landed:0,trips:0,col:[0,0,0,0,0],sets:0,setKey:'',plain:0,gold:0,fish:[],jel:[],rocks:[],schools:[],fx:[],patrols:[],
-  bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:WW/2+Math.cos(i*2.399)*rnd(88,150),y:WH/2+Math.sin(i*2.399)*rnd(80,130),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
+  bots:G.P.slice(1).map((p,i)=>({p,i,n:0,gold:0,flag:false,caught:false,x:hcx+Math.cos(i*2.399)*rnd(88,150),y:hcy+Math.sin(i*2.399)*rnd(80,130),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),fast:false,evs:[]}))};
  A.zoneOn=zoneOn();A.poach=0;A.outT=0;
  if(A.zoneOn&&(G.round===1||!G.zs))G.zs={};
  if(A.zoneOn)buildZones();
@@ -637,10 +638,10 @@ function startRound(T){
  for(let i=0;i<S;i++){const si=A.zoneOn?zl[i]:i%ns;A.fish.push(newFish(A.schools[si],si));if(A.zoneOn){const f=A.fish[A.fish.length-1],z=A.zones[si];f.rad=Math.min(f.rad,Math.min(z.x1-z.x0,z.y1-z.y0)*.34)}}
  if(A.zoneOn)A.bots.forEach(b=>{b.zi=b.i+1;b.poach=b.p.role.id==='tessa'?Math.random()<.55:b.p.role.id==='kalle'?Math.random()<.2:false;botWander(b)});
  /* Startpositionen: zufällig auf dem See verteilt (nicht am Hafen); im Fanggebiet-Modus im eigenen Gebiet */
- {const hx=WW/2,hy=WH/2,away=(x,y)=>Math.hypot(x-hx,y-hy)>230,spot=(z)=>{for(let t=0;t<40;t++){const x=z?rnd(z.x0+40,z.x1-40):rnd(WB.x0+60,WB.x1-60),y=z?rnd(z.y0+40,z.y1-40):rnd(WB.y0+60,WB.y1-60);if(away(x,y)||t>38)return{x,y}}};
+ {const hx=hcx,hy=hcy,away=(x,y)=>Math.hypot(x-hx,y-hy)>230,spot=(z)=>{for(let t=0;t<40;t++){const x=z?rnd(z.x0+40,z.x1-40):rnd(WB.x0+60,WB.x1-60),y=z?rnd(z.y0+40,z.y1-40):rnd(WB.y0+60,WB.y1-60);if(away(x,y)||t>38)return{x,y}}};
   const sp=spot(A.zoneOn?A.zones[0]:null);A.boat.x=sp.x;A.boat.y=sp.y;A.boat.ang=rnd(0,6.28);
   A.bots.forEach(b=>{const q=spot(A.zoneOn?A.zones[b.zi]:null);b.x=q.x;b.y=q.y;b.ang=rnd(0,6.28)})}
- for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-WW/2,y-WH/2)<230||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
+ for(let i=0;i<9;i++){let x,y,k=0;do{x=rnd(120,WW-120);y=rnd(120,WH-120);k++}while(k<30&&(Math.hypot(x-hcx,y-hcy)<230||A.rocks.some(r=>Math.hypot(r.x-x,r.y-y)<200)));A.rocks.push({x,y,r:rnd(20,34),sd:rnd(0,6)})}
  const nj=8+G.round+(A.ev.id==='jelly'?10:0);for(let i=0;i<nj;i++){const an=rnd(0,6.28);A.jel.push({x:rnd(100,WW-100),y:rnd(100,WH-100),vx:Math.cos(an)*14,vy:Math.sin(an)*14,r:17,ph:rnd(0,6)})}
  if(ph2&&G.round>=2)for(let i=0;i<CFG.PATROLS;i++)A.patrols.push({x:rnd(WB.x0,WB.x1),y:rnd(WB.y0,WB.y1),ang:rnd(0,6.28),tx:rnd(WB.x0,WB.x1),ty:rnd(WB.y0,WB.y1),tg:null,cool:0});
  A.bots.forEach(b=>{const n=botTarget(b.p);for(let k=0;k<n;k++)b.evs.push({t:rnd(3,T-2),prep:false,done:false,f:null});b.evs.sort((a,c)=>a.t-c.t)});
@@ -657,7 +658,7 @@ function buildZones(){
  let cols=Math.max(1,Math.round(Math.sqrt(n*WW/WH))),rows=Math.ceil(n/cols);while(cols*rows<n)cols++;
  const cw=WW/cols,ch=WH/rows,cells=[];
  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells.push({x0:c*cw,y0:r*ch,x1:(c+1)*cw,y1:(r+1)*ch});
- const hi=cells.findIndex(z=>WW/2>=z.x0&&WW/2<z.x1&&WH/2>=z.y0&&WH/2<z.y1);
+ const hcx=(HB.x0+HB.x1)/2,hcy=(HB.y0+HB.y1)/2,hi=cells.findIndex(z=>hcx>=z.x0&&hcx<z.x1&&hcy>=z.y0&&hcy<z.y1);
  let order=shuffle(cells.map((_,i)=>i));if(cells.length>n)order=order.filter(i=>i!==hi);
  A.zones=order.slice(0,n).map((ci,k)=>Object.assign({k},cells[ci]));
 }
