@@ -150,7 +150,7 @@ body.playing{overflow:hidden}
   <div class="card">
     <h2>🎯 Dein Auftrag</h2>
     <p>Du bist <b>eines von 30 Fischerbooten</b> in <b>derselben Bucht</b>. Alle fischen <b>gleichzeitig</b> auf einer großen Karte, die mitscrollt, wenn du an den Rand fährst. Du steuerst dein Boot mit dem Joystick (am PC: Pfeiltasten/WASD) und wirfst ein <b>Netz</b> aus, das hinter dem Boot herläuft – per Knopf holst du es ein und aus.</p>
-    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel${G.phase===2&&CFG.RANDHARBOR?'; sie liegt in jeder Session an einer anderen Stelle':' in der Kartenmitte'}) <b>entladen</b>, bevor du weiterfischen kannst – danach ist dein Boot wieder leer. Was am Ende der Session noch im Boot liegt, wird automatisch angelandet.</p>
+    <p>Dein Boot fasst nur <b>wenige Fische</b>. Du <b>musst</b> deinen Fang am <b>Hafen</b> (kleine Insel in der Kartenmitte) <b>entladen</b>, bevor du weiterfischen kannst – danach ist dein Boot wieder leer. Was am Ende der Session noch im Boot liegt, wird automatisch angelandet.</p>
     <p>🌈 <b>Farbset:</b> Die Fische gibt es in 5 Farben und Formen (schlank, rund, Raute …) mit unterschiedlichem Wert – <span style="color:#1f9d2c"><b>Grün</b> 1</span> · <span style="color:#6b7b8c"><b>Silber</b> 1</span> · <span style="color:#e07800"><b>Orange</b> 2</span> · <span style="color:#8a1fe0"><b>Violett</b> 3</span> · <span style="color:#e0155f"><b>Pink</b> 4</span>. Für <b>jedes komplette Set aus allen 5 Farben</b> gibt es <b>+4 Extrapunkte</b>. Dazu kommen Großfische (2×) und Goldfische (3×).</p>
     <p><b>Dein Ziel:</b> Fang möglichst viele Fische und mach den größten Gewinn. Mehr musst du erstmal nicht wissen – viel Erfolg!</p>
   </div>
@@ -269,7 +269,7 @@ const COMM={
  sonar:{name:'Sonar-Boje',emoji:'📡',max:1,cost:[60],desc:'Alle sehen die Wachstumsprognose'}
 };
 const FACTS=[
- {t:'Laut FAO gelten über ein Drittel der weltweit bewirtschafteten Fischbestände als überfischt.',m:['😎🐟','Ich: nur 5 Fische fangen','Tessa: hold my net']},
+ {t:'Laut FAO gilt über ein Drittel der weltweit bewirtschafteten Fischbestände als überfischt.',m:['😎🐟','Ich: nur 5 Fische fangen','Tessa: hold my net']},
  {t:'1992 verhängte Kanada ein Fangverbot für Kabeljau vor Neufundland – der Bestand war zusammengebrochen. Tausende Jobs verschwanden.',m:['📉','Bestand: 100','Bestand: ???']},
  {t:'Garrett Hardin beschrieb 1968 in „The Tragedy of the Commons“ eine Weide, die von zu vielen Hirten genutzt wird: Für jeden lohnt sich ein Tier mehr – für alle zusammen wird es ruinös.',m:['🐄🐄🐄','Jeder Hirte: nur eine Kuh mehr','Die Weide: bin ich ein Witz für dich?']},
  {t:'Elinor Ostrom erhielt 2009 den Wirtschaftsnobelpreis. Sie zeigte, dass Gemeinschaften ihre Allmende oft selbst gut verwalten – mit klaren Regeln, Absprachen und Kontrolle. Sie untersuchte z. B. Almen in der Schweiz und Bewässerungssysteme in Spanien.',m:['🧑‍🔬','Ostrom: es geht auch anders','Regeln · Absprache · Kontrolle']},
@@ -278,16 +278,16 @@ const FACTS=[
  {t:'Studien zeigen: Bestände, die mit wissenschaftlich begründeten Quoten bewirtschaftet werden, erholen sich meist – etwa der Hering in der Nordsee nach den Krisen der 1970er.',m:['📈','Quote halten','See wächst wieder']},
  {t:'Rund die Hälfte des Fisches, den Menschen essen, stammt inzwischen aus Aquakultur (Fischzucht).',m:['🐟🏭','Fischzucht','…ist auch nicht immer super, aber besser als leere Meere']},
  {t:'Von Fischerei und Aquakultur leben weltweit rund 600 Millionen Menschen ganz oder teilweise.',m:['🌍','Fisch ist Job, Essen und Kultur','Aber nur, wenn es noch welche gibt']},
- {t:'Natur ist ein Produktionsfaktor – erneuerbare Ressourcen wie Fisch oder Wald können nachwachsen. Aber nur, wenn genug Restbestand übrig bleibt.',m:['🌳🐟','Natur: Produktionsfaktor','Wirtschaft: *nutzt sie auf wie unendlich*']}
+ {t:'Natur ist ein Produktionsfaktor – erneuerbare Ressourcen wie Fisch oder Wald können nachwachsen. Aber nur, wenn genug Restbestand übrig bleibt.',m:['🌳🐟','Natur: Produktionsfaktor','Wirtschaft: *nutzt sie, als wäre sie unendlich*']}
 ];
 const QUIZ=[
  {q:'Fische im offenen Meer sind ein typisches …',o:['Allmendegut','Privatgut','Clubgut','Öffentliches Gut'],a:0,e:'Allmendegüter: niemand kann ausgeschlossen werden (nicht ausschließbar), aber jeder Fisch ist nur einmal da (Rivalität).'},
- {q:'Was ist typisch für Allmendegüter?',o:['Ausschließbar, keine Rivalität','Nicht ausschließbar, aber Rivalität','Ausschließbar und Rivalität','Weder noch'],a:1,e:'Nicht-Ausschließbarkeit + Rivalität im Konsum = Übernutzungsgefahr.'},
+ {q:'Was ist typisch für Allmendegüter?',o:['Ausschließbar, keine Rivalität','Nicht ausschließbar, aber Rivalität','Ausschließbar und mit Rivalität','Weder noch'],a:1,e:'Nicht-Ausschließbarkeit + Rivalität im Konsum = Übernutzungsgefahr.'},
  {q:'Wer erhielt 2009 den Wirtschaftsnobelpreis für Forschung zu Gemeingütern?',o:['Milton Friedman','Elinor Ostrom','Adam Smith','Paul Krugman'],a:1,e:'Elinor Ostrom – als erste Frau mit dem Wirtschaftsnobelpreis.'},
  {q:'Wer beschrieb 1968 die „Tragödie der Allmende“?',o:['Garrett Hardin','Karl Marx','John Maynard Keynes','Greta Thunberg'],a:0,e:'Garrett Hardin, Fachzeitschrift „Science“, 1968.'},
- {q:'Was ist ein Trittbrettfahrer (Free Rider)?',o:['Wer zu spät kommt','Wer Nutzen zieht, ohne einen Beitrag zu leisten','Wer Fahrrad fährt','Wer das Gemeingut schützt'],a:1,e:'Trittbrettfahrer nutzen etwas gemeinsam, ohne selbst etwas dazu beizutragen – zum Beispiel ein Laichschutzgebiet, das alle bezahlen, aber auch wer nichts einzahlt nutzt.'},
+ {q:'Was ist ein Trittbrettfahrer (Free Rider)?',o:['Wer zu spät kommt','Wer Nutzen zieht, ohne einen Beitrag zu leisten','Wer Fahrrad fährt','Wer das Gemeingut schützt'],a:1,e:'Trittbrettfahrer nutzen etwas gemeinsam, ohne selbst etwas dazu beizutragen – zum Beispiel ein Laichschutzgebiet, das alle bezahlen, das aber auch nutzen darf, wer nichts einzahlt.'},
  {q:'Was bedeutet „maximaler nachhaltiger Ertrag“ (MSY)?',o:['So viel fangen wie möglich','Größte Fangmenge, die dauerhaft möglich ist, ohne den Bestand zu verkleinern','Fangquote 0','Der höchste Preis'],a:1,e:'Im Spiel liegt er bei mittlerem Bestand (etwa die Hälfte der Kapazität) – dort wächst die Bucht am schnellsten.'},
- {q:'Wenn die Kosten der Überfischung nicht der Verursacher trägt, spricht man von …',o:['Gewinn','Externen Kosten (Externalität)','Fixkosten','Skalenerträgen'],a:1,e:'Die Kosten tragen alle – der Fang gehört aber nur dem einzelnen Fischer.'},
+ {q:'Wenn nicht der Verursacher die Kosten der Überfischung trägt, spricht man von …',o:['Gewinn','Externen Kosten (Externalität)','Fixkosten','Skalenerträgen'],a:1,e:'Die Kosten tragen alle – der Fang gehört aber nur dem einzelnen Fischer.'},
  {q:'Was passierte 1992 vor Neufundland?',o:['Rekordfang','Fangverbot für Kabeljau nach Bestandszusammenbruch','Neue Fischzucht','Ölpest'],a:1,e:'Ein warnendes Beispiel für Kollaps durch Überfischung.'},
  {q:'Warum steigt der Preis bei knapper werdenden Fischen?',o:['Angebot sinkt, Nachfrage bleibt','Fische werden schöner','Steuern sinken','Nachfrage sinkt'],a:0,e:'Preismechanismus: Knappheit macht jeden Fisch wertvoller – und Fischen lukrativer. Ein Teufelskreis.'},
  {q:'Was ist eine Fangquote (TAC)?',o:['Mindestfang pro Boot','Erlaubte Höchstmenge, die gefangen werden darf','Preis pro Fisch','Ein Fischfest'],a:1,e:'Die Gesamtfangmenge wird so festgelegt, dass sich der Bestand erholen kann – und auf die Boote aufgeteilt.'},
@@ -492,7 +492,7 @@ function renderDecision(){
  ${eventCard()}
  ${planner}
  <div class="card"><h3>⏱ Sessiondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
-  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel in der Kartenmitte) entladen – danach ist es wieder leer und du fischst weiter. Was am Sessionende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
+  <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel${G.phase===2&&CFG.RANDHARBOR?'; sie liegt in jeder Session an einer anderen Stelle':' in der Kartenmitte'}) entladen – danach ist es wieder leer und du fischst weiter. Was am Sessionende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
 ${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
  G.pred=null;document.querySelectorAll('#predBox .pred').forEach(b=>b.onclick=()=>{G.pred=b.dataset.p;document.querySelectorAll('#predBox .pred').forEach(x=>{x.style.outline=x===b?'4px solid #fb8500':'';x.style.background=x===b?'#fff4e0':''})});
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
