@@ -1239,7 +1239,7 @@ function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
  else headline=`🚔 Die Patrouille erwischt ${caughtN} Boote – Strafen: ${finesTotal} 💰. Bestand: ${Snew}.`;
  if(ph===2&&polOn()&&G.poachN)headline+=` 🚫 ${G.poachN} Boote fischten in fremden Fanggebieten.`;
  if(!empty)headline+=zmsg;
- G.hist.push({r:G.round,start:Sstart,after:Safter,end:Snew});
+ G.hist.push({r:G.round,start:Sstart,after:Safter,end:Snew,total,fines:finesTotal,caught:caughtN});
  const sorted=rankPlayers(false);
  const dS=Snew-Sstart,act=dS>Sstart*.02?'up':dS<-Sstart*.02?'down':'same',predRes=G.pred?{g:G.pred,act,ok:G.pred===act,dS}:null;
  G.last={zst,predRes,rows,Sstart,Safter,gr,farm,Snew,pr,headline,empty,total,sorted,king,tac,Q,finesTotal,caughtN,ecoN,sneakyN,
@@ -1375,11 +1375,38 @@ function renderUpgrades(){
  show('s-upg');
 }
 
+
+/* ---------- Auswertung fürs Arbeitsblatt ---------- */
+function avgCoinsNow(){const a=G.P.filter(q=>!q.dummy);return a.length?Math.round(a.reduce((t,q)=>t+q.coins,0)/a.length):0}
+function wsEvalHTML(host){
+ const R=[null,G.res[1],G.res[2]],cols=[1,2].filter(i=>R[i]);if(!cols.length)return '';
+ const n=i=>R[i].nBoats||G.P.filter(q=>!q.dummy).length||1;
+ const head=cols.map(i=>`<th>Spielrunde ${i}${i===1?' (ohne Regeln)':' (mit Regeln)'}</th>`).join('');
+ const tr=(l,f)=>`<tr><td>${l}</td>${cols.map(i=>`<td><b>${f(i)}</b></td>`).join('')}</tr>`;
+ let h=`<div class="card" style="border:4px solid #1A3C6E"><h3>📋 ${host?'Auswertung für die Arbeitsblätter':'Deine Zahlen fürs Arbeitsblatt'}</h3>
+ <p class="small">${host?'Diese Werte können die Schüler:innen in die Tabellen der Arbeitsblätter übertragen (Klassenwerte).':'Trage diese Werte in die Tabelle deines Arbeitsblatts ein.'}</p>
+ <table><tr><th></th>${head}</tr>
+ ${tr('Fischbestand zu Beginn',i=>CFG.S0)}
+ ${tr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (leer)':''))}
+ ${host?'':tr('Dein Fang insgesamt',i=>R[i].myFish!=null?R[i].myFish:'–')}
+ ${tr('Gesamtfang der Klasse',i=>R[i].total)}
+ ${tr('Ø Fang pro Boot',i=>(Math.round(R[i].total/n(i)*10)/10).toString().replace('.',','))}
+ ${host?'':tr('Dein Gewinn (Münzen)',i=>R[i].myCoins)}
+ ${tr('Ø Gewinn pro Boot (Münzen)',i=>R[i].avgCoins!=null?R[i].avgCoins:'–')}
+ ${tr('Strafen insgesamt',i=>i===1?'–':R[i].fines+' 💰')}</table>`;
+ cols.forEach(i=>{
+  const hs=R[i].hist||[];
+  h+=`<h4 style="margin:14px 0 4px">Spielrunde ${i}: Verlauf je Session</h4><table><tr><th>Session</th>${i===2?'<th>Regel</th>':''}<th>Bestand am Start</th><th>Gesamtfang</th><th>Bestand danach</th>${i===2?'<th>Strafen</th>':''}</tr>`+
+  hs.map(x=>`<tr><td>${x.r}</td>${i===2?'<td>'+(x.r===1?'Quote':x.r===2?'Quote + Kontrolle':'Fanggebiete')+'</td>':''}<td>${x.start}</td><td>${x.total!=null?x.total:x.start-x.after}</td><td>${x.end}</td>${i===2?'<td>'+(x.fines||0)+' 💰'+(x.caught?' ('+x.caught+' Boote)':'')+'</td>':''}</tr>`).join('')+'</table>';
+ });
+ return h+'</div>';
+}
+
 /* ---------- Ende einer Spielrunde ---------- */
 function endPhase(){
  const ph=G.phase,sorted=byCoins(),me=G.P[0];
  const myRank=sorted.indexOf(me)+1;
- G.res[ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank,myCoins:me.coins,winner:sorted[0],myFish:me.fishTotal,viol:me.viol};
+ G.res[ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank,myCoins:me.coins,winner:sorted[0],myFish:me.fishTotal,viol:me.viol,avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length};
  if(ph===1)renderPhase1End(sorted,myRank);else renderFinal(sorted,myRank);
 }
 function podiumHTML(sorted){
@@ -1435,6 +1462,7 @@ function renderFinal(sorted,myRank){
   <tr><td>Dein Platz</td><td>${R1.myRank}. (${R1.myCoins} 💰)</td><td>${myRank}. (${R2.myCoins} 💰)</td></tr>
   <tr><td>Reichstes Boot</td><td>${R1.winner.role.emoji} ${esc(R1.winner.name)}</td><td>${sorted[0].role.emoji} ${esc(sorted[0].name)}</td></tr></table>
   <canvas id="chart2" width="700" height="260" style="margin-top:10px"></canvas></div>
+ ${wsEvalHTML(false)}
  <div class="card"><h3>🎓 Fazit: Das Gemeinschaftsprinzip</h3>
  <ul>
  <li><b>Ohne Regeln</b> belohnt der Markt kurzfristig den Rücksichtslosesten – am Ende ist der See leer und alle verlieren (Tragödie der Allmende, Hardin 1968).</li>
@@ -1973,7 +2001,8 @@ function mpHostPaint(){
  if(m.state!=='done'&&m.state!=='ended')btn+=` <button class="btn ghost" id="hsStop" style="background:#ffe3e3;color:#a4161a">⛔ Spiel beenden</button>`;
  mid.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">${stateTxt}</h3><span class="pill">${ps.length} Spieler</span></div><div class="row" style="margin-top:8px">${btn}</div></div>
  <div class="card"><h3>👥 Spieler</h3><div id="hsPl"></div></div>
- ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}`;
+ ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}
+ ${['phaseEnd','done'].includes(m.state)&&G.res[1]?wsEvalHTML(true):''}`;
  const pl=$('#hsPl');
  pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
  pl.querySelectorAll('canvas[data-b]').forEach(c=>{const p=ps.find(x=>x.id===c.dataset.b);if(p)try{drawBoatCustom(c.getContext('2d'),55,36,Object.assign({parts:{}},p.boat),.75,null)}catch(e){}});
@@ -1985,7 +2014,7 @@ function mpHostPaint(){
  on('hsPlay',()=>mpSet({state:'play',startAt:mpNow()+8000}));
  on('hsEnd',()=>mpHostCalc());
  on('hsNext',()=>{G.round=m.rd+1;G.S=m.Snew;mpSet({state:'prep',rd:m.rd+1,S:m.Snew,startAt:0})});
- on('hsPE',async()=>{G.phase=m.ph;try{await mpSet({state:'phaseEnd'});const sorted=byCoins().filter(p=>!p.dummy);G.res[m.ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank:0,myCoins:0,winner:sorted[0]}}catch(e){}});
+ on('hsPE',async()=>{G.phase=m.ph;try{await mpSet({state:'phaseEnd'});const sorted=byCoins().filter(p=>!p.dummy);G.res[m.ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank:0,myCoins:0,winner:sorted[0],avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length}}catch(e){}});
  on('hsP2',()=>{G.phase=2;G.round=1;G.S=CFG.S0;G.hist=[];G.collapse=false;G.last=null;G.totalCatch=0;G.totalFines=0;G.P.forEach(p=>{p.coins=p.dummy?-1e9:p.role.start;p.fishTotal=0;p.lastFish=0;p.fines=0;p.viol=0;p.tag=''});mpSet({state:'prep',ph:2,rd:1,S:CFG.S0,startAt:0,result:null,end:false,empty:false})});
  on('hsDone',()=>mpSet({state:'done'}));
 }
