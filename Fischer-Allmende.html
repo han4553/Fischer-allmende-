@@ -218,7 +218,7 @@ const CFG={
   K:450,            // Kapazität der Bucht (max. Fische)
   SEASON_EVENTS:false, // Wetter-Ereignisse (Wind, Sturm, Nebel …) – aktuell AUS; true = wieder an
   API_URL:'',       // Adresse des Mehrspieler-Servers (leer = gleiche Seite /api/room)
-  ROUNDS:5,         // Sessions je Spielrunde
+  ROUNDS:4,         // Sessions je Spielrunde (4 → ca. 28 Min. inkl. Erklärung)
   S0:390,           // Start-Bestand
   R:1.2,            // Wachstumsrate (höher = Bucht erholt sich schneller)
   COLLAPSE:15,      // Bestand darunter = See leer -> Spielrunde endet
@@ -1601,6 +1601,9 @@ function setStock(n){
  }else if(G)G.S=n;
 }
 const curStock=()=>A&&A.running?A.fish.length:(G?G.S:0);
+/* Dauer-Schätzung für den Lehrer: Fangzeit + ca. 105 s je Session für Entscheidung, Auswertung, Quiz und Upgrades + ca. 6 Min. Einführung und Erklärung */
+window.estUp=()=>{const g=id=>document.getElementById(id),t=+((g('hsT')||g('tpT')||{}).value)||CFG.ROUND_TIME,r=+((g('hsR')||g('tpR')||{}).value)||CFG.ROUNDS,e=g('estBox');if(e)e.textContent='⏱ Gesamtdauer ca. '+Math.round((2*r*(t+105)+360)/60)+' Min. inkl. Erklärung (2 Spielrunden × '+r+' Sessions × '+t+' s)'};
+setInterval(()=>{const e=document.getElementById('estBox');if(e&&!e.textContent)estUp()},400);
 function silentSeason(){startRound(CFG.ROUND_TIME);A.running=false;finishRound()}
 function skipSeason(){
  if(!G)return;
@@ -1678,8 +1681,9 @@ function tpRender(){
  <div class="row" style="margin-top:8px"><button class="btn ghost" id="tpP1">↺ Spielrunde 1 neu starten</button><button class="btn ghost" id="tpP2">▶ Spielrunde 2 starten</button><button class="btn ghost" id="tpNew">🏠 Zurück zum Start</button></div>
  `:`<p>Kein Spiel läuft – die Einstellungen unten gelten für die nächsten Spiele.</p>`}
  <h3>🔧 Einstellungen (sofort wirksam)</h3><div class="row">
-  <label>Sessiondauer (s)<input type="number" id="tpT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
-  <label>Sessions je Runde<input type="number" id="tpR" min="1" max="12" value="${G?G.rounds:CFG.ROUNDS}"></label>
+  <label>Sessiondauer (s)<input type="number" id="tpT" min="10" max="300" value="${CFG.ROUND_TIME}" oninput="estUp()"></label>
+  <label>Sessions je Runde<input type="number" id="tpR" min="1" max="12" value="${G?G.rounds:CFG.ROUNDS}" oninput="estUp()"></label>
+ <p class="small" id="estBox" style="margin:2px 0 6px"></p>
   <label>Start-Bestand<input type="number" id="tpS0" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
   <label>Patrouillen<input type="number" id="tpPa" min="0" max="12" value="${CFG.PATROLS}"></label>
   <label><input type="checkbox" id="tpRH" ${CFG.RANDHARBOR?'checked':''}> Hafen je Session zufällig (Spielrunde 2)</label>
@@ -1708,7 +1712,7 @@ function tpRender(){
  sure('#tpP2',()=>{A&&(A.running=false);tpPaused=false;TP.classList.remove('show');startPhase(2)})
  sure('#tpNew',()=>{A&&(A.running=false);tpPaused=false;G=null;TP.classList.remove('show');show('s-start')})
  on('#tpApply',()=>{
-  CFG.ROUND_TIME=clamp(+$$('#tpT').value||60,10,300);CFG.ROUNDS=clamp(+$$('#tpR').value||5,1,12);if(G)G.rounds=CFG.ROUNDS;CFG.S0=clamp(+$$('#tpS0').value||390,20,CFG.K);CFG.PATROLS=clamp(+$$('#tpPa').value,0,12);CFG.RANDHARBOR=!!document.getElementById('tpRH').checked;
+  CFG.ROUND_TIME=clamp(+$$('#tpT').value||60,10,300);CFG.ROUNDS=clamp(+$$('#tpR').value||4,1,12);if(G)G.rounds=CFG.ROUNDS;CFG.S0=clamp(+$$('#tpS0').value||390,20,CFG.K);CFG.PATROLS=clamp(+$$('#tpPa').value,0,12);CFG.RANDHARBOR=!!document.getElementById('tpRH').checked;
   CFG.FINE_MULT=Math.max(0,+$$('#tpF').value);CFG.PATROL_P=clamp(+$$('#tpC').value/100,0,1);CFG.R=clamp(+$$('#tpG').value||1.2,.1,3);
   tpRefresh();toast('✅ Einstellungen übernommen');tpRender();
  });
@@ -1844,8 +1848,9 @@ function mpHostInit(){
  mpHostRender();
 }
 const hostFields=()=>`<div class="row">
- <label>Sessiondauer (s)<input type="number" id="hsT" min="10" max="300" value="${CFG.ROUND_TIME}"></label>
- <label>Sessions je Runde<input type="number" id="hsR" min="1" max="12" value="${CFG.ROUNDS}"></label>
+ <label>Sessiondauer (s)<input type="number" id="hsT" min="10" max="300" value="${CFG.ROUND_TIME}" oninput="estUp()"></label>
+ <label>Sessions je Runde<input type="number" id="hsR" min="1" max="12" value="${CFG.ROUNDS}" oninput="estUp()"></label>
+ <p class="small" id="estBox" style="margin:2px 0 6px"></p>
  <label>Start-Bestand<input type="number" id="hsS" min="20" max="${CFG.K}" value="${CFG.S0}"></label>
  <label>Patrouillen (Runde 2)<input type="number" id="hsP" min="0" max="12" value="${CFG.PATROLS}"></label>
  <label><input type="checkbox" id="hsRH" ${CFG.RANDHARBOR?'checked':''}> Hafen je Session zufällig (Runde 2)</label>
@@ -1854,7 +1859,7 @@ const hostFields=()=>`<div class="row">
  <label>Wachstumsrate<input type="number" id="hsG" min=".1" max="3" step=".1" value="${CFG.R}"></label></div>`;
 function mpReadFields(){
  const v=id=>+document.getElementById(id).value;
- CFG.ROUND_TIME=clamp(v('hsT')||60,10,300);CFG.ROUNDS=clamp(v('hsR')||5,1,12);CFG.S0=clamp(v('hsS')||390,20,CFG.K);CFG.PATROLS=clamp(Math.round(v('hsP')),0,12);CFG.RANDHARBOR=!!(document.getElementById('hsRH')&&document.getElementById('hsRH').checked);
+ CFG.ROUND_TIME=clamp(v('hsT')||60,10,300);CFG.ROUNDS=clamp(v('hsR')||4,1,12);CFG.S0=clamp(v('hsS')||390,20,CFG.K);CFG.PATROLS=clamp(Math.round(v('hsP')),0,12);CFG.RANDHARBOR=!!(document.getElementById('hsRH')&&document.getElementById('hsRH').checked);
  CFG.FINE_MULT=Math.max(0,v('hsF'));CFG.PATROL_P=clamp(v('hsC')/100,0,1);CFG.R=clamp(v('hsG')||1.2,.1,3);
 }
 const mpCfgObj=()=>({ROUND_TIME:CFG.ROUND_TIME,ROUNDS:CFG.ROUNDS,S0:CFG.S0,PATROLS:CFG.PATROLS,FINE_MULT:CFG.FINE_MULT,PATROL_P:CFG.PATROL_P,R:CFG.R,RANDHARBOR:CFG.RANDHARBOR});
