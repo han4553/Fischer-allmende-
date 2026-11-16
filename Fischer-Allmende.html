@@ -491,9 +491,16 @@ function renderDecision(){
   <p>Marktpreis pro Fisch: <b>${fmt(p)} Münzen</b> ${revLvl()>=3?'(seltener Fisch = teurer)':''} · Betriebskosten: <b>${me.role.fix}</b> · Laderaum pro Fahrt: <b>${capOf()}</b>${G.phase===2&&!zoneOn()?` · Quote: <b>${quotaNow()}</b>`:''}</p>${prev}</div>
  ${eventCard()}
  ${planner}
+ ${G.phase===1&&G.round===1?`<div class="card" style="border:4px solid #fb8500;background:#fff8ec"><h3>🎮 So steuerst du dein Boot</h3>
+  <div class="row" style="gap:18px;align-items:flex-start;flex-wrap:wrap">
+   <div style="flex:1;min-width:200px"><p><b>🕹 Joystick</b> (unten links)<br>Ziehe den Daumen in die Richtung, in die dein Boot fahren soll. Je weiter du ziehst, desto schneller fährt es.</p></div>
+   <div style="flex:1;min-width:200px"><p><b>🎣 Netz-Knopf</b> (unten rechts)<br>Tippe darauf, um das Netz auszuwerfen. Fahre dafür in einen Fischschwarm.</p></div>
+   <div style="flex:1;min-width:200px"><p><b>⚓ Hafen</b> (kleine Insel)<br>Ist dein Boot voll, fahre zur Insel und entlade. Der Fang zählt erst, wenn er im Hafen ist.</p></div></div>
+  <p class="small">Am Computer: Pfeiltasten oder W A S D zum Steuern, Leertaste oder Enter für das Netz. Die Zeit läuft für alle gleichzeitig – ${CFG.ROUND_TIME} Sekunden pro Session.</p></div>`:''}
  <div class="card"><h3>⏱ Sessiondauer: ${CFG.ROUND_TIME} Sekunden – für alle gleich</h3>
   <p class="small">Alle ${G.P.length} Boote fischen gleichzeitig auf einer großen Karte (die Karte scrollt mit, wenn du an den Rand fährst). Ist dein Boot voll, musst du am Hafen (kleine Insel${G.phase===2&&CFG.RANDHARBOR?'; sie liegt in jeder Session an einer anderen Stelle':' in der Kartenmitte'}) entladen – danach ist es wieder leer und du fischst weiter. Was am Sessionende noch im Boot liegt, wird automatisch angelandet. 🌈 Sammle alle 5 Fischfarben für Extrapunkte!</p>
-${MP.role==='player'?'<div class="pill" id="mpCount" style="font-size:20px">⏳ Warte auf den Lehrer …</div>':'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
+${MP.role==='player'?(MP.view?'<div class="pill" id="mpCount" style="font-size:20px">👁 Vorschau – hier startet der Lehrer</div>':MP.ready[G.phase+':'+G.round]?'<div class="pill" id="mpCount" style="font-size:20px">✔ Du bist bereit – warte auf den Lehrer …</div>':'<div id="mpCount"><button class="btn green" id="mpReady" style="font-size:24px;padding:16px 28px">✅ Ich bin bereit!</button><p class="small">Klicke, sobald du die Infos gelesen hast. Dein Lehrer sieht dann, dass du startklar bist.</p></div>'):'<button class="btn" id="goFish">🎣 Rausfahren!</button>'}</div>`;
+ if($('#mpReady'))$('#mpReady').onclick=async()=>{const k=G.phase+':'+G.round;try{await mpCall('ready',{id:MP.id,ph:G.phase,rd:G.round});MP.ready[k]=1;const c=$('#mpCount');if(c)c.outerHTML='<div class="pill" id="mpCount" style="font-size:20px">✔ Du bist bereit – warte auf den Lehrer …</div>'}catch(e){toast('⚠️ '+e.message)}};
  G.pred=null;document.querySelectorAll('#predBox .pred').forEach(b=>b.onclick=()=>{G.pred=b.dataset.p;document.querySelectorAll('#predBox .pred').forEach(x=>{x.style.outline=x===b?'4px solid #fb8500':'';x.style.background=x===b?'#fff4e0':''})});
  if($('#goFish'))$('#goFish').onclick=()=>{const go=()=>startRound(CFG.ROUND_TIME),el=document.documentElement;
   if(useFS&&!document.fullscreenElement&&el.requestFullscreen){try{el.requestFullscreen().then(()=>setTimeout(go,200)).catch(go)}catch(e){go()}}else go()};
@@ -1115,7 +1122,7 @@ function draw(){
  drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
- if(A.t<7&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · Boot voll? Fang im Hafen entladen';
+ if(A.t<12&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · Boot voll? Fang im Hafen entladen';
  else if(A.t<7&&A.zoneOn)msg='⭐ DEIN Fanggebiet ist farbig markiert · 🚔 Fremdes Gebiet wird kontrolliert';
  else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
 const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
@@ -1378,12 +1385,65 @@ function renderUpgrades(){
 
 /* ---------- Auswertung fürs Arbeitsblatt ---------- */
 function avgCoinsNow(){const a=G.P.filter(q=>!q.dummy);return a.length?Math.round(a.reduce((t,q)=>t+q.coins,0)/a.length):0}
+function boardNow(){return byCoins().filter(q=>!q.dummy).map((q,i)=>({n:i+1,name:q.alias||q.name,coins:q.coins,fish:q.fishTotal||0,fines:q.fines||0,viol:q.viol||0}))}
+/* Excel-Export (.xlsx ohne Bibliothek: minimaler ZIP-Container) */
+function exportXlsx(){
+ const R=[null,G.res[1],G.res[2]],cols=[1,2].filter(i=>R[i]);if(!cols.length){toast('Noch keine Auswertung');return}
+ const X=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+ const L=n=>{let t='';n++;while(n>0){const m=(n-1)%26;t=String.fromCharCode(65+m)+t;n=Math.floor((n-1)/26)}return t};
+ const sheets=[];
+ const sh=(name,rows,widths)=>sheets.push({name,rows,widths});
+ const nB=i=>R[i].nBoats||(R[i].board?R[i].board.length:1)||1;
+ cols.slice().reverse().forEach(i=>{
+  const b=R[i].board||[];
+  sh('Bestenliste Spielrunde '+i,[['T','Fischer Allmende – Bestenliste Spielrunde '+i],[],['H','Platz','Name','Münzen','Fang gesamt','Strafen (💰)','Regelverstöße'],...b.map(x=>['R',x.n,x.name,x.coins,x.fish,x.fines,x.viol])],[8,28,12,14,14,16]);
+ });
+ const k=[['T','Fischer Allmende – Klassenwerte für die Arbeitsblätter'],[],['H','',...cols.map(i=>'Spielrunde '+i+(i===1?' (ohne Regeln)':' (mit Regeln)'))]];
+ const kr=(l,f)=>k.push(['R',l,...cols.map(f)]);
+ kr('Fischbestand zu Beginn',i=>CFG.S0);
+ kr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (leer)':''));
+ kr('Gesamtfang der Klasse',i=>R[i].total);
+ kr('Ø Fang pro Boot',i=>Math.round(R[i].total/nB(i)*10)/10);
+ kr('Ø Gewinn pro Boot (Münzen)',i=>R[i].avgCoins!=null?R[i].avgCoins:'');
+ kr('Strafen insgesamt (💰)',i=>i===1?0:R[i].fines);
+ kr('Reichstes Boot',i=>R[i].board&&R[i].board[0]?R[i].board[0].name+' ('+R[i].board[0].coins+')':'');
+ sh('Klassenwerte',k,[34,26,26]);
+ const v=[['T','Fischer Allmende – Verlauf je Session'],[],['H','Spielrunde','Session','Regel','Bestand am Start','Gesamtfang','Bestand danach','Strafen (💰)']];
+ cols.forEach(i=>(R[i].hist||[]).forEach(x=>v.push(['R',i,x.r,i===1?'frei':x.r===1?'Quote':x.r===2?'Quote + Kontrolle':'Fanggebiete',x.start,x.total!=null?x.total:x.start-x.after,x.end,i===1?0:(x.fines||0)])));
+ sh('Verlauf',v,[12,10,20,18,14,16,14]);
+ const enc=new TextEncoder(),files=[];
+ const add=(n,t)=>files.push({n,d:enc.encode(t)});
+ add('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map((_,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'</Types>');
+ add('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+ add('xl/workbook.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map((s,i)=>'<sheet name="'+X(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join('')+'</sheets></workbook>');
+ add('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((_,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join('')+'<Relationship Id="rId'+(sheets.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+ add('xl/styles.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="14"/><color rgb="FF1A3C6E"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE8F4F8"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF808080"/></left><right style="thin"><color rgb="FF808080"/></right><top style="thin"><color rgb="FF808080"/></top><bottom style="thin"><color rgb="FF808080"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf/></cellStyleXfs><cellXfs count="4"><xf fontId="0" fillId="0" borderId="0"/><xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"/><xf fontId="0" fillId="0" borderId="1" applyBorder="1"/><xf fontId="2" fillId="0" borderId="0" applyFont="1"/></cellXfs></styleSheet>');
+ sheets.forEach((s,si)=>{
+  const rows=s.rows.map((r,ri)=>{if(!r.length)return '';const t=r[0],st=t==='H'?1:t==='R'?2:3;
+   return '<row r="'+(ri+1)+'">'+r.slice(1).map((c,ci)=>{const ref=L(ci)+(ri+1);return typeof c==='number'?'<c r="'+ref+'" s="'+st+'"><v>'+c+'</v></c>':'<c r="'+ref+'" s="'+st+'" t="inlineStr"><is><t>'+X(c)+'</t></is></c>'}).join('')+'</row>'}).join('');
+  add('xl/worksheets/sheet'+(si+1)+'.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><cols>'+s.widths.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols><sheetData>'+rows+'</sheetData><pageMargins left="0.5" right="0.5" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="'+(si<cols.length?'portrait':'landscape')+'" fitToWidth="1" fitToHeight="0"/></worksheet>');
+ });
+ const T=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let j=0;j<8;j++)c=c&1?0xEDB88320^(c>>>1):c>>>1;T[n]=c>>>0}
+ const crc=d=>{let c=0xFFFFFFFF;for(let i=0;i<d.length;i++)c=T[(c^d[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0};
+ const parts=[],cen=[];let off=0;
+ const u16=v=>[v&255,(v>>8)&255],u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>>24)&255];
+ files.forEach(f=>{const nm=enc.encode(f.n),c=crc(f.d);
+  const lh=new Uint8Array([0x50,0x4b,3,4,...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(c),...u32(f.d.length),...u32(f.d.length),...u16(nm.length),...u16(0)]);
+  parts.push(lh,nm,f.d);
+  cen.push(new Uint8Array([0x50,0x4b,1,2,...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(0),...u16(0x21),...u32(c),...u32(f.d.length),...u32(f.d.length),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nm);
+  off+=lh.length+nm.length+f.d.length});
+ const cl=cen.reduce((t,a)=>t+a.length,0);
+ const end=new Uint8Array([0x50,0x4b,5,6,...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cl),...u32(off),...u16(0)]);
+ const blob=new Blob([...parts,...cen,end],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Fischer-Allmende_Auswertung.xlsx';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+}
 function wsEvalHTML(host){
  const R=[null,G.res[1],G.res[2]],cols=[1,2].filter(i=>R[i]);if(!cols.length)return '';
  const n=i=>R[i].nBoats||G.P.filter(q=>!q.dummy).length||1;
  const head=cols.map(i=>`<th>Spielrunde ${i}${i===1?' (ohne Regeln)':' (mit Regeln)'}</th>`).join('');
  const tr=(l,f)=>`<tr><td>${l}</td>${cols.map(i=>`<td><b>${f(i)}</b></td>`).join('')}</tr>`;
  let h=`<div class="card" style="border:4px solid #1A3C6E"><h3>📋 ${host?'Auswertung für die Arbeitsblätter':'Deine Zahlen fürs Arbeitsblatt'}</h3>
+ ${host||!MP.role?'<button class="btn blue" onclick="exportXlsx()">📊 Als Excel herunterladen (zum Ausdrucken)</button>':''}
  <p class="small">${host?'Diese Werte können die Schüler:innen in die Tabellen der Arbeitsblätter übertragen (Klassenwerte).':'Trage diese Werte in die Tabelle deines Arbeitsblatts ein.'}</p>
  <table><tr><th></th>${head}</tr>
  ${tr('Fischbestand zu Beginn',i=>CFG.S0)}
@@ -1406,7 +1466,7 @@ function wsEvalHTML(host){
 function endPhase(){
  const ph=G.phase,sorted=byCoins(),me=G.P[0];
  const myRank=sorted.indexOf(me)+1;
- G.res[ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank,myCoins:me.coins,winner:sorted[0],myFish:me.fishTotal,viol:me.viol,avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length};
+ G.res[ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank,myCoins:me.coins,winner:sorted[0],myFish:me.fishTotal,viol:me.viol,avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length,board:boardNow()};
  if(ph===1)renderPhase1End(sorted,myRank);else renderFinal(sorted,myRank);
 }
 function podiumHTML(sorted){
@@ -1752,7 +1812,7 @@ renderRoles();
 /* =====================================================================
    MEHRSPIELER (Lehrer-Lobby + Schüler per QR-Code) – braucht api/room.js + Redis
    ===================================================================== */
-const MP={role:null,code:'',hk:'',id:'',api:'',off:0,meta:null,players:[],reports:{},timer:null,key:'',applied:{},calcBusy:false,started:{}};
+const MP={role:null,code:'',hk:'',id:'',api:'',off:0,meta:null,players:[],reports:{},timer:null,key:'',applied:{},calcBusy:false,started:{},ready:{},rdy:{},view:false};
 const mpNow=()=>Date.now()+MP.off;
 const PROD_URL='https://fischer-allmende.vercel.app';
 const mpApiBase=()=>MP.api||CFG.API_URL||(location.protocol==='file:'?PROD_URL+'/api/room':new URL('/api/room',location.href).href);
@@ -1813,6 +1873,7 @@ function mpOnMeta(m,n){
  if(m.state==='ended'){if(MP.role==='player'&&MP.key!=='ended'){MP.key='ended';MP.startAt=0;if(typeof A!=='undefined'&&A)A.running=false;let t='';if(G&&G.P&&G.P[0]){const so=byCoins().filter(p=>!p.dummy),pl=so.indexOf(G.P[0])+1;t=`<p>Dein Stand: <b>${G.P[0].coins} 💰</b> – Platz <b>${pl}</b> von ${so.length}.</p>`}mpWait('<h2>🏁 Der Lehrer hat das Spiel beendet</h2>'+t+'<p>Danke fürs Mitspielen!</p>')}return}
  if(m.state==='lobby'){const e=$('#mpN');if(e)e.textContent=(n||0)+' Spieler in der Lobby';return}
  if(MP.role!=='player')return;
+ if(MP.view&&!MP.id&&m.roster&&m.roster.length)MP.id=(m.roster.find(e=>e.human)||m.roster[0]).rid;
  if(!G){
   if(!m.roster||!m.roster.some(e=>e.rid===MP.id)){mpWait('<h2>Zu spät!</h2><p>Das Spiel läuft bereits ohne dich. Frag deinen Lehrer.</p>');return}
   mpBuildClientG(m);
@@ -1858,7 +1919,7 @@ async function mpPlayerFinish(){
  const rep={poach:A.poach||0,fish:A.cargo,gold:A.gold,income:Math.round((A.cargo+A.gold)*pr*(eco?CFG.ECO_MULT:1)),fine:pFine,viol:!!pViol,eco,caught:!!(pFine>0),sneaky:!!pViol&&!(pFine>0)};
  MP.reported=rep;
  mpWait(`<h2>🎣 Session geschafft!</h2><p>Dein Fang: <b>${rep.fish} Fische</b>.</p><p>Warte auf die anderen Fischer und die Auswertung …</p>`);
- for(let i=0;i<4;i++){try{await mpCall('report',{id:MP.id,ph:G.phase,rd:G.round,rep});break}catch(e){await new Promise(r=>setTimeout(r,800))}}
+ for(let i=0;i<(MP.view?0:4);i++){try{await mpCall('report',{id:MP.id,ph:G.phase,rd:G.round,rep});break}catch(e){await new Promise(r=>setTimeout(r,800))}}
 }
 function mpApplyResult(res,silent){
  const k=res.ph+':'+res.rd;if(MP.applied[k])return;MP.applied[k]=1;
@@ -1915,7 +1976,7 @@ function mpHostRender(){
 function mpHostStart(){clearInterval(MP.timer);MP.timer=setInterval(mpHostPoll,2000);mpHostPoll()}
 async function mpHostPoll(){
  try{
-  const j=await mpCall('hstate');MP.players=j.players;MP.reports=j.reports;MP.meta=j.meta;
+  const j=await mpCall('hstate');MP.players=j.players;MP.reports=j.reports;MP.rdy=j.ready||{};MP.meta=j.meta;
   if(MP.meta.cfg)mpCfg(MP.meta.cfg);
   if(MP.meta.roster&&!G)mpHostBuildG();
   mpHostAuto();mpHostPaint();
@@ -1983,18 +2044,20 @@ function mpHostPaint(){
  const top=$('#hsTop');
  if(!top.dataset.code){top.dataset.code=MP.code;
   top.innerHTML=`<div class="row" style="align-items:flex-start"><div id="hsQR"></div><div style="flex:1;min-width:230px"><h2 style="margin:0">Raum <span style="letter-spacing:4px">${MP.code}</span></h2>
-   <p class="small" style="word-break:break-all">${esc(link)}</p><div class="row"><button class="btn blue" id="hsBig">🖥 QR groß (Beamer)</button><button class="btn ghost" id="hsCp">📋 Link kopieren</button></div><p id="hsStat" class="small"></p></div></div>`;
+   <p class="small" style="word-break:break-all">${esc(link)}</p><div class="row"><button class="btn blue" id="hsBig">🖥 QR groß (Beamer)</button><button class="btn ghost" id="hsCp">📋 Link kopieren</button><button class="btn ghost" id="hsView">🪟 Schüleransicht (2. Fenster)</button></div><p id="hsStat" class="small"></p></div></div>`;
   try{const cv=qrDraw(link,360);cv.style.cssText='width:200px;height:200px;image-rendering:pixelated;border:6px solid #fff;border-radius:8px;background:#fff';$('#hsQR').appendChild(cv)}catch(e){}
   $('#hsBig').onclick=()=>{let ov=document.getElementById('qrov');if(!ov){ov=document.createElement('div');ov.id='qrov';ov.className='qrov';document.body.appendChild(ov)}ov.innerHTML='<h1 style="margin:0;color:#0b3d5c">🎣 Fischer Allmende – Code scannen und mitspielen! Raum '+MP.code+'</h1>';ov.appendChild(qrDraw(link,900));const b=document.createElement('button');b.className='btn';b.textContent='✖ Schließen';b.onclick=()=>ov.classList.remove('show');ov.appendChild(b);ov.classList.add('show')};
+  $('#hsView').onclick=()=>{const u=new URL(mpJoinLink());u.searchParams.delete('room');u.searchParams.set('view',MP.code);const w=window.open(u.toString(),'fgview','width=480,height=860');if(!w)toast('Pop-up blockiert – bitte erlauben')};
   $('#hsCp').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(link):Promise.reject()).then(()=>toast('Kopiert!')).catch(()=>{prompt('Link:',link)})};
  }
  const mid=$('#hsMid'),ps=MP.players||[];
  {const st=document.getElementById('hsSet');if(st)st.style.display=m.state==='lobby'?'':'none'}
  const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
+ const rdyNow=(MP.rdy&&MP.rdy[m.ph+':'+m.rd])||{},nRdy=ps.filter(p=>rdyNow[p.id]).length;
  const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Session ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Session läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Session ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
  let btn='';
  if(m.state==='lobby')btn=`<button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
- else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Session ${m.rd} starten (Countdown 8 s)</button>`;
+ else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Session ${m.rd} starten (Countdown 8 s)</button><span class="pill" style="${nRdy===ps.length&&ps.length?'background:#d8f5e3;color:#176b3a':''}">✅ ${nRdy}/${ps.length} bereit</span>`;
  else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Session jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
  else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Session ${m.rd+1} vorbereiten</button>`;
  else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
@@ -2004,7 +2067,7 @@ function mpHostPaint(){
  ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}
  ${['phaseEnd','done'].includes(m.state)&&G.res[1]?wsEvalHTML(true):''}`;
  const pl=$('#hsPl');
- pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
+ pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th>${m.state==='prep'?'Bereit':''}</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td>${m.state==='prep'?(rdyNow[p.id]?'<b style="color:#2a9d8f">✅ bereit</b>':'<span class="small">⏳</span>'):''}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
  pl.querySelectorAll('canvas[data-b]').forEach(c=>{const p=ps.find(x=>x.id===c.dataset.b);if(p)try{drawBoatCustom(c.getContext('2d'),55,36,Object.assign({parts:{}},p.boat),.75,null)}catch(e){}});
  pl.querySelectorAll('[data-al]').forEach(i=>{i.onchange=async()=>{try{await mpCall('alias',{id:i.dataset.al,alias:i.value});const nm=i.value.trim();if(m.roster){const names=Object.assign({},m.names||{});names[i.dataset.al]=nm||(ps.find(x=>x.id===i.dataset.al)||{}).name;const p=G&&G.P.find(x=>x.rid===i.dataset.al);if(p)p.name=names[i.dataset.al];await mpSet({names})}toast('✔ Name gespeichert')}catch(e){toast('⚠️ '+e.message)}}});
  pl.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{if(m.state!=='lobby'){toast('Nach dem Start kann niemand entfernt werden');return}try{await mpCall('kick',{id:b.dataset.k});mpHostPoll()}catch(e){}});
@@ -2014,12 +2077,22 @@ function mpHostPaint(){
  on('hsPlay',()=>mpSet({state:'play',startAt:mpNow()+8000}));
  on('hsEnd',()=>mpHostCalc());
  on('hsNext',()=>{G.round=m.rd+1;G.S=m.Snew;mpSet({state:'prep',rd:m.rd+1,S:m.Snew,startAt:0})});
- on('hsPE',async()=>{G.phase=m.ph;try{await mpSet({state:'phaseEnd'});const sorted=byCoins().filter(p=>!p.dummy);G.res[m.ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank:0,myCoins:0,winner:sorted[0],avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length}}catch(e){}});
+ on('hsPE',async()=>{G.phase=m.ph;try{await mpSet({state:'phaseEnd'});const sorted=byCoins().filter(p=>!p.dummy);G.res[m.ph]={seasons:G.round,total:G.totalCatch,endS:G.S,empty:G.collapse,hist:[...G.hist],fines:G.totalFines,myRank:0,myCoins:0,winner:sorted[0],avgCoins:avgCoinsNow(),nBoats:G.P.filter(q=>!q.dummy).length,board:boardNow()}}catch(e){}});
  on('hsP2',()=>{G.phase=2;G.round=1;G.S=CFG.S0;G.hist=[];G.collapse=false;G.last=null;G.totalCatch=0;G.totalFines=0;G.P.forEach(p=>{p.coins=p.dummy?-1e9:p.role.start;p.fishTotal=0;p.lastFish=0;p.fines=0;p.viol=0;p.tag=''});mpSet({state:'prep',ph:2,rd:1,S:CFG.S0,startAt:0,result:null,end:false,empty:false})});
  on('hsDone',()=>mpSet({state:'done'}));
 }
+function mpViewInit(code){
+ MP.view=true;MP.role='player';MP.code=code.toUpperCase();
+ const q=new URLSearchParams(location.search);if(q.get('api'))MP.api=q.get('api');
+ ['teachBtn','bTeach'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'});TP_LOCK=true;
+ const b=document.createElement('div');b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:99999;background:#1A3C6E;color:#fff;padding:4px 14px;border-radius:14px;font-size:14px;pointer-events:none;opacity:.92';b.textContent='👁 Schüleransicht (Vorschau) – Raum '+MP.code;document.body.appendChild(b);
+ mpWait('<h2>👁 Schüleransicht</h2><p>Hier siehst du, was die Schüler:innen sehen. Warte auf den Spielstart …</p><p class="small" id="mpN"></p>');
+ clearInterval(MP.timer);MP.timer=setInterval(mpPlayerPoll,1800);mpPlayerPoll();
+ setInterval(()=>{mpPlayTick()},250);
+}
 function mpStartup(){
  const q=new URLSearchParams(location.search);
+ if(q.get('view')){mpViewInit(q.get('view'));return}
  if(q.get('room')){mpPlayerInit(q.get('room'));show('s-start');return}
  if(q.get('s')==='1'){show('s-start');return} // Schüler-Einzelspiel über alten Code
  mpHostInit();

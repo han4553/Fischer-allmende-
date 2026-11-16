@@ -75,17 +75,25 @@ module.exports = async (req, res) => {
       return res.json({ ok: 1 });
     }
 
+    if (a === 'ready') {
+      const id = clean(b.id, 6);
+      if (!h['p:' + id]) return res.status(403).json({ error: 'unbekannt' });
+      await R('HSET', key, 'y:' + (+b.ph || 0) + ':' + (+b.rd || 0) + ':' + id, '1');
+      return res.json({ ok: 1 });
+    }
+
     // ab hier nur Lehrer
     if (b.hk !== h.hk) return res.status(403).json({ error: 'Kein Lehrer-Schlüssel' });
     if (a === 'hstate') {
       res.setHeader('Cache-Control', 'no-store');
-      const players = [], reports = {};
+      const players = [], reports = {}, ready = {};
       for (const k of Object.keys(h)) {
         if (k.startsWith('p:')) players.push(J(h[k], null));
+        else if (k.startsWith('y:')) { const [, ph, rd, id] = k.split(':'); (ready[ph + ':' + rd] = ready[ph + ':' + rd] || {})[id] = 1; }
         else if (k.startsWith('r:')) { const [, ph, rd, id] = k.split(':'); (reports[ph + ':' + rd] = reports[ph + ':' + rd] || {})[id] = J(h[k], {}); }
       }
       players.sort((x, y) => +x.id - +y.id);
-      return res.json({ now: Date.now(), meta, players: players.filter(Boolean), reports });
+      return res.json({ now: Date.now(), meta, players: players.filter(Boolean), reports, ready });
     }
     if (a === 'set') {
       const next = Object.assign({}, meta, b.patch || {}, { v: (meta.v || 0) + 1 });
