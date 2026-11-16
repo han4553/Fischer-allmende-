@@ -403,7 +403,7 @@ function startPhase(ph){
 
 /* ---------- Lernmodule: Infos & Abfragen ---------- */
 const FACT_SEQ={1:[8,0,1,7,9],2:[4,5,6,3,2]};
-const QUIZ_SEQ={1:[[],[13,14],[8,25],[15,21],[16,7]],2:[[9,28],[10,19],[11,23],[2,24],[3,27]],3:[5,6,12,17,20]}; // je Session 2 Fragen (Spielrunde 1, Session 1: keine), am Ende 5 Abschlussfragen
+const QUIZ_SEQ={1:[[0,1],[13,14],[8,25],[15,21],[16,7]],2:[[9,28],[10,19],[11,23],[2,24],[3,27]],3:[5,6,12,17,20]}; // je Session 2 Fragen (Spielrunde 1, Session 1: keine), am Ende 5 Abschlussfragen
 function quizCard(Q,id,title,reward){
  return `<div class="card quiz" id="${id}"><h3>${title||'🧠 Bonusfrage'}${reward?` (+${reward} Münzen)`:''}</h3><p><b>${Q.q}</b></p><div class="qo">${Q.o.map((o,i)=>`<button data-i="${i}">${o}</button>`).join('')}</div><p class="small qe"></p></div>`;
 }
@@ -412,6 +412,7 @@ function attachQuiz(id,Q,reward,onDone){
  box.querySelectorAll('.qo button').forEach(b=>b.onclick=()=>{
   if(done)return;done=true;const i=+b.dataset.i;
   box.querySelectorAll('.qo button').forEach((x,j)=>{if(j===Q.a)x.classList.add('ok');else if(j===i)x.classList.add('bad')});
+  if(MP.role==='player'&&!MP.view&&MP.id&&G){const lab=Q.q||'Reflexionsfrage',kk='q'+[...lab].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);mpCall('quiz',{id:MP.id,ph:G.phase,rd:G.round,k:kk,q:lab,ok:i===Q.a?1:0}).catch(()=>{})}
   if(i===Q.a){if(reward&&G){G.P[0].coins+=reward}toast('✅ Richtig!'+(reward?' +'+reward+' Münzen':''));beep(800,.15)}else{toast('❌ Nicht ganz');beep(150,.2,'sawtooth')}
   box.querySelector('.qe').textContent=Q.e;
   if(onDone)onDone(i===Q.a);
@@ -1301,9 +1302,17 @@ function attachLbToggle(getSorted){
  let all=false;
  $('#lbToggle').onclick=()=>{all=!all;$('#lbBox').innerHTML=leaderboardHTML(getSorted(),all);$('#lbToggle').textContent=all?'🔽 Nur Top 10 + meine Umgebung':'📜 Alle '+G.P.length+' anzeigen'};
 }
+/* Lesefrage: prüft, ob die Meldung und die Zahlen der Session gelesen wurden */
+function readQ(L,ph,rd){
+ const useStock=rd%2===1,right=useStock?L.Snew:L.total;
+ const set=new Set([right]);let guard=0;
+ while(set.size<4&&guard++<50){const d=Math.max(3,Math.round(Math.max(right,20)*(.08+Math.random()*.3)));const v=Math.max(0,right+(Math.random()<.5?-d:d));set.add(v)}
+ const opts=shuffle([...set]);
+ return {q:`Lesefrage S${ph}.${rd}: ${useStock?'Wie viele Fische sind nach dem Nachwuchs jetzt im See (neuer Bestand)?':'Wie viele Fische haben alle Boote in dieser Session zusammen gefangen?'}`,o:opts.map(String),a:opts.indexOf(right),e:`Das steht oben in der Meldung und in der Rechnung: ${right} Fische. Genau lesen lohnt sich!`};
+}
 function renderResult(){
  const L=G.last,me=G.P[0],ph=G.phase,fact=FACTS[FACT_SEQ[ph][(G.round-1)%5]],m=fact.m,lv=revLvl();
- const Qs=(QUIZ_SEQ[ph][(G.round-1)%5]||[]).map(i=>QUIZ[i]);
+ const Qs=[readQ(L,ph,G.round),...(QUIZ_SEQ[ph][(G.round-1)%5]||[]).map(i=>QUIZ[i])];
  const R1h=ph===2&&G.res[1]?G.res[1].hist:null,r1=R1h&&R1h[G.round-1];
  const nutzen=ph===2?`<div class="card" style="border:4px solid #2a9d8f"><h3>🔍 Vergleich mit Spielrunde 1</h3><table class="small" style="width:100%"><tr><th></th><th>🌊 Spielrunde 1 (frei)</th><th>🚔 jetzt (Spielrunde 2)</th></tr><tr><td>Bestand am Sessionstart</td><td>${r1?r1.start:'–'}</td><td><b>${L.Sstart}</b></td></tr><tr><td>Gesamtfang der Session</td><td>${r1?r1.start-r1.after:'–'}</td><td><b>${L.total}</b></td></tr><tr><td>Bestand nach Nachwuchs</td><td class="neg">${r1?r1.end:'–'}</td><td class="pos"><b>${L.Snew}</b></td></tr></table><p class="small">${r1&&L.Snew>r1.end?'Mit Quote bleibt mehr Fisch im See als in der freien Fischerei.':'Der Bestand entwickelt sich anders als in Spielrunde 1.'}</p></div>`:'';
  const myRow=L.rows[0];
@@ -1348,7 +1357,9 @@ function renderResult(){
  ${Qs.map((q,k)=>quizCard(q,'qz'+k,'🧠 Bonusfrage '+(k+1)+'/'+Qs.length,CFG.QUIZ_REWARD)).join('')}
  <button class="btn green" id="toNext">${end?'🏁 Weiter':'🛠 Zu den Upgrades'}</button>`;
  if(lv>=2)drawChart($('#chart1'),G.hist);attachLbToggle(()=>L.sorted);
- Qs.forEach((q,k)=>attachQuiz('qz'+k,q,CFG.QUIZ_REWARD));
+ {const nx=$('#toNext');let open=Qs.length;const lab=nx.textContent;
+  const upd=()=>{nx.disabled=open>0;nx.style.opacity=open>0?.5:1;nx.textContent=open>0?'🔒 Erst die '+open+' Frage'+(open>1?'n':'')+' beantworten':lab};
+  Qs.forEach((q,k)=>attachQuiz('qz'+k,q,CFG.QUIZ_REWARD,()=>{open--;upd()}));upd();}
  $('#toNext').onclick=()=>{if(end)endPhase();else enterUpgrades()};
  show('s-result');
  if(L.empty)beep(100,.6,'sawtooth',.08);
@@ -1489,10 +1500,11 @@ function renderPhase1End(sorted,myRank){
  <div class="card"><h3>🏅 Endstand Spielrunde 1</h3><div id="lbBox">${leaderboardHTML(sorted,false)}</div><button class="btn ghost" id="lbToggle" style="margin-top:8px;padding:8px 14px;font-size:15px">📜 Alle ${G.P.length} anzeigen</button></div>
  <div class="card" style="border:4px solid #2a9d8f"><h3>🚔 Spielrunde 2: Was, wenn es Regeln gibt?</h3>
   <p>Gleicher See, gleiche ${G.P.length} Boote – aber jetzt gibt die Fischereibehörde <b>Fangquoten</b> vor.</p>
-  <button class="btn" id="toPhase2">🚔 Spielrunde 2 starten</button></div>`;
+  ${MP.role==='player'?(MP.view?'<div class="pill" id="toPhase2" style="font-size:20px">👁 Vorschau – der Lehrer startet Spielrunde 2</div>':MP.ready['2:0']?'<div class="pill" id="toPhase2" style="font-size:20px">✔ Du bist bereit – warte auf den Lehrer …</div>':'<button class="btn green" id="toPhase2" style="font-size:24px;padding:16px 28px">✅ Bereit für Spielrunde 2!</button>'):'<button class="btn" id="toPhase2">🚔 Spielrunde 2 starten</button>'}</div>`;
  drawChart($('#chart1'),R.hist.length?R.hist:[{r:1,start:CFG.S0,after:0,end:0}]);
  attachQuiz('refl',{a:1,e:'Genau: Der Nutzen ist privat, die Kosten sind gemeinsam.'},0,()=>{$('#reveal').style.display='block'});attachLbToggle(()=>sorted);
- $('#toPhase2').onclick=()=>{if(MP.role)toast('Der Lehrer startet Spielrunde 2');else startPhase(2)};
+ $('#toPhase2').onclick=async()=>{if(!MP.role){startPhase(2);return}if(MP.view||MP.ready['2:0'])return;
+  try{await mpCall('ready',{id:MP.id,ph:2,rd:0});MP.ready['2:0']=1;$('#toPhase2').outerHTML='<div class="pill" id="toPhase2" style="font-size:20px">✔ Du bist bereit – warte auf den Lehrer …</div>'}catch(e){toast('⚠️ '+e.message)}};
  show('s-final');
 }
 function renderFinal(sorted,myRank){
@@ -1976,7 +1988,7 @@ function mpHostRender(){
 function mpHostStart(){clearInterval(MP.timer);MP.timer=setInterval(mpHostPoll,2000);mpHostPoll()}
 async function mpHostPoll(){
  try{
-  const j=await mpCall('hstate');MP.players=j.players;MP.reports=j.reports;MP.rdy=j.ready||{};MP.meta=j.meta;
+  const j=await mpCall('hstate');MP.players=j.players;MP.reports=j.reports;MP.rdy=j.ready||{};MP.quiz=j.quiz||{};MP.meta=j.meta;
   if(MP.meta.cfg)mpCfg(MP.meta.cfg);
   if(MP.meta.roster&&!G)mpHostBuildG();
   mpHostAuto();mpHostPaint();
@@ -1994,15 +2006,16 @@ function mpHostBuildG(){
  G.P.forEach(p=>{p.coins=p.dummy?-1e9:p.role.start});
 }
 async function mpSet(patch){const j=await mpCall('set',{patch});MP.meta=Object.assign({},MP.meta,patch,{v:j.v});mpHostPaint()}
-async function mpHostStartGame(){
+async function mpHostStartGame(sim){
  if(document.getElementById('hsT'))mpReadFields();
- const hs=MP.players.filter(Boolean);if(!hs.length){toast('Noch niemand in der Lobby');return}
+ MP.sim=sim===true;
+ const hs=sim===true?[]:MP.players.filter(Boolean);if(!hs.length&&sim!==true){toast('Noch niemand in der Lobby');return}
  const names=shuffle(BOT_NAMES).filter(n=>!hs.some(p=>(p.alias||p.name).toLowerCase()===n.toLowerCase()));
  const mix=[];Object.entries(BOT_MIX).forEach(([id,n])=>{for(let i=0;i<n;i++)mix.push(id)});shuffle(mix);
  const roster=hs.map(p=>({rid:p.id,name:p.alias||p.name,boat:p.boat,human:true,strat:'kalle'}));
  let k=0;while(roster.length<CFG.BOATS){roster.push({rid:'b'+k,name:names[k%names.length]+(k>=names.length?' II':''),boat:randBoat(),human:false,strat:mix[k%mix.length]});k++}
  G=null;MP.applied={};MP.calcBusy=false;
- await mpSet({state:'prep',ph:1,rd:1,S:CFG.S0,roster,cfg:mpCfgObj(),result:null,startAt:0,names:{}});
+ await mpSet({state:'prep',ph:1,rd:1,S:CFG.S0,roster,cfg:mpCfgObj(),result:null,startAt:0,names:{},sim:MP.sim?1:0});
  mpHostBuildG();mpHostPaint();
 }
 function mpHostAuto(){
@@ -2036,6 +2049,31 @@ async function mpHostCalc(){
  }catch(e){toast('⚠️ '+e.message)}
  MP.calcBusy=false;show('s-host');
 }
+function quizCell(id){
+ const a=((MP.quiz||{})[id]||[]).slice().sort((x,y)=>x.t-y.t);if(!a.length)return '<span class="small">–</span>';
+ const ok=a.filter(x=>x.ok).length;
+ return `<b>${ok}/${a.length}</b> <span title="${a.map(x=>(x.ok?'✅ ':'❌ ')+esc(x.q)).join('\n')}" style="cursor:help">${a.map(x=>x.ok?'✅':'❌').join('')}</span>`;
+}
+function quizOverviewHTML(){
+ const ps=MP.players||[],qs={};
+ ps.forEach(p=>((MP.quiz||{})[p.id]||[]).forEach(x=>{const o=qs[x.k]=qs[x.k]||{q:x.q,n:0,ok:0,who:[]};o.n++;if(x.ok)o.ok++;else o.who.push(p.alias||p.name)}));
+ const rows=Object.values(qs).sort((a,b)=>b.n-a.n);
+ if(!rows.length)return '<p class="small">Noch keine Quizfragen beantwortet.</p>';
+ return `<table><tr><th>Frage</th><th>Beantwortet</th><th>Richtig</th><th>Falsch beantwortet von</th></tr>${rows.map(o=>`<tr><td>${esc(o.q)}</td><td>${o.n}/${ps.length}</td><td>${o.ok}</td><td class="small">${o.who.map(esc).join(', ')||'–'}</td></tr>`).join('')}</table>`;
+}
+async function mpSimAll(){
+ if(MP.simRun)return;MP.simRun=true;toast('🧪 Simulation läuft …');
+ try{for(let i=0;i<80;i++){
+  await new Promise(r=>setTimeout(r,2300));
+  const m=MP.meta;if(!m||!m.sim||m.state==='done'||m.state==='ended')break;
+  const b=id=>document.getElementById(id);
+  if(m.state==='prep'&&!MP.calcBusy)await mpHostCalc();
+  else if(m.state==='result')(b('hsPE')||b('hsNext'))&&(b('hsPE')||b('hsNext')).click();
+  else if(m.state==='phaseEnd')(b('hsP2')||b('hsDone'))&&(b('hsP2')||b('hsDone')).click();
+  await mpHostPoll();
+ }}catch(e){toast('⚠️ '+e.message)}
+ MP.simRun=false;toast('🧪 Simulation beendet');
+}
 function mpHostPaint(){
  const H=$('#s-host'),m=MP.meta||{state:'lobby'};
  if(!H.querySelector('#hsStat'))H.innerHTML=`<h1 class="hero" style="font-size:36px">👩‍🏫 Lehrer-Verwaltung</h1><div class="card" id="hsTop"></div><div id="hsMid"></div><div class="card" id="hsSet"><h3>🔧 Spieleinstellungen</h3>${hostFields()}<div class="row" style="margin-top:8px"><button class="btn blue" id="hsSave">💾 Einstellungen speichern</button><span class="small">Änderbar, solange die Lobby offen ist.</span></div></div>`;
@@ -2053,26 +2091,31 @@ function mpHostPaint(){
  const mid=$('#hsMid'),ps=MP.players||[];
  {const st=document.getElementById('hsSet');if(st)st.style.display=m.state==='lobby'?'':'none'}
  const reps=MP.reports?(MP.reports[m.ph+':'+m.rd]||{}):{};
- const rdyNow=(MP.rdy&&MP.rdy[m.ph+':'+m.rd])||{},nRdy=ps.filter(p=>rdyNow[p.id]).length;
+ const p2w=m.state==='phaseEnd'&&m.ph===1,rdyNow=(MP.rdy&&MP.rdy[p2w?'2:0':m.ph+':'+m.rd])||{},nRdy=ps.filter(p=>rdyNow[p.id]).length;
  const stateTxt={lobby:'🚪 Lobby offen – die Schüler treten bei',prep:`Spielrunde ${m.ph}, Session ${m.rd}/${CFG.ROUNDS} – bereit`,play:`🌊 Session läuft (${m.ph}/${m.rd})`,calc:'⏳ Auswertung …',result:`📊 Ergebnis Session ${m.rd} – Bestand jetzt ${m.Snew}`,phaseEnd:'🏁 Spielrunde beendet',done:'🏆 Spiel beendet',ended:'⛔ Spiel vom Lehrer beendet'}[m.state]||m.state;
  let btn='';
- if(m.state==='lobby')btn=`<button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
+ if(m.state==='lobby')btn=`<button class="btn ghost" id="hsSim" title="Probelauf ohne Schüler: 30 Computer-Boote spielen, du kannst alles durchklicken oder automatisch durchlaufen lassen">🧪 Simulation (ohne Schüler)</button> <button class="btn green" id="hsGo">▶ Spiel starten (${ps.length} Spieler, Rest füllt das Spiel auf)</button>`;
+ else if(m.state==='prep'&&m.sim)btn=`<span class="pill">🧪 Simulation</span> <button class="btn green" id="hsSimStep">⏩ Session ${m.rd} simulieren</button> <button class="btn blue" id="hsSimAll">⏩⏩ Alles automatisch durchspielen</button>`;
  else if(m.state==='prep')btn=`<button class="btn green" id="hsPlay">🚦 Session ${m.rd} starten (Countdown 8 s)</button><span class="pill" style="${nRdy===ps.length&&ps.length?'background:#d8f5e3;color:#176b3a':''}">✅ ${nRdy}/${ps.length} bereit</span>`;
  else if(m.state==='play')btn=`<button class="btn" id="hsEnd">⏹ Session jetzt auswerten</button><span class="pill">📨 ${Object.keys(reps).length}/${ps.length} Meldungen</span>`;
  else if(m.state==='result')btn=m.end?`<button class="btn green" id="hsPE">🏁 Spielrunde ${m.ph} abschließen</button>`:`<button class="btn green" id="hsNext">➡ Session ${m.rd+1} vorbereiten</button>`;
- else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
+ else if(m.state==='phaseEnd')btn=m.ph===1?`<button class="btn green" id="hsP2">🚔 Spielrunde 2 starten</button><span class="pill" style="${nRdy===ps.length&&ps.length?'background:#d8f5e3;color:#176b3a':''}">✅ ${nRdy}/${ps.length} bereit für Spielrunde 2</span>`:`<button class="btn green" id="hsDone">🏆 Gesamtauswertung anzeigen</button>`;
  if(m.state!=='done'&&m.state!=='ended')btn+=` <button class="btn ghost" id="hsStop" style="background:#ffe3e3;color:#a4161a">⛔ Spiel beenden</button>`;
  mid.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">${stateTxt}</h3><span class="pill">${ps.length} Spieler</span></div><div class="row" style="margin-top:8px">${btn}</div></div>
  <div class="card"><h3>👥 Spieler</h3><div id="hsPl"></div></div>
+ ${m.state!=='lobby'?`<div class="card"><h3>🧠 Quiz-Übersicht</h3><p class="small">Pro Spieler:in steht oben ✅/❌ in der Spielerliste (Maus darüber zeigt die Frage). Hier siehst du, welche Fragen wie oft beantwortet wurden.</p>${quizOverviewHTML()}</div>`:''}
  ${G&&G.last&&['result','phaseEnd','done'].includes(m.state)?`<div class="card"><h3>🏅 Bestenliste</h3>${leaderboardHTML(byCoins().filter(p=>!p.dummy),false)}</div>`:''}
  ${['phaseEnd','done'].includes(m.state)&&G.res[1]?wsEvalHTML(true):''}`;
  const pl=$('#hsPl');
- pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th>${m.state==='prep'?'Bereit':''}</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td>${m.state==='prep'?(rdyNow[p.id]?'<b style="color:#2a9d8f">✅ bereit</b>':'<span class="small">⏳</span>'):''}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
+ pl.innerHTML=ps.length?`<table><tr><th></th><th>Name</th><th>Anzeigename</th><th>Fang</th><th>🧠 Quiz</th><th>${m.state==='prep'||p2w?'Bereit':''}</th><th></th></tr>${ps.map(p=>`<tr><td><canvas data-b="${p.id}" width="110" height="64" style="width:70px"></canvas></td><td>${esc(p.name)}</td><td><input type="text" maxlength="16" data-al="${p.id}" value="${esc(p.alias||'')}" placeholder="Fantasiename" style="width:140px;padding:6px"></td><td>${reps[p.id]?reps[p.id].fish:'–'}</td><td>${quizCell(p.id)}</td><td>${m.state==='prep'||p2w?(rdyNow[p.id]?'<b style="color:#2a9d8f">✅ bereit</b>':'<span class="small">⏳</span>'):''}</td><td><button class="btn ghost" data-k="${p.id}" style="padding:6px 10px;font-size:14px">✖</button></td></tr>`).join('')}</table>`:'<p class="small">Noch niemand beigetreten. Zeige den QR-Code.</p>';
  pl.querySelectorAll('canvas[data-b]').forEach(c=>{const p=ps.find(x=>x.id===c.dataset.b);if(p)try{drawBoatCustom(c.getContext('2d'),55,36,Object.assign({parts:{}},p.boat),.75,null)}catch(e){}});
  pl.querySelectorAll('[data-al]').forEach(i=>{i.onchange=async()=>{try{await mpCall('alias',{id:i.dataset.al,alias:i.value});const nm=i.value.trim();if(m.roster){const names=Object.assign({},m.names||{});names[i.dataset.al]=nm||(ps.find(x=>x.id===i.dataset.al)||{}).name;const p=G&&G.P.find(x=>x.rid===i.dataset.al);if(p)p.name=names[i.dataset.al];await mpSet({names})}toast('✔ Name gespeichert')}catch(e){toast('⚠️ '+e.message)}}});
  pl.querySelectorAll('[data-k]').forEach(b=>b.onclick=async()=>{if(m.state!=='lobby'){toast('Nach dem Start kann niemand entfernt werden');return}try{await mpCall('kick',{id:b.dataset.k});mpHostPoll()}catch(e){}});
  const on=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f};
- on('hsGo',mpHostStartGame);
+ on('hsGo',()=>mpHostStartGame());
+ on('hsSim',()=>mpHostStartGame(true));
+ on('hsSimStep',()=>mpHostCalc());
+ on('hsSimAll',()=>mpSimAll());
  on('hsStop',async()=>{if(!confirm('Spiel für ALLE Spieler jetzt beenden?'))return;try{await mpSet({state:'ended'});try{localStorage.removeItem('fg_host')}catch(e){}toast('Spiel beendet')}catch(e){toast('⚠️ '+e.message)}});
  on('hsPlay',()=>mpSet({state:'play',startAt:mpNow()+8000}));
  on('hsEnd',()=>mpHostCalc());
