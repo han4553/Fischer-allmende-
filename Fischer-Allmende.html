@@ -213,13 +213,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 /* 1) SPIELBALANCE */
 const CFG={
   BOATS:30,         // Anzahl Boote (1 Spieler:in + KI)
-  ROUND_TIME:60,    // Sekunden pro Session – für alle gleich
+  ROUND_TIME:90,    // Sekunden pro Session – für alle gleich
   WORLD:3.0,        // Kartengröße = Bildschirmgröße x WORLD (Karte scrollt mit)
-  K:450,            // Kapazität der Bucht (max. Fische)
+  K:600,            // Kapazität der Bucht (max. Fische)
   SEASON_EVENTS:false, // Wetter-Ereignisse (Wind, Sturm, Nebel …) – aktuell AUS; true = wieder an
   API_URL:'',       // Adresse des Mehrspieler-Servers (leer = gleiche Seite /api/room)
   ROUNDS:3,         // Sessions je Spielrunde
-  S0:390,           // Start-Bestand
+  S0:500,           // Start-Bestand
   R:1.2,            // Wachstumsrate (höher = Bucht erholt sich schneller)
   COLLAPSE:15,      // Bestand darunter = See leer -> Spielrunde endet
   BASECARGO:8,      // Laderaum pro Fahrt (Fische im Boot, bis zum Entladen im Hafen)
@@ -303,7 +303,7 @@ const QUIZ=[
  {q:'Wie kann der Staat externe Kosten „internalisieren“?',o:['Durch eine Umweltabgabe oder handelbare Zertifikate','Durch mehr Werbung','Indem er die Preise freigibt','Durch niedrigere Löhne'],a:0,e:'Abgaben (Pigou-Steuer) oder Zertifikate machen den Verursacher zum Zahler – so fließen die Kosten in seine Entscheidung ein.'},
  {q:'Was ist der Vorteil handelbarer Fangquoten (z. B. in Island)?',o:['Alle fangen gleich viel','Die Gesamtmenge bleibt begrenzt und die Quoten wandern zu den kostengünstigsten Fischern','Der Fisch wird immer billiger','Es braucht keine Kontrolle mehr'],a:1,e:'Die Gesamtmenge schützt den Bestand, der Handel sorgt dafür, dass effizient gefischt wird. Kontrolle braucht es trotzdem.'},
  {q:'Warum wächst ein Fischbestand bei mittlerer Größe am schnellsten?',o:['Weil dann die Preise am höchsten sind','Bei kleinem Bestand fehlen Elterntiere, bei vollem Bestand ist Nahrung und Platz knapp','Weil dann die Fischer pausieren','Weil Fische Gruppen mögen'],a:1,e:'Logistisches Wachstum: erst steigt der Zuwachs, dann bremsen knappe Ressourcen. Der größte Zuwachs liegt etwa bei der Hälfte der Kapazität.'},
- {q:'Du willst mit einem festen Einsatz (60 Sekunden, ein Boot) möglichst viel Ertrag erzielen. Welches Prinzip ist das?',o:['Minimalprinzip','Maximalprinzip','Nachhaltigkeitsprinzip','Subsidiaritätsprinzip'],a:1,e:'Maximalprinzip: gegebener Einsatz, maximaler Ertrag. Minimalprinzip: gegebenes Ziel mit minimalem Einsatz.'},
+ {q:'Du willst mit einem festen Einsatz (eine Session lang, ein Boot) möglichst viel Ertrag erzielen. Welches Prinzip ist das?',o:['Minimalprinzip','Maximalprinzip','Nachhaltigkeitsprinzip','Subsidiaritätsprinzip'],a:1,e:'Maximalprinzip: gegebener Einsatz, maximaler Ertrag. Minimalprinzip: gegebenes Ziel mit minimalem Einsatz.'},
  {q:'Was unterscheidet ein öffentliches Gut von einem Allmendegut?',o:['Beim öffentlichen Gut gibt es keine Rivalität im Konsum','Öffentliche Güter sind immer teurer','Allmendegüter gehören dem Staat','Es gibt keinen Unterschied'],a:0,e:'Beide sind schwer ausschließbar. Aber beim öffentlichen Gut (z. B. Leuchtturm) mindert meine Nutzung nicht die der anderen – beim Allmendegut schon.'},
  {q:'Welches Prinzip gehört zu Ostroms Erfolgsfaktoren für Gemeingüter?',o:['Keine Regeln, damit alle frei sind','Nutzer überwachen sich gegenseitig, Verstöße werden abgestuft bestraft','Alle Rechte liegen bei einer Person','Strafen sollen möglichst hoch und sofort sein'],a:1,e:'Ostrom: klare Grenzen, Regeln passend zur Situation, Mitbestimmung, Überwachung und abgestufte Sanktionen.'},
  {q:'Die Betriebskosten deines Bootes fallen jede Session an – egal, wie viel du fängst. Wie nennt man solche Kosten?',o:['Variable Kosten','Fixkosten','Grenzkosten','Opportunitätskosten'],a:1,e:'Fixkosten sind unabhängig von der Menge. Variable Kosten wachsen mit dem Fang.'},
@@ -1812,7 +1812,7 @@ function tpRender(){
  sure('#tpP2',()=>{A&&(A.running=false);tpPaused=false;TP.classList.remove('show');startPhase(2)})
  sure('#tpNew',()=>{A&&(A.running=false);tpPaused=false;G=null;TP.classList.remove('show');show('s-start')})
  on('#tpApply',()=>{
-  CFG.ROUND_TIME=clamp(+$$('#tpT').value||60,10,300);CFG.ROUNDS=clamp(+$$('#tpR').value||3,1,12);if(G)G.rounds=CFG.ROUNDS;CFG.S0=clamp(+$$('#tpS0').value||390,20,CFG.K);CFG.PATROLS=clamp(+$$('#tpPa').value,0,12);CFG.RANDHARBOR=!!document.getElementById('tpRH').checked;
+  CFG.ROUND_TIME=clamp(+$$('#tpT').value||90,10,300);CFG.ROUNDS=clamp(+$$('#tpR').value||3,1,12);if(G)G.rounds=CFG.ROUNDS;CFG.S0=clamp(+$$('#tpS0').value||500,20,CFG.K);CFG.PATROLS=clamp(+$$('#tpPa').value,0,12);CFG.RANDHARBOR=!!document.getElementById('tpRH').checked;
   CFG.FINE_MULT=Math.max(0,+$$('#tpF').value);CFG.PATROL_P=clamp(+$$('#tpC').value/100,0,1);CFG.R=clamp(+$$('#tpG').value||1.2,.1,3);
   tpRefresh();toast('✅ Einstellungen übernommen');tpRender();
  });
@@ -1960,7 +1960,7 @@ const hostFields=()=>`<div class="row">
  <label>Wachstumsrate<input type="number" id="hsG" min=".1" max="3" step=".1" value="${CFG.R}"></label></div>`;
 function mpReadFields(){
  const v=id=>+document.getElementById(id).value;
- CFG.ROUND_TIME=clamp(v('hsT')||60,10,300);CFG.ROUNDS=clamp(v('hsR')||3,1,12);CFG.S0=clamp(v('hsS')||390,20,CFG.K);CFG.PATROLS=clamp(Math.round(v('hsP')),0,12);CFG.RANDHARBOR=!!(document.getElementById('hsRH')&&document.getElementById('hsRH').checked);
+ CFG.ROUND_TIME=clamp(v('hsT')||90,10,300);CFG.ROUNDS=clamp(v('hsR')||3,1,12);CFG.S0=clamp(v('hsS')||500,20,CFG.K);CFG.PATROLS=clamp(Math.round(v('hsP')),0,12);CFG.RANDHARBOR=!!(document.getElementById('hsRH')&&document.getElementById('hsRH').checked);
  CFG.FINE_MULT=Math.max(0,v('hsF'));CFG.PATROL_P=clamp(v('hsC')/100,0,1);CFG.R=clamp(v('hsG')||1.2,.1,3);
 }
 const mpCfgObj=()=>({ROUND_TIME:CFG.ROUND_TIME,ROUNDS:CFG.ROUNDS,S0:CFG.S0,PATROLS:CFG.PATROLS,FINE_MULT:CFG.FINE_MULT,PATROL_P:CFG.PATROL_P,R:CFG.R,RANDHARBOR:CFG.RANDHARBOR});
