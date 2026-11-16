@@ -1238,7 +1238,7 @@ function settle(rows,Sstart,Safter,pr,Q,tac,lastPl,doRender){
  const empty=Snew<CFG.COLLAPSE;
  const caughtN=rows.filter(r=>r.caught).length,ecoN=rows.filter(r=>r.eco).length,sneakyN=rows.filter(r=>r.sneaky).length;
  let headline;
- if(empty)headline='💀 Der See ist leer! Für alle endet die Fischerei.';
+ if(empty)headline=`💀 Nur noch ${Snew} Fische (weniger als ${CFG.COLLAPSE}): Der Bestand ist zusammengebrochen und kann sich nicht mehr erholen. Für alle endet die Fischerei.`;
  else if(ph===1&&Safter<Sstart*.6)headline=`🚨 Goldrausch! ${esc(king.p.name)} holt ${king.fish} Fische – der Bestand sinkt um ${Math.round((1-Safter/Sstart)*100)} %!`;
  else if(ph===1)headline=`🐟 Gesamtfang ${total} Fische – der Bestand liegt bei ${Snew}.`;
  else if(ph===2&&!polOn()){const ov=rows.filter(r=>r.fish>Q).length;headline=(ov?`📜 ${ov} von ${rows.length} Booten haben mehr als die Quote gefangen – Bestand: ${Snew}.`:`✅ Alle halten sich an die Quote – der See erholt sich auf ${Snew}!`)+(G.poachN?` 🚫 ${G.poachN} Boote fischten in fremden Fanggebieten.`:'')}
@@ -1412,7 +1412,7 @@ function exportXlsx(){
  const k=[['T','Fischer Allmende – Klassenwerte für die Arbeitsblätter'],[],['H','',...cols.map(i=>'Spielrunde '+i+(i===1?' (ohne Regeln)':' (mit Regeln)'))]];
  const kr=(l,f)=>k.push(['R',l,...cols.map(f)]);
  kr('Fischbestand zu Beginn',i=>CFG.S0);
- kr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (leer)':''));
+ kr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (zusammengebrochen)':''));
  kr('Gesamtfang der Klasse',i=>R[i].total);
  kr('Ø Fang pro Boot',i=>Math.round(R[i].total/nB(i)*10)/10);
  kr('Ø Gewinn pro Boot (Münzen)',i=>R[i].avgCoins!=null?R[i].avgCoins:'');
@@ -1458,7 +1458,7 @@ function wsEvalHTML(host){
  <p class="small">${host?'Diese Werte können die Schüler:innen in die Tabellen der Arbeitsblätter übertragen (Klassenwerte).':'Trage diese Werte in die Tabelle deines Arbeitsblatts ein.'}</p>
  <table><tr><th></th>${head}</tr>
  ${tr('Fischbestand zu Beginn',i=>CFG.S0)}
- ${tr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (leer)':''))}
+ ${tr('Fischbestand am Ende',i=>R[i].endS+(R[i].empty?' (zusammengebrochen)':''))}
  ${host?'':tr('Dein Fang insgesamt',i=>R[i].myFish!=null?R[i].myFish:'–')}
  ${tr('Gesamtfang der Klasse',i=>R[i].total)}
  ${tr('Ø Fang pro Boot',i=>(Math.round(R[i].total/n(i)*10)/10).toString().replace('.',','))}
@@ -1487,13 +1487,13 @@ function renderPhase1End(sorted,myRank){
  const R=G.res[1],w=sorted[0],me=G.P[0];
  sorted.forEach((p,i)=>{p.prevRank=p.rank;p.rank=i+1;});
  $('#s-final').innerHTML=`
- <h1 class="hero" style="font-size:36px">${R.empty?'💀 Der See ist leer!':'🏁 Ende der Spielrunde 1'}</h1>
- <div class="news">${R.empty?`Nach Session ${R.seasons} gibt es keine Fische mehr – die Fischerei ist am Ende.`:`Nach ${R.seasons} Sessions sind nur noch ${R.endS} von ${CFG.K} Fischen übrig.`}</div>
+ <h1 class="hero" style="font-size:36px">${R.empty?'💀 Der See ist zusammengebrochen!':'🏁 Ende der Spielrunde 1'}</h1>
+ <div class="news">${R.empty?`Nach Session ${R.seasons} sind nur noch ${R.endS} Fische übrig – weniger als ${CFG.COLLAPSE}. Das reicht nicht, damit sich der Bestand erholt: Die Fischerei ist am Ende.`:`Nach ${R.seasons} Sessions sind nur noch ${R.endS} von ${CFG.K} Fischen übrig.`}</div>
  <div class="card" style="border:4px solid #fb8500"><h3>🏆 Der beste Fischer erreicht Platz 1</h3>
   <p><b>${w.role.emoji} ${esc(w.name)}${w.isP?' – das bist DU!':''}</b> hat mit <b>${w.fishTotal} gefangenen Fischen</b> und <b>${w.coins} 💰</b> gewonnen. ${w.isP?'Du hast konsequent am meisten rausgeholt – und wurdest dafür belohnt.':`Du landest auf Platz <b>${myRank}</b> mit ${me.coins} 💰 und ${me.fishTotal} Fischen.`}</p>
   ${podiumHTML(sorted)}</div>
  <div class="card"><h3>…aber was bleibt?</h3>
-  <p>Alle ${G.P.length} Boote zusammen fingen <b>${R.total} Fische</b>. ${R.empty?'Jetzt ist der See leer: <b>niemand</b> kann mehr fischen, auch der Sieger nicht.':'Der See ist fast leer – die Fänge brechen ein.'}</p>
+  <p>Alle ${G.P.length} Boote zusammen fingen <b>${R.total} Fische</b>. ${R.empty?'Der Bestand ist zusammengebrochen: <b>niemand</b> kann mehr sinnvoll fischen, auch der Sieger nicht.':'Der See ist fast leer – die Fänge brechen ein.'}</p>
   <canvas id="chart1" width="700" height="230"></canvas></div>
  ${quizCard({q:'Warum ist der See leer, obwohl niemand das wollte?',o:['Weil alle zu langsam waren','Weil für jeden Einzelnen ein Fisch mehr Gewinn brachte, die Kosten des leeren Sees aber alle gemeinsam tragen','Weil die Fische weggeschwommen sind','Weil der Preis zu niedrig war'],a:1,e:'Genau.'},'refl','🤔 Auswertung: Was ist passiert?',0)}
  <div class="card" id="reveal" style="display:none;border:4px solid #e63946"><h3>📉 Tragödie der Allmende</h3><p>Die Bucht ist ein <b>Allmendegut</b>: Niemand kann von der Nutzung ausgeschlossen werden (nicht ausschließbar), aber jeder Fisch, den du fängst, fehlt den anderen (<b>Rivalität</b>). Der Nutzen eines Fisches gehört ganz dir, die Kosten eines leeren Sees tragen alle. Also ist es für jeden vernünftig, schnell mehr zu fangen – und für alle zusammen ein Verlust. Garrett Hardin nannte das 1968 die <b>Tragödie der Allmende</b>.</p><table class="small" style="width:100%"><tr><th></th><th>Die anderen fangen wenig</th><th>Die anderen fangen viel</th></tr><tr><td><b>Ich fange wenig</b></td><td>👍 alle gut (See bleibt)</td><td>😖 ich habe wenig, der See ist trotzdem leer</td></tr><tr><td><b>Ich fange viel</b></td><td>🤑 ich gewinne</td><td>💀 alle verlieren</td></tr></table><p class="small">Für jeden Einzelnen ist „viel fangen“ die beste Antwort – das ist ein <b>Gefangenendilemma</b>. Wie kommt man da raus? Das probierst du in Spielrunde 2.</p></div>
@@ -1527,7 +1527,7 @@ function renderFinal(sorted,myRank){
   <div>${badges.map(b=>`<span class="badge">${b}</span>`).join('')}</div></div>
  <div class="card"><h3>⚖️ Vergleich: freie Fischerei vs. Quote & Kontrolle</h3>
   <table><tr><th></th><th>🌊 Spielrunde 1<br>frei</th><th>🚔 Spielrunde 2<br>geregelt</th></tr>
-  <tr><td>Sessions gefischt</td><td>${R1.seasons}${R1.empty?' (dann leer)':''}</td><td>${R2.seasons}</td></tr>
+  <tr><td>Sessions gefischt</td><td>${R1.seasons}${R1.empty?' (dann zusammengebrochen)':''}</td><td>${R2.seasons}</td></tr>
   <tr><td>Gesamtfang aller Boote</td><td class="${more?'neg':'pos'}">${R1.total}</td><td class="${more?'pos':'neg'}">${R2.total}</td></tr>
   <tr><td>Bestand am Ende</td><td class="neg">${R1.endS} / ${CFG.K}</td><td class="pos">${R2.endS} / ${CFG.K}</td></tr>
   <tr><td>Strafen insgesamt</td><td>–</td><td>${R2.fines} 💰</td></tr>
@@ -1769,7 +1769,7 @@ function applyURLParams(){
 let TP_LOCK=false;
 function tpRender(){
  const playing=!!(A&&A.running),inG=!!G;
- const st=inG?`Spielrunde ${G.phase}/2 · Session ${G.round}/${G.rounds} · Bestand <b>${curStock()}</b>/${CFG.K}${playing?' · ⏱ '+Math.max(0,Math.round(A.T-A.t))+' s übrig':''}${G.collapse?' · See leer':''}`:'Kein Spiel läuft';
+ const st=inG?`Spielrunde ${G.phase}/2 · Session ${G.round}/${G.rounds} · Bestand <b>${curStock()}</b>/${CFG.K}${playing?' · ⏱ '+Math.max(0,Math.round(A.T-A.t))+' s übrig':''}${G.collapse?' · See zusammengebrochen':''}`:'Kein Spiel läuft';
  TP.innerHTML=`<div class="box"><div class="row" style="justify-content:space-between"><h2 style="margin:0">⚙️ Lehrer-Verwaltung</h2><button class="btn ghost" id="tpX">✖ Schließen${tpPaused?' & weiter':''}</button></div>
  <div class="st" style="margin-top:8px">${st}${tpPaused?' · ⏸ pausiert':''}</div>
  ${inG?`<h3>🐟 Fischbestand</h3><div class="row"><button class="btn blue" data-s="-50">−50</button><button class="btn blue" data-s="50">+50</button><button class="btn blue" data-s="100">+100</button><button class="btn blue" data-s="max">Voll (${CFG.K})</button><button class="btn blue" data-s="half">Hälfte</button><button class="btn blue" data-s="low">Fast leer (20)</button>
