@@ -632,6 +632,25 @@ function drawEvent(c,W,H,t,B,vx,vy){
  else if(e==='fog'){const x=B.x-vx,y=B.y-vy,g=c.createRadialGradient(x,y,90,x,y,330);g.addColorStop(0,'rgba(225,238,243,0)');g.addColorStop(1,'rgba(225,238,243,.93)');c.fillStyle=g;c.fillRect(0,0,W,H)}
  else if(e==='current'){c.strokeStyle='rgba(255,255,255,.28)';c.lineWidth=2;for(let i=0;i<14;i++){const x=((i*173+t*40*Math.cos(A.curAng)*3)%(W+120)+W+120)%(W+120)-60,y=((i*89+t*40*Math.sin(A.curAng)*3)%(H+120)+H+120)%(H+120)-60;c.beginPath();c.moveTo(x,y);c.lineTo(x+Math.cos(A.curAng)*40,y+Math.sin(A.curAng)*40);c.stroke()}}
 }
+/* Kurze Einblendungen während der Fahrt: Spielrunde 1/Session 1 = Bedienung, Spielrunde 2 = jeweils die neue Regel */
+function tutNow(t){
+ let st=null;
+ if(G.phase===1&&G.round===1)st=[['🕹 Joystick (unten links)','Daumen in eine Richtung ziehen: Das Boot fährt los – je weiter du ziehst, desto schneller.'],
+  ['🐟 Fischschwärme suchen','Fahre in die Fische. Die Karte scrollt mit, auf dem Radar unten siehst du die ganze Bucht.'],
+  ['🎣 Netz-Knopf (unten rechts)','Tippe darauf, wenn Fische unter deinem Boot sind: Das Netz fängt sie ein.'],
+  ['⚓ Boot voll? Ab zum Hafen!','Fahre zur kleinen Insel und entlade. Erst dann bekommst du Geld für den Fang.'],
+  ['🌈 Farben bringen mehr','Seltene Farben sind mehr wert. Alle 5 Farben zusammen geben Extrapunkte.'],
+  ['🏁 30 Boote, ein See','Alle fischen gleichzeitig. Wer mehr fängt, verdient mehr – aber der Bestand sinkt für alle.']];
+ else if(G.phase===2&&zoneOn())st=[['🏝 Eigene Fanggebiete','Dein Gebiet ist farbig markiert. Die Fische darin gehören dir, eine Quote gibt es nicht mehr.'],
+  ['🚔 Fremde Gebiete sind tabu','Wer in einem fremden Gebiet fischt, wird kontrolliert und bestraft.'],
+  ['🌱 Dein Gebiet wächst nach','Aber nur, wenn du nicht alles leerfischst – dein Bestand ist dein Kapital.']];
+ else if(G.phase===2&&polOn())st=[['🚔 Polizeiboote kontrollieren jetzt','Wer mehr als die Quote ('+A.quota+') an Land bringt, verliert den Überfang und zahlt Strafe.'],
+  ['🌿 Öko-Siegel für Regeltreue','Wer sich an die Quote hält, bekommt einen höheren Preis und eine Prämie.']];
+ else if(G.phase===2)st=[['📜 Neue Regel: Quote '+A.quota,'Jedes Boot darf höchstens '+A.quota+' Fische fangen. Noch kontrolliert niemand.'],
+  ['🤔 Deine Entscheidung','Hältst du dich dran, schont das den See. Mehr fangen bringt kurzfristig mehr Geld.']];
+ if(!st)return null;
+ const dur=6,i=Math.floor(t/dur);return i>=0&&i<st.length?[st[i][0],st[i][1],i+1,st.length]:null;
+}
 function startRound(T){
  show('s-play');fitWorld();
  const me=G.P[0],S=G.S,hk=me.upg.hook,wn=me.upg.winch,ph2=G.phase===2;
@@ -1123,12 +1142,17 @@ function draw(){
  drawEvent(c,W,H,t,B,vx,vy);
  c.textAlign='center';c.textBaseline='alphabetic';c.font='bold 16px "Trebuchet MS",sans-serif';c.lineWidth=4;c.strokeStyle='#0b3d5c';c.fillStyle='#fff';
  let msg='';
- if(A.t<12&&G.round===1&&G.phase===1)msg='🕹 Joystick = Kurs & Tempo · 🎣 Netz-Knopf · Boot voll? Fang im Hafen entladen';
- else if(A.t<7&&A.zoneOn)msg='⭐ DEIN Fanggebiet ist farbig markiert · 🚔 Fremdes Gebiet wird kontrolliert';
- else if(A.t<7&&G.phase===2)msg=polOn()?'📜 Quote '+A.quota+' · 🚔 Patrouillen kontrollieren!':'📜 Quote: '+A.quota+' Fische pro Boot.';
+ const tut=tutNow(A.t);
 const fitT=(txt,y)=>{const w=c.measureText(txt).width,k=Math.min(1,(W-24)/w);c.save();c.translate(W/2,y);c.scale(k,k);c.strokeText(txt,0,0);c.fillText(txt,0,0);c.restore()};
- if(msg)fitT(msg,AR.y0+26);
- if(A.t<6&&A.ev.id!=='calm'){const em=A.ev.emoji+' '+A.ev.name+': '+A.ev.txt;c.globalAlpha=clamp(6-A.t,0,1);fitT(em,AR.y0+52);c.globalAlpha=1}
+ let tutH=0;
+ if(tut){const bw=Math.min(W-190,640),bx=8,by=AR.y0+8;c.save();c.font='15px "Trebuchet MS",sans-serif';
+  const words=tut[1].split(' '),lines=[];let cur='';words.forEach(w=>{const t=cur?cur+' '+w:w;if(c.measureText(t).width>bw-24&&cur){lines.push(cur);cur=w}else cur=t});if(cur)lines.push(cur);
+  tutH=36+lines.length*19;
+  c.globalAlpha=.9;c.fillStyle='#0b3d5c';c.beginPath();if(c.roundRect)c.roundRect(bx,by,bw,tutH,12);else c.rect(bx,by,bw,tutH);c.fill();c.globalAlpha=1;c.textAlign='left';
+  c.fillStyle='#ffd166';c.font='bold 18px "Trebuchet MS",sans-serif';c.fillText(tut[0],bx+12,by+24);
+  c.fillStyle='#fff';c.font='15px "Trebuchet MS",sans-serif';lines.forEach((l,i)=>c.fillText(l,bx+12,by+46+i*19));
+  c.fillStyle='rgba(255,255,255,.5)';c.font='12px sans-serif';c.textAlign='right';c.fillText('Tipp '+tut[2]+'/'+tut[3],bx+bw-10,by+16);c.restore()}
+ if(A.t<6&&A.ev.id!=='calm'){const em=A.ev.emoji+' '+A.ev.name+': '+A.ev.txt;c.globalAlpha=clamp(6-A.t,0,1);fitT(em,AR.y0+(tut?tutH+36:52));c.globalAlpha=1}
  drawMini(c);
  const tl=Math.max(0,A.T-A.t),mm=Math.floor(tl/60),ss=Math.floor(tl%60);
  $('#h-time').textContent='⏱ '+mm+':'+(ss<10?'0':'')+ss;
